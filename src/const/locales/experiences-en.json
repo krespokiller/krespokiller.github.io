@@ -1,22 +1,33 @@
 {
   "experiences": [
     {
+      "company": "Loopay",
+      "role": "Senior Software Engineer",
+      "dates": "Oct 2025 – Present",
+      "location": "Remote",
+      "description": [
+        "Full-stack architecture and development for Soberana: end-to-end web platform built with React (Vite) frontend and NestJS backend, optimized PostgreSQL schemas, containerized deployment on AWS ECS (backend), GCP hosting (frontend), domains via AWS Route 53, and automated CI/CD pipelines on GitHub Actions.",
+        "Backend development of Loopay FX: built from scratch a Foreign Exchange Market Intermediation (IMC) platform with Python (Django), PostgreSQL / AWS Aurora, optimized indices for complex queries, containerized on AWS ECS and managed via AWS Route 53.",
+        "Multi-tenant architecture design: scalable NestJS backend implementing Strategy and Adapter design patterns for decoupled integration of multiple external payment gateways.",
+        "AI-driven agile development: daily practical workflow using Spec-Driven Development (SDD) with Opencode and Engram to accelerate feature delivery, automate repetitive tasks, and enforce code modularity — drastically reducing token consumption costs.",
+        "DevOps, automation & security: modular Infrastructure as Code scripts with Terraform, continuous observability with OneUptime, AWS CloudTrail security audits, and CI/CD pipeline automation via GitHub Actions.",
+        "Senior technical leadership: resolving complex production bugs, refactoring legacy codebases with SOLID principles, and conducting thorough code reviews to ensure team-wide code quality."
+      ],
+      "tags": ["NestJS", "React", "Vite", "PostgreSQL", "AWS ECS", "GCP", "Route 53", "Terraform", "Django", "Aurora", "GitHub Actions", "SDD", "OneUptime"]
+    },
+    {
       "company": "Trebet",
-      "role": "Co-Founder / Software Engineer",
+      "role": "Software Engineer (Technical Partner)",
       "dates": "Sep 2024 – Sep 2025",
       "location": "Bogotá, Colombia",
       "description": [
-        "Lead and coordinated a team of 5 engineers, ensuring alignment and delivery of the platform.",
-        "Collaborated directly with stakeholders to fully understand business needs and define technical solutions.",
-        "Developed and maintained a mobile application using React Native.",
-        "Built backend services on a dedicated PHP domain to support the platform's core features.",
-        "Implemented an intercom system leveraging WebRTC for real-time communication.",
-        "Configured and managed TURN/STUN servers to guarantee connection stability.",
-        "Integrated WebSockets for efficient peer-to-peer communication.",
-        "Added push notifications to enable reliable and instant user interactions.",
-        "Managed AWS infrastructure, focusing on reliability, scalability, and smooth operations.",
-        "Successfully delivered the application despite complex technical and organizational challenges."
-      ]
+        "Native hybrid mobile application development and deployment for iOS and Android using TypeScript (React Native).",
+        "Core backend services and APIs built with PHP (Laravel) and relational MySQL databases, optimizing query performance and table structure.",
+        "Real-time WebRTC intercom systems: deployed and administered CoTURN (STUN/TURN) servers in cloud environments for reliable peer-to-peer connectivity.",
+        "Persistent real-time messaging channels via WebSockets and integrated push notifications for low-latency mobile interaction.",
+        "Server infrastructure management with DigitalOcean Droplets, automating code delivery and testing via GitHub Actions pipelines."
+      ],
+      "tags": ["React Native", "Laravel", "MySQL", "WebRTC", "CoTURN", "WebSockets", "DigitalOcean", "GitHub Actions"]
     },
     {
       "company": "Galgo",
@@ -24,12 +35,13 @@
       "dates": "Dec 2023 – Sep 2025",
       "location": "Remote",
       "description": [
-        "Checkout Team: Developed and maintained features in a Backend for Frontend (BFF) architecture using NestJS and Next.js, with a stronger focus on backend development in NestJS.",
-        "Risk Team: Maintained and supported multiple applications within a microservices ecosystem built on an event-driven architecture in AWS.",
-        "Worked with Taktile (decision-flow platform) and Retool (internal UI builder) to improve decision-making processes and internal operations.",
-        "Implemented monitoring and analytics solutions with Datadog and Amplitude to ensure system reliability and provide product insights.",
-        "Acted as a technical bridge, supporting both engineering teams and business executives in troubleshooting and solving operational issues."
-      ]
+        "Checkout BFF development: maintained transactional microservices under a Backend-for-Frontend architecture with Next.js and NestJS, integrating MongoDB for high-speed session data storage.",
+        "Financial risk systems (EDA): developed and optimized microservices within a distributed event-driven ecosystem on AWS, integrating decision engines with Taktile and operational UI panels with Retool.",
+        "Infrastructure as Code: provisioned and deployed highly redundant cloud resources via Terraform templates managed through the env0 automation platform.",
+        "Observability & product tracking: implemented telemetry with Datadog for infrastructure monitoring, user behavior analytics with Amplitude, and lead flow integrations via HubSpot API.",
+        "CI/CD automation: configured build, testing (unit and integration), and continuous deployment pipelines on GitHub Actions targeting AWS infrastructure."
+      ],
+      "tags": ["Next.js", "NestJS", "MongoDB", "AWS", "Terraform", "env0", "Datadog", "Amplitude", "HubSpot", "GitHub Actions"]
     },
     {
       "company": "Loopay",
@@ -37,11 +49,10 @@
       "dates": "Jan 2023 – 2024",
       "location": "Remote",
       "description": [
-        "Improved and extended an existing application built with RedwoodJS.",
-        "Developed features using GraphQL, Prisma, Node.js, and React.",
-        "Optimized database interactions with Prisma and handled backend logic with Node.js.",
-        "Built responsive and user-friendly interfaces with React."
-      ]
+        "Full-stack development and evolution of the main platform built on RedwoodJS: interactive React UI components, server-side Node.js logic, and optimized queries via GraphQL and Prisma ORM.",
+        "CI/CD setup and maintenance with GitHub Actions for automated deployment and integration workflows."
+      ],
+      "tags": ["RedwoodJS", "React", "GraphQL", "Prisma", "Node.js", "GitHub Actions"]
     },
     {
       "company": "Tribuu Technologies",
@@ -49,32 +60,11 @@
       "dates": "2021 – 2022",
       "location": "Remote",
       "description": [
-        "Led the development of a Single Page Application (SPA) with Angular, Express, and MongoDB.",
-        "Designed and implemented a microservices architecture to improve scalability and modularity.",
-        "Integrated Algolia for advanced search and improved content discoverability.",
-        "Embedded video conferencing capabilities by integrating Zoom APIs."
-      ]
-    },
-    {
-      "company": "Freelance",
-      "role": "Web Developer",
-      "dates": "2020",
-      "location": "Remote",
-      "description": [
-        "Designed and developed a landing page for a truck workshop using HTML, CSS, and vanilla JavaScript.",
-        "Integrated a WhatsApp chat button for customer support.",
-        "Built an online clothing store with PrestaShop, increasing visibility and enabling online sales."
-      ]
-    },
-    {
-      "company": "Freelance",
-      "role": "CMS Developer",
-      "dates": "2018 – 2019",
-      "location": "Remote",
-      "description": [
-        "Developed a discreet sex-shop e-commerce platform using WordPress and WooCommerce.",
-        "Implemented responsive design and security measures for a confidential online retail experience."
-      ]
+        "Microservices architecture design and development: Single Page Application (SPA) with Angular frontend and highly modular backend services using Express / Node.js with MongoDB.",
+        "Complex API integrations: implemented Algolia indexed search engine and embedded Zoom SDK video conferencing capabilities.",
+        "CI/CD automation: configured continuous integration and delivery pipelines using GitHub Actions."
+      ],
+      "tags": ["Angular", "Express", "MongoDB", "Algolia", "Zoom API", "GitHub Actions"]
     }
   ]
 }

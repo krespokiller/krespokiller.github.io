@@ -1,43 +1,102 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #4A3C8C;
-  --color-secondary: #6B5B95;
-  --color-accent: #8E7CC3;
-  --color-dark: #0a0a0a;
-  --color-light: #ffffff;
-  --color-gray-800: #1f2937;
-  --color-gray-700: #374151;
-  --color-gray-600: #4b5563;
+  --color-primary: #F59E0B;
+  --color-secondary: #D97706;
+  --color-accent: #FDE68A;
+  --color-dark: #171717;
+  --color-light: #FAFAF9;
+  --color-gray-800: #262626;
+  --color-gray-700: #404040;
+  --color-gray-600: #525252;
+}
+
+/* Light mode (default) */
+:root,
+[data-theme="light"] {
+  --bg: #FAFAF9;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F5F5F4;
+  --bg-tag: rgba(245, 158, 11, 0.08);
+  --border: #E7E5E4;
+  --border-card: #E7E5E4;
+  --text: #1C1917;
+  --text-secondary: #57534E;
+  --text-muted: #A8A29E;
+  --text-tag: #B45309;
+  --border-tag: rgba(245, 158, 11, 0.2);
+  --line-color: rgba(28, 25, 23, 0.08);
+  --node-color: rgba(28, 25, 23, 0.04);
+  --gradient-line: rgba(28, 25, 23, 0.12);
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --bg: #0C0A09;
+  --bg-card: rgba(28, 25, 23, 0.5);
+  --bg-card-hover: rgba(28, 25, 23, 0.6);
+  --bg-tag: rgba(245, 158, 11, 0.1);
+  --border: #292524;
+  --border-card: rgba(41, 37, 36, 0.5);
+  --text: #FAFAF9;
+  --text-secondary: #A8A29E;
+  --text-muted: #57534E;
+  --text-tag: #F59E0B;
+  --border-tag: rgba(245, 158, 11, 0.2);
+  --line-color: rgba(245, 158, 11, 0.08);
+  --node-color: rgba(245, 158, 11, 0.04);
+  --gradient-line: rgba(245, 158, 11, 0.15);
 }
 
 @layer base {
   html {
-    @apply bg-dark text-light;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
   body {
-    @apply bg-dark text-light font-light antialiased;
+    background: var(--bg);
+    color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
     line-height: 1.5;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
   * {
-    @apply border-gray-700;
+    border-color: var(--border);
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-light hover:bg-secondary transition-all duration-300 rounded-lg px-6 py-2.5 font-medium text-sm tracking-wide;
+    @apply rounded-lg px-6 py-2.5 font-medium text-sm tracking-wide transition-all duration-300;
+    background: var(--text);
+    color: var(--bg);
+  }
+  .btn-primary:hover {
+    opacity: 0.85;
   }
 
   .btn-secondary {
-    @apply bg-secondary text-light hover:bg-accent transition-all duration-300 rounded-lg px-6 py-2.5 font-medium text-sm tracking-wide;
+    @apply rounded-lg px-6 py-2.5 font-medium text-sm tracking-wide transition-all duration-300;
+    background: var(--bg-tag);
+    color: var(--text-tag);
+    border: 1px solid var(--border-tag);
+  }
+  .btn-secondary:hover {
+    background: var(--border-tag);
   }
 
   .card {
-    @apply bg-gray-900/50 border border-gray-800/50 rounded-xl p-6;
+    @apply rounded-xl p-6 transition-all duration-300;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+  }
+  .card:hover {
+    background: var(--bg-card-hover);
   }
 
   .text-gradient {
@@ -45,7 +104,11 @@
   }
 
   .nav-link {
-    @apply text-gray-400 hover:text-light transition-colors duration-300 font-light tracking-wide text-sm;
+    @apply font-light tracking-wide text-sm transition-colors duration-300;
+    color: var(--text-muted);
+  }
+  .nav-link:hover {
+    color: var(--text);
   }
 
   .section {
@@ -56,18 +119,14 @@
     @apply max-w-5xl mx-auto;
   }
 
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+  .tag {
+    @apply inline-flex items-center gap-1.5 rounded-full text-xs font-medium px-3 py-1 transition-colors duration-200;
+    background: var(--bg-tag);
+    color: var(--text-tag);
+    border: 1px solid var(--border-tag);
   }
-
-  .line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+  .tag:hover {
+    opacity: 0.8;
   }
 }
 

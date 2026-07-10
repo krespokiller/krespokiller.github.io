@@ -1,11 +1,11 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Heading } from '@/components/atoms';
 import { Experience } from '@/models';
+import { useInView } from '@/hooks';
+import { ICON_MAP } from '@/const/iconMap';
 
 interface ExperienceItemProps extends Experience {
-  isExpanded?: boolean;
-  onToggleExpand?: () => void;
+  index: number;
 }
 
 export const ExperienceItem: React.FC<ExperienceItemProps> = ({
@@ -14,73 +14,85 @@ export const ExperienceItem: React.FC<ExperienceItemProps> = ({
   dates,
   description,
   location,
-  isExpanded = false,
-  onToggleExpand,
+  tags,
+  index,
 }) => {
-  const { t } = useTranslation();
-  const maxItemsToShow = 3;
-  const shouldShowExpandButton = description.length > maxItemsToShow;
-  const displayedDescription = isExpanded ? description : description.slice(0, maxItemsToShow);
-
-  const handleToggleExpand = () => {
-    if (onToggleExpand) {
-      onToggleExpand();
-    }
-  };
+  const { ref, isInView } = useInView({ threshold: 0.15 });
+  const delay = index * 100;
 
   return (
-    <div className={`card group h-full flex flex-col transition-all duration-500 ease-out ${
-      isExpanded
-        ? 'bg-gray-900/90 shadow-2xl border-gray-600/50'
-        : 'hover:shadow-xl hover:bg-gray-900/60'
-    }`}>
-      {/* Header Section - Fixed at top */}
-      <div className={`flex flex-col ${isExpanded ? 'md:flex-row md:items-start md:gap-6' : 'sm:flex-row sm:justify-between sm:items-start'} mb-6 transition-all duration-700`}>
-        <div className="flex-1 min-w-0">
-          <Heading level={3} className={`font-light text-light mb-2 tracking-tight transition-all duration-700 ${
-            isExpanded ? 'text-2xl md:text-3xl' : 'text-lg group-hover:text-xl'
-          }`}>
-            {role}
-          </Heading>
-          <p className={`text-gray-400 font-light transition-all duration-700 ${isExpanded ? 'text-lg' : 'text-base'}`}>
-            {company}
-          </p>
-          {location && (
-            <p className={`text-gray-500 font-light mt-1 transition-all duration-700 ${isExpanded ? 'text-base' : 'text-sm'}`}>
-              {location}
-            </p>
-          )}
-        </div>
-        <span className={`text-gray-500 font-light whitespace-nowrap tracking-wide shrink-0 transition-all duration-700 ${
-          isExpanded
-            ? 'mt-3 md:mt-0 text-sm bg-gray-800/50 px-3 py-1 rounded-full'
-            : 'text-xs mt-1 sm:mt-0 sm:ml-4'
-        }`}>
-          {dates}
-        </span>
+    <div
+      ref={ref}
+      className={`relative flex gap-6 md:gap-10 transition-all duration-700 ease-out ${
+        isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+      }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {/* Timeline dot + line */}
+      <div className="flex flex-col items-center flex-shrink-0">
+        <div
+          className={`w-3 h-3 rounded-full border-2 border-primary transition-all duration-500 ${
+            isInView ? 'scale-100' : 'scale-0'
+          }`}
+          style={{
+            transitionDelay: `${delay + 200}ms`,
+            background: isInView ? 'var(--text-tag)' : 'var(--bg)',
+            boxShadow: isInView ? '0 0 0 4px var(--bg-tag)' : 'none',
+          }}
+        />
+        <div
+          className="w-px flex-1 min-h-[80px]"
+          style={{
+            background: `linear-gradient(to bottom, var(--gradient-line), transparent)`,
+          }}
+        />
       </div>
 
-      {/* Content Section - Takes available space */}
-      <div className="flex-1 flex flex-col justify-between min-h-0">
-        <ul className={`space-y-3 ${isExpanded ? 'space-y-4' : ''} flex-1`}>
-          {displayedDescription.map((item: string, index: number) => (
-            <li key={index} className={`text-gray-300 leading-relaxed font-light transition-all duration-700 ${
-              isExpanded ? 'text-base' : 'text-sm'
-            }`}>
-              {item}
+      {/* Content */}
+      <div className="pb-12 flex-1 min-w-0">
+        {/* Date badge */}
+        <span
+          className="inline-block text-xs font-medium tracking-wider uppercase mb-3 rounded-full px-3 py-1"
+          style={{ background: 'var(--bg-tag)', color: 'var(--text-tag)' }}
+        >
+          {dates}
+        </span>
+
+        {/* Header */}
+        <div className="mb-4">
+          <Heading level={3} className="text-xl md:text-2xl font-medium tracking-tight" style={{ color: 'var(--text)' }}>
+            {role}
+          </Heading>
+          <p className="text-base font-light" style={{ color: 'var(--text-secondary)' }}>
+            {company}
+            {location && (
+              <span className="ml-2" style={{ color: 'var(--text-muted)' }}>· {location}</span>
+            )}
+          </p>
+        </div>
+
+        {/* Description */}
+        <ul className="space-y-2.5 mb-5">
+          {description.map((item, i) => (
+            <li key={i} className="flex gap-3 text-sm leading-relaxed font-light" style={{ color: 'var(--text-secondary)' }}>
+              <span className="mt-1.5 flex-shrink-0" style={{ color: 'var(--text-tag)', opacity: 0.6 }}>›</span>
+              <span>{item}</span>
             </li>
           ))}
         </ul>
 
-        {/* Button Section - Always at bottom */}
-        {shouldShowExpandButton && (
-          <div className="mt-6 pt-4 border-t border-gray-700/50 flex-shrink-0">
-            <button
-              onClick={handleToggleExpand}
-              className="text-primary hover:text-secondary transition-all duration-300 text-sm font-medium hover:underline px-3 py-2 rounded-lg hover:bg-gray-800/50"
-            >
-              {isExpanded ? t('experience.showLess') : t('experience.showMore', { count: description.length - maxItemsToShow })}
-            </button>
+        {/* Tags with icons */}
+        {tags && tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => {
+              const Icon = ICON_MAP[tag];
+              return (
+                <span key={tag} className="tag text-[11px] px-2.5 py-0.5">
+                  {Icon && <Icon size={12} />}
+                  {tag}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>

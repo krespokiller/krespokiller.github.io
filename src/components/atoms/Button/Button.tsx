@@ -17,7 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   type = 'button',
 }) => {
-  const baseClasses = 'font-medium rounded-lg transition-all duration-300 focus:outline-none focus:ring-1 focus:ring-offset-2';
+  const baseClasses = 'font-medium rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
 
   const variantClasses = {
     primary: 'bg-primary text-light hover:bg-primary/80 focus:ring-primary',
@@ -36,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       type={type}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses} btn-${variant}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses}`}
       onClick={onClick}
       disabled={disabled}
     >

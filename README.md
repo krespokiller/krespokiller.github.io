@@ -1,101 +1,55 @@
-# David Santiago Vargas - Portfolio
+# David Santiago Vargas — Portfolio
 
-A modern, responsive portfolio website built with React, TypeScript, Tailwind CSS, and Storybook. Features Atomic Design architecture for scalability and maintainability.
+Personal portfolio website built with React, TypeScript, Tailwind CSS, and Storybook.
 
 ## Features
 
-- **Atomic Design**: Organized components following Atomic Design principles (atoms, molecules, organisms)
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
-- **Interactive Elements**: Smooth animations and transitions
-- **Professional Experience**: Detailed showcase of work history from CV
-- **Contact Section**: Integrated contact form with GitHub and LinkedIn links
-- **Frontend Only**: No backend dependencies for simple deployment
+- **Atomic Design**: Components organized as atoms → molecules → organisms
+- **Timeline Experience**: Vertical timeline with scroll-reveal animations
+- **Skills Grid**: Categorized tech stack with amber-themed badges
+- **Interactive Background**: Canvas-based gravitational deformation effect
+- **i18n**: English / Spanish language toggle
+- **Responsive**: Mobile-first with Tailwind CSS
 
 ## Tech Stack
 
-- **Framework**: React 18
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4 with custom color palette
-- **Component Library**: Storybook for development
-- **Build Tool**: Vite
-- **Package Manager**: Yarn
-
-## Color Palette
-
-- Primary: #448C42
-- Secondary: #6ED96A
-- Accent: #7DF279
-- Dark: #0C2604
-- Light: #F2F2F2
+- React 18 + TypeScript
+- Tailwind CSS v4
+- Vite
+- Storybook
+- react-i18next
+- Yarn
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js v22+
-- Yarn
-
-### Installation
-
 ```shell
 yarn install
-```
-
-### Development
-
-```shell
 yarn dev
 ```
 
-### Build for Production
+## Build & Preview
 
 ```shell
 yarn build
-```
-
-### Preview Production Build
-
-```shell
 yarn preview
 ```
 
-### Storybook
+## Deployment
 
-```shell
-yarn storybook
-```
-
-### Build Storybook
-
-```shell
-yarn build-storybook
-```
-
-## Deployment to GitHub Pages
-
-1. Ensure Node.js v22+ is installed
-2. Build the project: `pnpm build`
-3. The `dist` folder contains the static files
-4. Deploy the `dist` folder to GitHub Pages
+Push to `main` triggers GitHub Actions → builds and deploys to GitHub Pages.
 
 ## Project Structure
 
 ```
 src/
-├── app/
-│   ├── components/
-│   │   ├── atoms/          # Basic UI elements (Button, Input, Heading)
-│   │   ├── molecules/      # Combinations of atoms (ExperienceItem, ContactForm)
-│   │   └── organisms/      # Complex sections (Header, Footer, ExperienceSection)
-│   ├── pages/              # Page components
-│   └── shared/             # Shared utilities
-├── client.tsx             # Main entry point
-└── index.css              # Global styles
+├── components/
+│   ├── atoms/          # Button, Heading, Input
+│   ├── molecules/      # ExperienceItem
+│   └── organisms/      # Header, Footer, ExperienceSection, SkillsSection, InteractiveBackground
+├── const/locales/      # i18n JSON files
+├── hooks/              # useLanguage, useInView
+├── models/             # TypeScript interfaces
+├── pages/              # Home
+├── services/           # InteractiveBackground physics/render
+└── styles/             # Tailwind config + global CSS
 ```
-
-## Contact
-
-David Santiago Vargas
-- Email: davidsantiagovargas1234@gmail.com
-- GitHub: [davidsantiagovargas1234](https://github.com/davidsantiagovargas1234)
-- LinkedIn: [David Santiago Vargas](https://linkedin.com/in/david-santiago-vargas)

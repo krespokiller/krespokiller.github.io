@@ -5,8 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>David Santiago Vargas - Portfolio</title>
-    <script type="module" crossorigin src="/assets/index-BdolhwYw.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-OimtARjf.css">
+    <script>
+      (function() {
+        var t = localStorage.getItem('portfolio-theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-UgCp0EiC.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DgaS-7qI.css">
   </head>
   <body>
     <div id="root"></div>

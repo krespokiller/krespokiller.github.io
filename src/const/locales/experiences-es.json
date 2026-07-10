@@ -1,22 +1,33 @@
 {
   "experiences": [
     {
+      "company": "Loopay",
+      "role": "Ingeniero de Software Senior",
+      "dates": "Oct 2025 – Presente",
+      "location": "Remoto",
+      "description": [
+        "Arquitectura y desarrollo full-stack de Soberana: plataforma web de extremo a extremo con React (Vite) en frontend y NestJS en backend, esquemas optimizados de PostgreSQL, despliegue contenerizado en AWS ECS (backend), hosting en GCP (frontend), dominios vía AWS Route 53 y pipelines CI/CD automatizados en GitHub Actions.",
+        "Desarrollo backend de Loopay FX: construcción desde cero de la plataforma de Intermediación del Mercado Cambiario (IMC) con Python (Django), PostgreSQL / AWS Aurora, índices optimizados para consultas complejas, contenedores en AWS ECS y gestión vía AWS Route 53.",
+        "Diseño de arquitectura multi-tenant: backend escalable en NestJS implementando patrones Strategy y Adapter para la integración desacoplada de múltiples pasarelas de pago externas.",
+        "Desarrollo ágil con IA: flujo diario basado en Spec-Driven Development (SDD) con Opencode y Engram para acelerar entrega de funcionalidades, automatizar tareas repetitivas y asegurar modularidad del código, reduciendo drásticamente costos de consumo de tokens.",
+        "DevOps, automatización y seguridad: scripts modulares de IaC con Terraform, observabilidad continua con OneUptime, auditorías de seguridad en AWS CloudTrail y pipelines CI/CD con GitHub Actions.",
+        "Referente técnico senior: resolución de bugs complejos en producción, refactorización de código heredado con principios SOLID y ejecución de code reviews para asegurar calidad técnica del equipo."
+      ],
+      "tags": ["NestJS", "React", "Vite", "PostgreSQL", "AWS ECS", "GCP", "Route 53", "Terraform", "Django", "Aurora", "GitHub Actions", "SDD", "OneUptime"]
+    },
+    {
       "company": "Trebet",
-      "role": "Co-Fundador / Ingeniero de Software",
+      "role": "Ingeniero de Software (Socio Tecnológico)",
       "dates": "Sep 2024 – Sep 2025",
       "location": "Bogotá, Colombia",
       "description": [
-        "Lideré y coordiné un equipo de 5 ingenieros, asegurando la alineación y entrega de la plataforma.",
-        "Colaboré directamente con las partes interesadas para comprender completamente las necesidades del negocio y definir soluciones técnicas.",
-        "Desarrollé y mantuve una aplicación móvil utilizando React Native.",
-        "Construí servicios backend en un dominio PHP dedicado para apoyar las características principales de la plataforma.",
-        "Implementé un sistema de intercomunicación aprovechando WebRTC para comunicación en tiempo real.",
-        "Configuré y gestioné servidores TURN/STUN para garantizar la estabilidad de la conexión.",
-        "Integré WebSockets para una comunicación eficiente entre pares.",
-        "Agregué notificaciones push para permitir interacciones confiables e instantáneas con los usuarios.",
-        "Gestioné la infraestructura de AWS, enfocándome en la confiabilidad, escalabilidad y operaciones fluidas.",
-        "Entregué exitosamente la aplicación a pesar de desafíos técnicos y organizacionales complejos."
-      ]
+        "Desarrollo y despliegue de aplicación móvil nativa híbrida para iOS y Android con TypeScript (React Native).",
+        "Servicios backend core y APIs principales con PHP (Laravel) y bases de datos relacionales MySQL, optimizando rendimiento de consultas y estructura de tablas.",
+        "Sistemas de intercomunicación en tiempo real con WebRTC: despliegue y administración de servidores CoTURN (STUN/TURN) en la nube para conectividad peer-to-peer confiable.",
+        "Canales de mensajería persistentes y en tiempo real vía WebSockets, integrados con notificaciones push para interacción móvil de baja latencia.",
+        "Gestión de infraestructura con Droplets de DigitalOcean, automatizando entrega y testing mediante pipelines de GitHub Actions."
+      ],
+      "tags": ["React Native", "Laravel", "MySQL", "WebRTC", "CoTURN", "WebSockets", "DigitalOcean", "GitHub Actions"]
     },
     {
       "company": "Galgo",
@@ -24,12 +35,13 @@
       "dates": "Dic 2023 – Sep 2025",
       "location": "Remoto",
       "description": [
-        "Equipo de Checkout: Desarrollé y mantuve características en una arquitectura Backend for Frontend (BFF) usando NestJS y Next.js, con un enfoque más fuerte en el desarrollo backend en NestJS.",
-        "Equipo de Riesgo: Mantuve y apoyé múltiples aplicaciones dentro de un ecosistema de microservicios construido en una arquitectura impulsada por eventos en AWS.",
-        "Trabajé con Taktile (plataforma de flujo de decisiones) y Retool (constructor de UI interno) para mejorar los procesos de toma de decisiones y operaciones internas.",
-        "Implementé soluciones de monitoreo y análisis con Datadog y Amplitude para asegurar la confiabilidad del sistema y proporcionar insights del producto.",
-        "Actué como puente técnico, apoyando tanto a los equipos de ingeniería como a los ejecutivos de negocio en la resolución de problemas y solución de problemas operativos."
-      ]
+        "Desarrollo de Checkout (BFF): mantenimiento de microservicios transaccionales bajo arquitectura Backend-for-Frontend con Next.js y NestJS, integrando MongoDB para almacenamiento de alta velocidad de datos de sesión.",
+        "Sistemas de riesgo financiero (EDA): desarrollo y optimización de microservicios en ecosistema distribuido guiado por eventos en AWS, integrando motores de decisión con Taktile y paneles funcionales en Retool.",
+        "Infraestructura como Código: aprovisionamiento y despliegue de recursos cloud altamente redundantes con Terraform gestionado a través de la plataforma env0.",
+        "Observabilidad y tracking de producto: telemetría con Datadog para monitoreo de infraestructura, análisis de logs e interacciones de usuario con Amplitude, e integraciones de leads vía HubSpot API.",
+        "Automatización CI/CD: pipelines de construcción, testing (unitarias e integración) y despliegue continuo en GitHub Actions hacia infraestructuras en AWS."
+      ],
+      "tags": ["Next.js", "NestJS", "MongoDB", "AWS", "Terraform", "env0", "Datadog", "Amplitude", "HubSpot", "GitHub Actions"]
     },
     {
       "company": "Loopay",
@@ -37,11 +49,10 @@
       "dates": "Ene 2023 – 2024",
       "location": "Remoto",
       "description": [
-        "Mejoré y extendí una aplicación existente construida con RedwoodJS.",
-        "Desarrollé características usando GraphQL, Prisma, Node.js y React.",
-        "Optimizé las interacciones de base de datos con Prisma y manejé la lógica backend con Node.js.",
-        "Construí interfaces responsivas y amigables para el usuario con React."
-      ]
+        "Desarrollo full-stack y evolución de la plataforma principal construida en RedwoodJS: componentes de UI interactivos con React, lógica server-side en Node.js y consultas optimizadas con GraphQL y Prisma ORM.",
+        "Configuración y mantenimiento de flujos CI/CD con GitHub Actions para despliegue e integración automatizados."
+      ],
+      "tags": ["RedwoodJS", "React", "GraphQL", "Prisma", "Node.js", "GitHub Actions"]
     },
     {
       "company": "Tribuu Technologies",
@@ -49,32 +60,11 @@
       "dates": "2021 – 2022",
       "location": "Remoto",
       "description": [
-        "Lideré el desarrollo de una Aplicación de Página Única (SPA) con Angular, Express y MongoDB.",
-        "Diseñé e implementé una arquitectura de microservicios para mejorar la escalabilidad y modularidad.",
-        "Integré Algolia para búsqueda avanzada y mejoré la capacidad de descubrimiento de contenido.",
-        "Incrusté capacidades de videoconferencia integrando APIs de Zoom."
-      ]
-    },
-    {
-      "company": "Freelance",
-      "role": "Desarrollador Web",
-      "dates": "2020",
-      "location": "Remoto",
-      "description": [
-        "Diseñé y desarrollé una página de destino para un taller de camiones usando HTML, CSS y JavaScript vanilla.",
-        "Integré un botón de chat de WhatsApp para soporte al cliente.",
-        "Construí una tienda de ropa en línea con PrestaShop, aumentando la visibilidad y permitiendo ventas en línea."
-      ]
-    },
-    {
-      "company": "Freelance",
-      "role": "Desarrollador CMS",
-      "dates": "2018 – 2019",
-      "location": "Remoto",
-      "description": [
-        "Desarrollé una plataforma de comercio electrónico discreta para sex-shop usando WordPress y WooCommerce.",
-        "Implementé diseño responsivo y medidas de seguridad para una experiencia minorista en línea confidencial."
-      ]
+        "Arquitectura y desarrollo de microservicios: Single Page Application (SPA) con Angular en frontend y servicios backend modulares con Express / Node.js y MongoDB.",
+        "Integraciones de APIs complejas: motor de búsqueda indexada con Algolia e integración de SDKs de Zoom para videollamadas embebidas.",
+        "Automatización CI/CD: pipelines de integración y entrega continua con GitHub Actions."
+      ],
+      "tags": ["Angular", "Express", "MongoDB", "Algolia", "Zoom API", "GitHub Actions"]
     }
   ]
 }

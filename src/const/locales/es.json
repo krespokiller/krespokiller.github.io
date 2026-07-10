@@ -2,6 +2,7 @@
   "hero": {
     "name": "David Santiago Vargas",
     "title": "Ingeniero de Software",
+    "subtitle": "Sistemas distribuidos · Arquitectura Cloud · Desarrollo con IA",
     "viewWork": "Ver Mi Trabajo"
   },
   "experience": {
@@ -11,6 +12,6 @@
     "showMore": "Ver {{count}} más"
   },
   "footer": {
-    "copyright": "© 2025 David Santiago Vargas"
+    "copyright": "© 2026 David Santiago Vargas"
   }
 }

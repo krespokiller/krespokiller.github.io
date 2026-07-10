@@ -2,6 +2,7 @@
   "hero": {
     "name": "David Santiago Vargas",
     "title": "Software Engineer",
+    "subtitle": "Distributed systems · Cloud Architecture · AI-Driven Development",
     "viewWork": "View My Work"
   },
   "experience": {
@@ -11,6 +12,6 @@
     "showMore": "Show {{count}} more"
   },
   "footer": {
-    "copyright": "© 2025 David Santiago Vargas"
+    "copyright": "© 2026 David Santiago Vargas"
   }
 }
