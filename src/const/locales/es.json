@@ -22,6 +22,18 @@
     "showLess": "Ver Menos",
     "showMore": "Ver {{count}} más"
   },
+  "contact": {
+    "title": "Contáctame",
+    "invite": "¿Quieres hablar sobre un proyecto, un puesto o una idea? La mejor forma de escribirme es por GitHub o LinkedIn.",
+    "github": {
+      "description": "Código, experimentos y proyectos open source.",
+      "ariaLabel": "Visitar el perfil de GitHub de David (se abre en una pestaña nueva)"
+    },
+    "linkedin": {
+      "description": "Experiencia profesional y trayectoria.",
+      "ariaLabel": "Visitar el perfil de LinkedIn de David (se abre en una pestaña nueva)"
+    }
+  },
   "footer": {
     "copyright": "© 2026 David Santiago Vargas"
   }

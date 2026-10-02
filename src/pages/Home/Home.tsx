@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { AboutSection, ExperienceSection, Footer, InteractiveBackground, Header } from "@/components";
+import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Header } from "@/components";
 import { Button } from "@/components/atoms";
 
 export function Home() {
@@ -43,6 +43,9 @@ export function Home() {
         <AboutSection />
 
         <ExperienceSection />
+
+        {/* Contact Section */}
+        <ContactSection />
       </main>
       <Footer />
     </div>
