@@ -25,6 +25,8 @@ import {
   SiHubspot,
   SiDigitalocean,
   SiGraphql,
+  SiVite,
+  SiWebrtc,
 } from 'react-icons/si';
 
 const AwsIcon: IconType = (props) => (
@@ -52,6 +54,48 @@ const WebsocketIcon: IconType = (props) => (
   </svg>
 );
 
+const EcsIcon: IconType = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M12 2.25 21 6.75v10.5l-9 4.5-9-4.5V6.75l9-4.5Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    <path d="m3 6.75 9 4.5 9-4.5M12 11.25v10.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+  </svg>
+);
+
+const AuroraIcon: IconType = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <ellipse cx="12" cy="5.5" rx="8" ry="3"/>
+    <path d="M4 5.5V12c0 1.657 3.582 3 8 3s8-1.343 8-3V5.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M4 12v6.5c0 1.657 3.582 3 8 3s8-1.343 8-3V12" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+  </svg>
+);
+
+const Route53Icon: IconType = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M3 12h18" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M12 3c2.7 2.5 4 5.5 4 9s-1.3 6.5-4 9c-2.7-2.5-4-5.5-4-9s1.3-6.5 4-9Z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+  </svg>
+);
+
+const CoturnIcon: IconType = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <rect x="3" y="3" width="18" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <rect x="3" y="14" width="18" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M6 6.5h6M6 17.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    <circle cx="17.5" cy="6.5" r="1.25"/>
+    <circle cx="17.5" cy="17.5" r="1.25"/>
+    <path d="M12 10v4" stroke="currentColor" strokeWidth="1.5"/>
+  </svg>
+);
+
+const SddIcon: IconType = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M6.5 3.5A1.5 1.5 0 0 1 8 2h6l4.5 4.5V19a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 19V3.5Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    <path d="M14 2v4.5h4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    <path d="m9.5 14 2 2 4-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 export const ICON_MAP: Record<string, IconType> = {
   'TypeScript': SiTypescript,
   'JavaScript': SiJavascript,
@@ -61,6 +105,7 @@ export const ICON_MAP: Record<string, IconType> = {
   'React': SiReact,
   'React Native': SiReact,
   'Next.js': SiNextdotjs,
+  'Vite': SiVite,
   'Angular': SiAngular,
   'NestJS': SiNestjs,
   'Node.js': SiNodedotjs,
@@ -75,7 +120,7 @@ export const ICON_MAP: Record<string, IconType> = {
   'Eloquent': SiLaravel,
   'Mongoose': SiMongodb,
   'AWS': AwsIcon,
-  'AWS ECS': AwsIcon,
+  'AWS ECS': EcsIcon,
   'GCP': SiGooglecloud,
   'Terraform': SiTerraform,
   'Docker': SiDocker,
@@ -87,8 +132,10 @@ export const ICON_MAP: Record<string, IconType> = {
   'DigitalOcean': SiDigitalocean,
   'GraphQL': SiGraphql,
   'WebSockets': WebsocketIcon,
-  'WebRTC': WebsocketIcon,
+  'WebRTC': SiWebrtc,
+  'CoTURN': CoturnIcon,
   'env0': SiTerraform,
-  'Aurora': AwsIcon,
-  'Route 53': AwsIcon,
+  'Aurora': AuroraIcon,
+  'Route 53': Route53Icon,
+  'SDD': SddIcon,
 };
