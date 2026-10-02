@@ -8,7 +8,8 @@ const meta: Meta<typeof InteractiveBackground> = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Interactive background component with gravitational deformation effect. Features a network of nodes and lines that respond to mouse/touch movement with subtle gravitational attraction.',
+        component:
+          'Fullscreen 3D particle-network background built with three.js. Particles drift through a real 3D volume, links reconnect live with distance/depth falloff, and the pointer drives a damped camera parallax plus gentle repulsion. Colors follow the --line-color/--node-color CSS variables.',
       },
     },
   },
@@ -23,7 +24,8 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default interactive background with gravitational deformation. Move your mouse over the canvas to see the effect.',
+        story:
+          'Default 3D network. Move the mouse to see the parallax camera offset and the particles drifting away from the cursor.',
       },
     },
   },
@@ -38,8 +40,8 @@ export const WithContent: Story = {
         <div className="relative z-10 p-8">
           <h1 className="text-4xl font-bold text-light mb-4">Interactive Background Demo</h1>
           <p className="text-gray-400 mb-4">
-            Move your mouse around to see the gravitational deformation effect.
-            The background nodes and lines will subtly warp toward your cursor position.
+            Move your mouse around to see the 3D parallax and particle repulsion.
+            The background network stays behind the content at all times.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-800 p-4 rounded-lg">
@@ -52,7 +54,7 @@ export const WithContent: Story = {
             </div>
             <div className="bg-gray-800 p-4 rounded-lg">
               <h3 className="text-light font-semibold mb-2">Feature 3</h3>
-              <p className="text-gray-400 text-sm">Smooth performance with optimized rendering.</p>
+              <p className="text-gray-400 text-sm">Smooth performance with pooled GPU buffers.</p>
             </div>
           </div>
         </div>
@@ -76,18 +78,20 @@ export const MobileFriendly: Story = {
     },
     docs: {
       description: {
-        story: 'Mobile-optimized version with touch support. Touch and drag to see the gravitational effect.',
+        story:
+          'Mobile viewport. The network drops to a smaller particle count (touch devices) and touch drag drives the same repulsion.',
       },
     },
   },
 };
 
-export const PerformanceOptimized: Story = {
+export const PerformanceNotes: Story = {
   args: {},
   parameters: {
     docs: {
       description: {
-        story: 'Performance-optimized version running at 30fps with selective rendering. Only renders elements within proximity of the cursor.',
+        story:
+          'Performance posture: device pixel ratio capped at 2, connection pass capped at 900 segments over preallocated buffers (no per-frame allocations), the loop pauses when the tab is hidden, and prefers-reduced-motion renders a single static frame.',
       },
     },
   },

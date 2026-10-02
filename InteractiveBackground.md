@@ -1,133 +1,59 @@
-# InteractiveBackground - Gravitational Deformation Effect
+# InteractiveBackground - 3D Particle Network
 
 ## Overview
 
-This component creates a dynamic background with nodes and connecting lines that deform gravitationally when the mouse moves over them. The effect uses repulsion physics to create a crystal-like appearance.
+Fullscreen decorative background rendered with three.js: a cloud of particles
+drifting through a real 3D volume, connected by lines that recompute live.
+The pointer drives a damped camera parallax and a gentle repulsion field, so
+the network keeps the reactive feel of the old Canvas 2D version with real depth.
 
 ## How It Works
 
-### 1. Node Grid Generation
-
-The effect starts by creating a grid of nodes across the screen:
-
-```typescript
-// Creates nodes every 60px horizontally and vertically
-for (let x = 0; x <= width; x += 60) {
-  for (let y = 0; y <= height; y += 60) {
-    nodes.push({ x, y, id: id++ });
-  }
-}
-```
-
-### 2. Line Connections
-
-Nodes within 120px of each other get connected with lines:
-
-```typescript
-// Connect nodes if they're close enough
-if (distance <= 120) {
-  lines.push({ start: node1, end: node2, distance });
-}
-```
-
-### 3. Gravitational Physics
-
-Each node and line segment experiences gravitational repulsion from the mouse:
-
-```typescript
-// Calculate repulsion force
-const force = G / (distance² + 1);  // Inverse square law
-const displacement = Math.min(force * 50, maxDisplacement);
-
-// Move AWAY from mouse (repulsion)
-return {
-  x: -normalizedDx * displacement,
-  y: -normalizedDy * displacement
-};
-```
-
-### 4. Bézier Curve Deformation
-
-Lines are rendered as quadratic Bézier curves that bend away from the mouse:
-
-```typescript
-// Control point moves away from mouse
-const controlX = midX + (displacement.x * intensity);
-const controlY = midY + (displacement.y * intensity);
-
-// Draw curved line
-ctx.moveTo(startX, startY);
-ctx.quadraticCurveTo(controlX, controlY, endX, endY);
-```
+- **Particles** (`150` desktop / `70` mobile) are spread uniformly in a volume
+  sized from the camera frustum, each with its own slow random drift vector
+  and wrap-around at the volume edges.
+- **Links** are recomputed every frame with a capped O(n^2) pass (squared
+  distance early-out, hard cap `LINK_MAX_SEGMENTS`). Line alpha falls off with
+  pair distance and with depth, so far links read as background. Segments are
+  written into preallocated `Float32Array` buffers (positions + RGBA vertex
+  colors) — no per-frame allocations; only `needsUpdate` flags flip.
+- **Pointer model**: the pointer is unprojected onto the `z = 0` plane and
+  smoothed with exponential damping. Particles inside `REPEL_RADIUS` get a
+  clamped repulsion offset that springs back to rest; the camera offsets
+  toward the pointer (`PARALLAX_STRENGTH`) and eases back when it leaves.
+- **Theme**: colors come from the `--line-color` / `--node-color` CSS vars.
+  A `MutationObserver` on the root `data-theme` attribute re-reads them, so
+  theme switches update particles and links live.
 
 ## Configuration
 
-All parameters are centralized in `interactiveBackground.config.ts`:
+All tunables live in `interactiveBackground.config.ts` next to the component:
 
-- `NODE_SPACING`: Distance between nodes (60px)
-- `GRAVITY_DESKTOP`: Gravitational strength on desktop (12.0)
-- `LINE_OPACITY`: Transparency of connecting lines (0.08)
-- `INFLUENCE_RADIUS_MULTIPLIER`: How far the effect reaches (4.0x node spacing)
+| Knob | Meaning |
+|------|---------|
+| `PARTICLE_COUNT_DESKTOP` / `_MOBILE` | Particle count per breakpoint |
+| `LINK_DISTANCE` | 3D distance threshold for connections |
+| `LINK_MAX_SEGMENTS` | Pooled link buffer capacity |
+| `DRIFT_SPEED` | Base per-particle drift speed |
+| `REPEL_RADIUS` / `REPEL_STRENGTH` / `REPEL_MAX_OFFSET` | Repulsion field |
+| `POINTER_DAMPING` / `OFFSET_DAMPING` | Smoothing rates (frame-rate independent) |
+| `PARALLAX_STRENGTH` | Camera offset at the screen edge |
+| `MAX_DPR` | Device pixel ratio cap for rendering |
 
-## Performance Optimizations
+## Performance & Accessibility
 
-1. **Distance Culling**: Only render elements within influence radius
-2. **Influence Threshold**: Skip elements with negligible effect
-3. **Mobile Optimizations**: Reduced parameters on smaller screens
+- Device pixel ratio capped at 2; DPR-scaled renderer for Retina displays.
+- Pointer state lives in refs — no React re-renders on pointer move.
+- The rAF loop pauses when `document.hidden`; unmount disposes geometries,
+  materials, renderer, listeners and observers.
+- `prefers-reduced-motion: reduce` renders a single static frame (particles +
+  links, no loop, no pointer reaction); the media query is observed live, so
+  the loop starts/stops if the setting changes.
+- Canvas is `aria-hidden="true"`, `role="presentation"`, `pointer-events-none`.
 
-## Mathematical Concepts
-
-### Gravitational Force
-```
-F = G / (r² + 1)
-```
-- `G`: Gravitational constant (12.0 on desktop)
-- `r`: Distance from mouse to element
-- Force decreases with square of distance
-
-### Displacement Calculation
-```
-displacement = min(F × 50, maxDisplacement)
-position = original + (-direction × displacement)
-```
-- Elements move away from mouse (negative direction)
-- Displacement is clamped to prevent extreme movements
-
-### Bézier Curve Control
-```
-controlPoint = midpoint + (displacement × intensity)
-```
-- Control point moves away from mouse
-- Intensity varies by screen size (4.2 desktop, 3.2 mobile)
+Note: the old 800ms interaction fade was dropped on purpose — the scene is
+always visible and pointer effects ease back to rest via damping.
 
 ## Usage
 
-Simply include the component in your React app:
-
-```tsx
-import InteractiveBackground from './components/InteractiveBackground';
-
-function App() {
-  return (
-    <div>
-      <InteractiveBackground />
-      {/* Your content here */}
-    </div>
-  );
-}
-```
-
-## Customization
-
-To modify the effect:
-
-1. **Change node density**: Adjust `NODE_SPACING` in config
-2. **Modify strength**: Change `GRAVITY_DESKTOP`/`GRAVITY_MOBILE`
-3. **Adjust visibility**: Modify `LINE_OPACITY` and `NODE_OPACITY`
-4. **Change reach**: Update `INFLUENCE_RADIUS_MULTIPLIER`
-
-## Browser Support
-
-- Modern browsers with Canvas 2D API support
-- Touch events for mobile devices
-- Responsive design with mobile optimizations
+Mounted once in `Home.tsx`; no props, content sits at `z-20` above it.

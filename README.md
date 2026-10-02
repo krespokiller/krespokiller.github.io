@@ -50,6 +50,5 @@ src/
 ├── hooks/              # useLanguage, useInView
 ├── models/             # TypeScript interfaces
 ├── pages/              # Home
-├── services/           # InteractiveBackground physics/render
 └── styles/             # Tailwind config + global CSS
 ```

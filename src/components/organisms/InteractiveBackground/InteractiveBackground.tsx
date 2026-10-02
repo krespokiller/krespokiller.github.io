@@ -1,155 +1,128 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { INTERACTIVE_BACKGROUND_CONFIG as CONFIG } from '@/const';
-import { NodeService, LineService, RenderService } from '@/services/InteractiveBackground';
-import type { Point, Node, Line } from '@/models';
+import { ParticleNetwork } from './ParticleNetwork';
+import type { ThemeColorInput } from './ParticleNetwork';
 
-function getCSSVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+/**
+ * Reads a CSS custom property from the document root and parses it as a
+ * themed color. Supports rgb()/rgba() and #rgb/#rrggbb (the theme sheets
+ * currently use rgba()).
+ */
+function parseThemeColor(name: string): ThemeColorInput {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const rgbMatch = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+  if (rgbMatch) {
+    return { r: +rgbMatch[1], g: +rgbMatch[2], b: +rgbMatch[3], a: rgbMatch[4] ? +rgbMatch[4] : 1 };
+  }
+  const hexMatch = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const hex = hexMatch[1];
+    const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+    return {
+      r: parseInt(full.slice(0, 2), 16),
+      g: parseInt(full.slice(2, 4), 16),
+      b: parseInt(full.slice(4, 6), 16),
+      a: 1,
+    };
+  }
+  return { r: 255, g: 255, b: 255, a: 0.08 };
 }
 
-function parseColor(colorStr: string): { r: number; g: number; b: number } {
-  if (!colorStr) return { r: 0, g: 0, b: 0 };
-  const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  if (match) return { r: +match[1], g: +match[2], b: +match[3] };
-  return { r: 0, g: 0, b: 0 };
-}
-
+/**
+ * Fullscreen fixed 3D particle-network background.
+ * The canvas is decorative: pointer events pass through and it is hidden
+ * from assistive technology.
+ */
 export const InteractiveBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number | null>(null);
-  const rendererRef = useRef<RenderService | null>(null);
-  const fadeOutTimeoutRef = useRef<number | null>(null);
+  const networkRef = useRef<ParticleNetwork | null>(null);
   const resizeRafRef = useRef<number | null>(null);
+  const reducedMotionRef = useRef(false);
+  const hiddenTabRef = useRef(false);
 
-  const interactionRef = useRef<{ isActive: boolean; currentPoint: Point | null }>({
-    isActive: false,
-    currentPoint: null,
-  });
-  const linesRef = useRef<Line[]>([]);
-  const colorsRef = useRef<{ line: { r: number; g: number; b: number }; node: { r: number; g: number; b: number } }>({
-    line: { r: 0, g: 0, b: 0 },
-    node: { r: 0, g: 0, b: 0 },
-  });
-
-  const refreshColors = useCallback(() => {
-    colorsRef.current = {
-      line: parseColor(getCSSVar('--line-color')),
-      node: parseColor(getCSSVar('--node-color')),
-    };
+  const applyThemeColors = useCallback(() => {
+    networkRef.current?.setThemeColors(parseThemeColor('--line-color'), parseThemeColor('--node-color'));
   }, []);
 
-  const animate = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (!rendererRef.current) {
-      rendererRef.current = new RenderService(ctx);
-    }
-
-    rendererRef.current.setColors(colorsRef.current.line, colorsRef.current.node);
-    rendererRef.current.render(linesRef.current, interactionRef.current.currentPoint, interactionRef.current.isActive);
-    animationRef.current = requestAnimationFrame(animate);
-  }, []);
-
-  const startFadeOut = useCallback(() => {
-    if (fadeOutTimeoutRef.current) clearTimeout(fadeOutTimeoutRef.current);
-    fadeOutTimeoutRef.current = setTimeout(() => {
-      interactionRef.current = { isActive: false, currentPoint: null };
-    }, CONFIG.FADE_OUT_DELAY);
-  }, []);
-
-  const cancelFadeOut = useCallback(() => {
-    if (fadeOutTimeoutRef.current) {
-      clearTimeout(fadeOutTimeoutRef.current);
-      fadeOutTimeoutRef.current = null;
+  /**
+   * Single source of truth for the animation loop: it runs only when the
+   * tab is visible and the user has not asked for reduced motion.
+   * Under reduced motion a single static frame is rendered instead.
+   */
+  const syncLoop = useCallback(() => {
+    const network = networkRef.current;
+    if (!network) return;
+    if (reducedMotionRef.current || hiddenTabRef.current) {
+      network.stop();
+      if (reducedMotionRef.current) network.renderStaticFrame();
+    } else {
+      network.start();
     }
   }, []);
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      cancelFadeOut();
-      interactionRef.current = { currentPoint: { x: event.clientX, y: event.clientY }, isActive: true };
-      startFadeOut();
-    };
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const handleMouseLeave = () => {
-      interactionRef.current = { isActive: false, currentPoint: null };
-    };
+    const network = new ParticleNetwork(canvas);
+    networkRef.current = network;
 
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    reducedMotionRef.current = reducedMotionQuery.matches;
+    hiddenTabRef.current = document.hidden;
+
+    applyThemeColors();
+    syncLoop();
+
+    const handleMouseMove = (event: MouseEvent) => network.setPointer(event.clientX, event.clientY);
     const handleTouchMove = (event: TouchEvent) => {
       const touch = event.touches[0];
-      cancelFadeOut();
-      interactionRef.current = { currentPoint: { x: touch.clientX, y: touch.clientY }, isActive: true };
-      startFadeOut();
+      if (touch) network.setPointer(touch.clientX, touch.clientY);
+    };
+    const handlePointerLeave = () => network.clearPointer();
+
+    const handleVisibilityChange = () => {
+      hiddenTabRef.current = document.hidden;
+      syncLoop();
     };
 
-    const handleTouchEnd = () => {
-      interactionRef.current = { isActive: false, currentPoint: null };
+    const handleReducedMotionChange = (event: MediaQueryListEvent) => {
+      reducedMotionRef.current = event.matches;
+      syncLoop();
     };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [cancelFadeOut, startFadeOut]);
-
-  const initializeNetwork = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    canvas.width = viewportWidth * dpr;
-    canvas.height = viewportHeight * dpr;
-
-    const ctx = canvas.getContext('2d');
-    if (ctx) ctx.scale(dpr, dpr);
-
-    const newNodes = NodeService.createGrid(viewportWidth, viewportHeight);
-    const newLines = LineService.createConnections(newNodes);
-    linesRef.current = newLines;
-  }, []);
-
-  useEffect(() => {
-    initializeNetwork();
 
     const handleResize = () => {
-      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
-      resizeRafRef.current = requestAnimationFrame(initializeNetwork);
+      if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
+      resizeRafRef.current = requestAnimationFrame(() => {
+        network.resize(window.innerWidth, window.innerHeight);
+        if (reducedMotionRef.current) network.renderStaticFrame();
+      });
     };
 
+    const themeObserver = new MutationObserver(applyThemeColors);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handlePointerLeave);
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handlePointerLeave);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('resize', handleResize);
+    reducedMotionQuery.addEventListener('change', handleReducedMotionChange);
+
     return () => {
+      themeObserver.disconnect();
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handlePointerLeave);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handlePointerLeave);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
-      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+      reducedMotionQuery.removeEventListener('change', handleReducedMotionChange);
+      if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
+      network.dispose();
+      networkRef.current = null;
     };
-  }, [initializeNetwork]);
-
-  useEffect(() => {
-    refreshColors();
-    const observer = new MutationObserver(refreshColors);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, [refreshColors]);
-
-  useEffect(() => {
-    animate();
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
-  }, [animate]);
+  }, [applyThemeColors, syncLoop]);
 
   return (
     <canvas
