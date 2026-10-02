@@ -5,6 +5,13 @@
     "subtitle": "Distributed systems · Cloud Architecture · AI-Driven Development",
     "viewWork": "View My Work"
   },
+  "nav": {
+    "ariaLabel": "Main navigation",
+    "home": "Back to top",
+    "about": "About",
+    "experience": "Experience",
+    "contact": "Contact"
+  },
   "about": {
     "title": "About Me",
     "bio": [

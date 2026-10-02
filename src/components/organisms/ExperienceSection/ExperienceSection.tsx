@@ -9,7 +9,7 @@ export const ExperienceSection: React.FC = () => {
   const experiences = t('experiences', { returnObjects: true }) as Experience[];
 
   return (
-    <section id="experience" className="py-24 px-6 md:px-4">
+    <section id="experience" className="scroll-mt-16 py-24 px-6 md:px-4">
       <div className="container">
         <div className="max-w-3xl mx-auto">
           <Heading level={2} className="text-3xl md:text-4xl text-center mb-16" style={{ color: 'var(--text)' }}>

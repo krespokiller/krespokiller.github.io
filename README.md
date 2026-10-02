@@ -45,9 +45,9 @@ src/
 ├── components/
 │   ├── atoms/          # Button, Heading, Input
 │   ├── molecules/      # ExperienceItem
-│   └── organisms/      # Header, Footer, ExperienceSection, SkillsSection, InteractiveBackground
+│   └── organisms/      # Navbar, AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground
 ├── const/locales/      # i18n JSON files
-├── hooks/              # useLanguage, useInView
+├── hooks/              # useActiveSection, useLanguage, useInView, useTheme
 ├── models/             # TypeScript interfaces
 ├── pages/              # Home
 └── styles/             # Tailwind config + global CSS

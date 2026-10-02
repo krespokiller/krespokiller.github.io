@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Header } from "@/components";
+import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar } from "@/components";
 import { Button } from "@/components/atoms";
 
 export function Home() {
@@ -7,7 +7,7 @@ export function Home() {
 
   return (
     <div className="min-h-screen relative">
-      <Header />
+      <Navbar />
       <InteractiveBackground />
       <main className="container relative z-20">
         {/* Hero Section */}

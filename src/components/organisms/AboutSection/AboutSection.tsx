@@ -14,7 +14,7 @@ export const AboutSection: React.FC = () => {
   const bio = t('about.bio', { returnObjects: true }) as string[];
 
   return (
-    <section id="about" aria-labelledby="about-title" className="py-24 px-6 md:px-4">
+    <section id="about" aria-labelledby="about-title" className="scroll-mt-16 py-24 px-6 md:px-4">
       <div className="container">
         <div className="max-w-3xl mx-auto">
           <Heading

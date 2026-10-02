@@ -5,6 +5,13 @@
     "subtitle": "Sistemas distribuidos · Arquitectura Cloud · Desarrollo con IA",
     "viewWork": "Ver Mi Trabajo"
   },
+  "nav": {
+    "ariaLabel": "Navegación principal",
+    "home": "Volver arriba",
+    "about": "Sobre mí",
+    "experience": "Experiencia",
+    "contact": "Contacto"
+  },
   "about": {
     "title": "Sobre mí",
     "bio": [

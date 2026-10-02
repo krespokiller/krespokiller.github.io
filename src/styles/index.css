@@ -110,6 +110,22 @@
   .nav-link:hover {
     color: var(--text);
   }
+  /* Active section highlight; declared after .nav-link so it wins the tie. */
+  .nav-link-active {
+    color: var(--text-tag);
+  }
+
+  /* Fixed bar surface: semi-transparent fill derived from the theme
+     background plus backdrop blur, with a hairline bottom border. The plain
+     var(--bg-card) declaration is the fallback for browsers without
+     color-mix(). */
+  .navbar {
+    background: var(--bg-card);
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 
   .section {
     @apply py-24 px-4;

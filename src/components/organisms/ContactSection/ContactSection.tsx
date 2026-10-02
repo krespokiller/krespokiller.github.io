@@ -46,7 +46,7 @@ export const ContactSection: React.FC = () => {
   ];
 
   return (
-    <section id="contact" aria-labelledby="contact-title" className="py-24 px-6 md:px-4">
+    <section id="contact" aria-labelledby="contact-title" className="scroll-mt-16 py-24 px-6 md:px-4">
       <div className="container">
         <div className="max-w-3xl mx-auto">
           <Heading
