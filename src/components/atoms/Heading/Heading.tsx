@@ -5,6 +5,7 @@ interface HeadingProps {
   level?: 1 | 2 | 3 | 4 | 5 | 6;
   className?: string;
   style?: React.CSSProperties;
+  id?: string;
 }
 
 export const Heading: React.FC<HeadingProps> = ({
@@ -12,6 +13,7 @@ export const Heading: React.FC<HeadingProps> = ({
   level = 1,
   className = '',
   style,
+  id,
 }) => {
   const baseClasses = 'tracking-tight';
 
@@ -24,7 +26,7 @@ export const Heading: React.FC<HeadingProps> = ({
     6: 'text-base md:text-lg font-light',
   };
 
-  const props = { className: `${baseClasses} ${levelClasses[level]} ${className}`, style };
+  const props = { id, className: `${baseClasses} ${levelClasses[level]} ${className}`, style };
 
   switch (level) {
     case 1: return <h1 {...props}>{children}</h1>;

@@ -5,6 +5,16 @@
     "subtitle": "Distributed systems · Cloud Architecture · AI-Driven Development",
     "viewWork": "View My Work"
   },
+  "about": {
+    "title": "About Me",
+    "bio": [
+      "I'm a Software Engineer focused on distributed systems, cloud architecture, and AI-driven development.",
+      "Since 2023 I've been part of Loopay, where I grew from Full Stack Developer to Senior Software Engineer building end-to-end platforms with React, NestJS, and PostgreSQL on AWS and GCP.",
+      "Before that, I built hybrid mobile apps and real-time systems at Trebet, transactional BFF and financial risk services at Galgo, and full-stack products at Tribuu Technologies.",
+      "I care about clean, modular code — and I practice spec-driven development with AI tooling to ship faster without sacrificing quality."
+    ],
+    "stackLabel": "Core Stack"
+  },
   "experience": {
     "title": "Experience",
     "showAll": "View All Experiences",

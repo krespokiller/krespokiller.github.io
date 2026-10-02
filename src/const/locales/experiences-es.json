@@ -6,12 +6,9 @@
       "dates": "Oct 2025 – Presente",
       "location": "Remoto",
       "description": [
-        "Arquitectura y desarrollo full-stack de Soberana: plataforma web de extremo a extremo con React (Vite) en frontend y NestJS en backend, esquemas optimizados de PostgreSQL, despliegue contenerizado en AWS ECS (backend), hosting en GCP (frontend), dominios vía AWS Route 53 y pipelines CI/CD automatizados en GitHub Actions.",
-        "Desarrollo backend de Loopay FX: construcción desde cero de la plataforma de Intermediación del Mercado Cambiario (IMC) con Python (Django), PostgreSQL / AWS Aurora, índices optimizados para consultas complejas, contenedores en AWS ECS y gestión vía AWS Route 53.",
-        "Diseño de arquitectura multi-tenant: backend escalable en NestJS implementando patrones Strategy y Adapter para la integración desacoplada de múltiples pasarelas de pago externas.",
-        "Desarrollo ágil con IA: flujo diario basado en Spec-Driven Development (SDD) con Opencode y Engram para acelerar entrega de funcionalidades, automatizar tareas repetitivas y asegurar modularidad del código, reduciendo drásticamente costos de consumo de tokens.",
-        "DevOps, automatización y seguridad: scripts modulares de IaC con Terraform, observabilidad continua con OneUptime, auditorías de seguridad en AWS CloudTrail y pipelines CI/CD con GitHub Actions.",
-        "Referente técnico senior: resolución de bugs complejos en producción, refactorización de código heredado con principios SOLID y ejecución de code reviews para asegurar calidad técnica del equipo."
+        "Entrega de productos de extremo a extremo: arquitectura full-stack de Soberana (frontend React/Vite, backend NestJS, esquemas optimizados de PostgreSQL, hosting en AWS ECS y GCP, Route 53 y CI/CD con GitHub Actions) y Loopay FX, plataforma de intermediación del mercado cambiario construida desde cero con Python (Django) y PostgreSQL/AWS Aurora.",
+        "Arquitectura escalable y flujo con IA: diseño multi-tenant en NestJS con patrones Strategy y Adapter para la integración desacoplada de pasarelas de pago, más Spec-Driven Development (SDD) diario con Opencode y Engram para acelerar la entrega, automatizar tareas repetitivas y asegurar la modularidad.",
+        "DevOps y liderazgo técnico: Infrastructure as Code con Terraform, observabilidad con OneUptime, auditorías de seguridad con AWS CloudTrail, automatización con GitHub Actions, resolución de incidentes en producción, refactorización SOLID de código heredado y code reviews rigurosos."
       ],
       "tags": ["NestJS", "React", "Vite", "PostgreSQL", "AWS ECS", "GCP", "Route 53", "Terraform", "Django", "Aurora", "GitHub Actions", "SDD", "OneUptime"]
     },
@@ -21,11 +18,9 @@
       "dates": "Sep 2024 – Sep 2025",
       "location": "Bogotá, Colombia",
       "description": [
-        "Desarrollo y despliegue de aplicación móvil nativa híbrida para iOS y Android con TypeScript (React Native).",
-        "Servicios backend core y APIs principales con PHP (Laravel) y bases de datos relacionales MySQL, optimizando rendimiento de consultas y estructura de tablas.",
-        "Sistemas de intercomunicación en tiempo real con WebRTC: despliegue y administración de servidores CoTURN (STUN/TURN) en la nube para conectividad peer-to-peer confiable.",
-        "Canales de mensajería persistentes y en tiempo real vía WebSockets, integrados con notificaciones push para interacción móvil de baja latencia.",
-        "Gestión de infraestructura con Droplets de DigitalOcean, automatizando entrega y testing mediante pipelines de GitHub Actions."
+        "Desarrollo móvil híbrido para iOS y Android con TypeScript (React Native).",
+        "Servicios backend core y APIs con PHP (Laravel) y MySQL, optimizando el rendimiento de consultas y la estructura de tablas.",
+        "Funcionalidades en tiempo real: sistemas de intercomunicación con WebRTC respaldados por servidores CoTURN (STUN/TURN) en la nube, mensajería persistente vía WebSockets con notificaciones push e infraestructura en DigitalOcean automatizada con GitHub Actions."
       ],
       "tags": ["React Native", "Laravel", "MySQL", "WebRTC", "CoTURN", "WebSockets", "DigitalOcean", "GitHub Actions"]
     },
@@ -35,11 +30,9 @@
       "dates": "Dic 2023 – Sep 2025",
       "location": "Remoto",
       "description": [
-        "Desarrollo de Checkout (BFF): mantenimiento de microservicios transaccionales bajo arquitectura Backend-for-Frontend con Next.js y NestJS, integrando MongoDB para almacenamiento de alta velocidad de datos de sesión.",
-        "Sistemas de riesgo financiero (EDA): desarrollo y optimización de microservicios en ecosistema distribuido guiado por eventos en AWS, integrando motores de decisión con Taktile y paneles funcionales en Retool.",
-        "Infraestructura como Código: aprovisionamiento y despliegue de recursos cloud altamente redundantes con Terraform gestionado a través de la plataforma env0.",
-        "Observabilidad y tracking de producto: telemetría con Datadog para monitoreo de infraestructura, análisis de logs e interacciones de usuario con Amplitude, e integraciones de leads vía HubSpot API.",
-        "Automatización CI/CD: pipelines de construcción, testing (unitarias e integración) y despliegue continuo en GitHub Actions hacia infraestructuras en AWS."
+        "Checkout (BFF): microservicios transaccionales bajo una arquitectura Backend-for-Frontend con Next.js y NestJS, integrando MongoDB para el almacenamiento de datos de sesión de alta velocidad.",
+        "Sistemas de riesgo financiero (EDA): microservicios guiados por eventos en AWS, integrando motores de decisión con Taktile y paneles funcionales en Retool.",
+        "Operación cloud: Infrastructure as Code con Terraform gestionada vía env0, telemetría con Datadog, analítica de usuarios con Amplitude, integraciones de leads con HubSpot y pipelines de CI/CD en GitHub Actions hacia AWS."
       ],
       "tags": ["Next.js", "NestJS", "MongoDB", "AWS", "Terraform", "env0", "Datadog", "Amplitude", "HubSpot", "GitHub Actions"]
     },
@@ -49,7 +42,8 @@
       "dates": "Ene 2023 – 2024",
       "location": "Remoto",
       "description": [
-        "Desarrollo full-stack y evolución de la plataforma principal construida en RedwoodJS: componentes de UI interactivos con React, lógica server-side en Node.js y consultas optimizadas con GraphQL y Prisma ORM.",
+        "Desarrollo full-stack de la plataforma principal sobre RedwoodJS: UI interactiva con React y lógica server-side en Node.js.",
+        "Consultas optimizadas mediante GraphQL y Prisma ORM.",
         "Configuración y mantenimiento de flujos CI/CD con GitHub Actions para despliegue e integración automatizados."
       ],
       "tags": ["RedwoodJS", "React", "GraphQL", "Prisma", "Node.js", "GitHub Actions"]
@@ -60,9 +54,9 @@
       "dates": "2021 – 2022",
       "location": "Remoto",
       "description": [
-        "Arquitectura y desarrollo de microservicios: Single Page Application (SPA) con Angular en frontend y servicios backend modulares con Express / Node.js y MongoDB.",
-        "Integraciones de APIs complejas: motor de búsqueda indexada con Algolia e integración de SDKs de Zoom para videollamadas embebidas.",
-        "Automatización CI/CD: pipelines de integración y entrega continua con GitHub Actions."
+        "Arquitectura de microservicios: SPA con Angular en frontend y servicios backend altamente modulares con Express / Node.js y MongoDB.",
+        "Integraciones de APIs complejas: motor de búsqueda indexada con Algolia y videoconferencia embebida con el SDK de Zoom.",
+        "Automatización CI/CD con GitHub Actions."
       ],
       "tags": ["Angular", "Express", "MongoDB", "Algolia", "Zoom API", "GitHub Actions"]
     }
