@@ -62,6 +62,7 @@ export class ParticleNetwork {
 
   private rafId: number | null = null;
   private tmpVector = new THREE.Vector3();
+  private wasRunningBeforeContextLoss = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -77,6 +78,7 @@ export class ParticleNetwork {
 
     this.createCloud();
     this.createLinks();
+    this.attachContextLossHandling();
     this.resize(window.innerWidth, window.innerHeight);
   }
 
@@ -162,12 +164,44 @@ export class ParticleNetwork {
 
   dispose(): void {
     this.stop();
+    this.detachContextLossHandling();
     this.points.geometry.dispose();
     this.links.geometry.dispose();
     this.pointsMaterial.dispose();
     this.linksMaterial.dispose();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
+
+  /**
+   * Keeps the canvas usable across WebGL context loss: preventDefault lets
+   * the context be restored, three.js re-uploads its resources on restore,
+   * and the loop restarts only if it was running before the loss (otherwise
+   * a single static frame is rendered, matching the reduced-motion contract).
+   */
+  private attachContextLossHandling(): void {
+    this.renderer.domElement.addEventListener('webglcontextlost', this.handleContextLost);
+    this.renderer.domElement.addEventListener('webglcontextrestored', this.handleContextRestored);
+  }
+
+  private detachContextLossHandling(): void {
+    this.renderer.domElement.removeEventListener('webglcontextlost', this.handleContextLost);
+    this.renderer.domElement.removeEventListener('webglcontextrestored', this.handleContextRestored);
+  }
+
+  private handleContextLost = (event: Event): void => {
+    event.preventDefault();
+    this.wasRunningBeforeContextLoss = this.rafId !== null;
+    this.stop();
+  };
+
+  private handleContextRestored = (): void => {
+    if (this.wasRunningBeforeContextLoss) {
+      this.start();
+    } else {
+      this.renderStaticFrame();
+    }
+  };
 
   private tick = (): void => {
     this.rafId = requestAnimationFrame(this.tick);

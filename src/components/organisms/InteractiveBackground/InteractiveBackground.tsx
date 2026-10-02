@@ -41,6 +41,9 @@ export const InteractiveBackground: React.FC = () => {
 
   const applyThemeColors = useCallback(() => {
     networkRef.current?.setThemeColors(parseThemeColor('--line-color'), parseThemeColor('--node-color'));
+    // With the loop stopped under reduced motion, theme changes need an
+    // explicit repaint to reach the canvas.
+    if (reducedMotionRef.current) networkRef.current?.renderStaticFrame();
   }, []);
 
   /**
