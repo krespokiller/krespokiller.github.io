@@ -9,9 +9,10 @@
     "title": "Sobre mí",
     "bio": [
       "Soy Ingeniero de Software enfocado en sistemas distribuidos, arquitectura cloud y desarrollo con IA.",
-      "Desde 2023 formo parte de Loopay, donde crecí de Desarrollador Full Stack a Ingeniero de Software Senior construyendo plataformas de extremo a extremo con React, NestJS y PostgreSQL sobre AWS y GCP.",
-      "Antes, desarrollé aplicaciones móviles híbridas y sistemas en tiempo real en Trebet, microservicios transaccionales y de riesgo financiero en Galgo, y productos full-stack en Tribuu Technologies.",
-      "Me importa el código limpio y modular, y practico el desarrollo guiado por especificaciones con herramientas de IA para entregar más rápido sin sacrificar calidad."
+      "Mi camino comenzó con productos full-stack en Tribuu Technologies y luego creció hacia varios roles en paralelo.",
+      "En Loopay he pasado por dos etapas: Desarrollador Full Stack desde 2023 e Ingeniero de Software Senior en la actualidad, construyendo plataformas de extremo a extremo con React, NestJS y PostgreSQL sobre AWS y GCP.",
+      "En paralelo, he construido microservicios transaccionales y de riesgo financiero en Galgo, además de aplicaciones móviles híbridas y sistemas en tiempo real en Trebet.",
+      "Me importa el código modular y SOLID, y practico el desarrollo guiado por especificaciones con herramientas de IA para entregar más rápido sin sacrificar calidad."
     ],
     "stackLabel": "Stack principal"
   },
