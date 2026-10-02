@@ -32,6 +32,12 @@ const getInitialLanguage = (): string => {
   return 'en';
 };
 
+// Keep <html lang> in sync so screen readers use the right voice rules
+// for the active language.
+const syncDocumentLanguage = (lng: string) => {
+  document.documentElement.lang = lng;
+};
+
 i18n
   .use(initReactI18next)
   .init({
@@ -43,10 +49,13 @@ i18n
     },
   });
 
+syncDocumentLanguage(i18n.language);
+
 // Persist every language change (the navbar toggle calls changeLanguage)
 // so the choice survives reloads.
 i18n.on('languageChanged', (lng) => {
   localStorage.setItem(LANGUAGE_STORAGE_KEY, lng);
+  syncDocumentLanguage(lng);
 });
 
 export default i18n;
