@@ -68,6 +68,14 @@
   * {
     border-color: var(--border);
   }
+
+  /* Belt-and-suspenders: any programmatic scroll without an explicit
+     behavior option falls back to auto under reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
 }
 
 @layer components {

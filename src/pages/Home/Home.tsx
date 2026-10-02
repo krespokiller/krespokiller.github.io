@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar } from "@/components";
 import { Button } from "@/components/atoms";
+import { usePrefersReducedMotion } from "@/hooks";
 
 export function Home() {
   const { t } = useTranslation();
+  // Reduced motion turns smooth scrolling into instant jumps.
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
     <div className="min-h-screen relative">
@@ -29,7 +32,7 @@ export function Home() {
                 <Button
                   onClick={() => {
                     const element = document.getElementById('experience');
-                    element?.scrollIntoView({ behavior: 'smooth' });
+                    element?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
                   }}
                 >
                   {t('hero.viewWork')}

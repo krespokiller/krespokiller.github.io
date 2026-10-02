@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 
 interface UseInViewOptions {
   threshold?: number;
@@ -11,10 +12,18 @@ export const useInView = ({
   rootMargin = '0px 0px -50px 0px',
   triggerOnce = true,
 }: UseInViewOptions = {}) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(false);
+  // Under reduced motion the content starts visible: no reveal animation,
+  // no flash of hidden content on the first paint.
+  const [isInView, setIsInView] = useState(prefersReducedMotion);
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setIsInView(true);
+      return;
+    }
+
     const element = ref.current;
     if (!element) return;
 
@@ -37,7 +46,7 @@ export const useInView = ({
     return () => {
       observer.unobserve(element);
     };
-  }, [threshold, rootMargin, triggerOnce]);
+  }, [prefersReducedMotion, threshold, rootMargin, triggerOnce]);
 
   return { ref, isInView };
 };

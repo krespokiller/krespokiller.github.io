@@ -9,9 +9,11 @@
     <script>
       (function() {
         var t = localStorage.getItem('portfolio-theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.setAttribute('data-theme', t);
+        // A stored choice always wins; otherwise honor the OS color scheme.
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
+        document.documentElement.setAttribute('data-theme', t);
       })();
     </script>
   </head>

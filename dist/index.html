@@ -2,19 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Portfolio of David Santiago Vargas, full-stack software engineer." />
     <title>David Santiago Vargas - Portfolio</title>
     <script>
       (function() {
         var t = localStorage.getItem('portfolio-theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.setAttribute('data-theme', t);
+        // A stored choice always wins; otherwise honor the OS color scheme.
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
+        document.documentElement.setAttribute('data-theme', t);
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-UgCp0EiC.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DgaS-7qI.css">
+    <script type="module" crossorigin src="/assets/index-CpxT58T-.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-2MOmsg7y.css">
   </head>
   <body>
     <div id="root"></div>

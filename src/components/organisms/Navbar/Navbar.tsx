@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useActiveSection, useLanguage, useTheme } from '@/hooks';
+import { useActiveSection, useLanguage, usePrefersReducedMotion, useTheme } from '@/hooks';
 
 interface NavItem {
   id: string;
@@ -21,6 +21,8 @@ export const Navbar: React.FC = () => {
   const { toggleLanguage, isEnglish } = useLanguage();
   const { toggleTheme, isDark } = useTheme();
   const activeSection = useActiveSection(NAV_SECTION_IDS);
+  // Reduced motion turns smooth scrolling into instant jumps.
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const fullName = t('hero.name');
   // The full name overflows a single-row navbar at 375px, so compact
@@ -29,13 +31,13 @@ export const Navbar: React.FC = () => {
 
   const scrollToTop = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };
 
   const scrollToSection = (id: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     // Same smooth-scroll behavior as the hero "View My Work" button.
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };
 
   return (

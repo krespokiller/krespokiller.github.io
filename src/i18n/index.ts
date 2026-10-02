@@ -22,15 +22,31 @@ const resources = {
   },
 };
 
+const LANGUAGE_STORAGE_KEY = 'portfolio-lang';
+const SUPPORTED_LANGUAGES = ['en', 'es'];
+
+const getInitialLanguage = (): string => {
+  if (typeof window === 'undefined') return 'en';
+  const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (stored && SUPPORTED_LANGUAGES.includes(stored)) return stored;
+  return 'en';
+};
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // default language
+    lng: getInitialLanguage(), // restored synchronously before the first render
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false, // React already escapes values
     },
   });
+
+// Persist every language change (the navbar toggle calls changeLanguage)
+// so the choice survives reloads.
+i18n.on('languageChanged', (lng) => {
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, lng);
+});
 
 export default i18n;

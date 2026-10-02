@@ -27,6 +27,8 @@ import {
   SiGraphql,
   SiVite,
   SiWebrtc,
+  SiAlgolia,
+  SiZoom,
 } from 'react-icons/si';
 
 const AwsIcon: IconType = (props) => (
@@ -138,4 +140,7 @@ export const ICON_MAP: Record<string, IconType> = {
   'Aurora': AuroraIcon,
   'Route 53': Route53Icon,
   'SDD': SddIcon,
+  'Algolia': SiAlgolia,
+  // SiZoom is the closest available brand mark for the Zoom API tag.
+  'Zoom API': SiZoom,
 };
