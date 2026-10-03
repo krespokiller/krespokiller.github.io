@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useActiveSection, useLanguage, usePrefersReducedMotion, useTheme } from '@/hooks';
+import { useActiveSection, useLanguage, usePrefersReducedMotion } from '@/hooks';
 
 interface NavItem {
   id: string;
@@ -20,7 +20,6 @@ const NAV_SECTION_IDS = NAV_ITEMS.map((item) => item.id);
 export const Navbar: React.FC = () => {
   const { t } = useTranslation();
   const { toggleLanguage, isEnglish } = useLanguage();
-  const { toggleTheme, isDark } = useTheme();
   const activeSection = useActiveSection(NAV_SECTION_IDS);
   // Reduced motion turns smooth scrolling into instant jumps.
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -84,31 +83,6 @@ export const Navbar: React.FC = () => {
           </ul>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              style={{ background: 'var(--bg-tag)', border: '1px solid var(--border-tag)' }}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {isDark ? (
-                <svg className="w-4 h-4" style={{ color: 'var(--text-tag)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" style={{ color: 'var(--text-tag)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
-            </button>
-
             <button
               onClick={toggleLanguage}
               className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

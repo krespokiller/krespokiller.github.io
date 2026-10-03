@@ -16,11 +16,8 @@ const meta: Meta<typeof SelectedWork> = {
   parameters: {
     layout: 'fullscreen',
     backgrounds: {
-      default: 'light',
-      values: [
-        { name: 'light', value: '#FAF8F3' },
-        { name: 'dark', value: '#0C0A09' },
-      ],
+      default: 'dark',
+      values: [{ name: 'dark', value: '#0C0A09' }],
     },
   },
   tags: ['autodocs'],
@@ -31,28 +28,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {},
-};
-
-// Each theme story forces the matching data-theme so the CSS vars
-// (card surfaces, borders, amber accents) resolve for that mode.
-export const LightTheme: Story = {
-  args: {},
-  decorators: [
-    (Story) => (
-      <div data-theme="light" style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
-};
-
-export const DarkTheme: Story = {
-  args: {},
-  decorators: [
-    (Story) => (
-      <div data-theme="dark" style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
 };

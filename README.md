@@ -47,7 +47,7 @@ src/
 │   ├── molecules/      # ExperienceItem
 │   └── organisms/      # Navbar, AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground
 ├── const/locales/      # i18n JSON files
-├── hooks/              # useActiveSection, useLanguage, useInView, useTheme
+├── hooks/              # useActiveSection, useLanguage, useInView, usePrefersReducedMotion
 ├── models/             # TypeScript interfaces
 ├── pages/              # Home
 └── styles/             # Tailwind config + global CSS

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -14,8 +14,7 @@
       content="krespokiller, david santiago vargas, tech lead, fintech, full stack, nestjs, react, aws, three.js"
     />
     <link rel="canonical" href="https://krespokiller.github.io/" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAF8F3" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0C0A09" />
+    <meta name="theme-color" content="#0C0A09" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -70,14 +69,9 @@
       }
     </script>
     <script>
-      (function() {
-        var t = localStorage.getItem('portfolio-theme');
-        // A stored choice always wins; otherwise honor the OS color scheme.
-        if (t !== 'dark' && t !== 'light') {
-          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', t);
-      })();
+      // Dark is the only theme; the attribute is set before first paint so
+      // the CSS var scopes resolve with no flash.
+      document.documentElement.setAttribute('data-theme', 'dark');
     </script>
   </head>
   <body>

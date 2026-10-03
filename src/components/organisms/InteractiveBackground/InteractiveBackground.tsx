@@ -57,13 +57,6 @@ export const InteractiveBackground: React.FC = () => {
   const hiddenTabRef = useRef(false);
   const grabActiveRef = useRef(false);
 
-  const applyThemeColors = useCallback(() => {
-    networkRef.current?.setThemeColors(parseThemeColor('--line-color'), parseThemeColor('--node-color'));
-    // With the loop stopped under reduced motion, theme changes need an
-    // explicit repaint to reach the canvas.
-    if (reducedMotionRef.current) networkRef.current?.renderStaticFrame();
-  }, []);
-
   /**
    * Single source of truth for the animation loop: it runs only when the
    * tab is visible and the user has not asked for reduced motion.
@@ -91,7 +84,9 @@ export const InteractiveBackground: React.FC = () => {
     reducedMotionRef.current = reducedMotionQuery.matches;
     hiddenTabRef.current = document.hidden;
 
-    applyThemeColors();
+    // Single dark theme: colors are read from the CSS vars once at init —
+    // there is no theme switching to observe.
+    network.setThemeColors(parseThemeColor('--line-color'), parseThemeColor('--node-color'));
     syncLoop();
 
     const handleMouseMove = (event: MouseEvent) => network.setPointer(event.clientX, event.clientY);
@@ -167,9 +162,6 @@ export const InteractiveBackground: React.FC = () => {
       });
     };
 
-    const themeObserver = new MutationObserver(applyThemeColors);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseleave', handlePointerLeave);
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -181,7 +173,6 @@ export const InteractiveBackground: React.FC = () => {
     reducedMotionQuery.addEventListener('change', handleReducedMotionChange);
 
     return () => {
-      themeObserver.disconnect();
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handlePointerLeave);
       document.removeEventListener('touchmove', handleTouchMove);
@@ -198,7 +189,7 @@ export const InteractiveBackground: React.FC = () => {
       network.dispose();
       networkRef.current = null;
     };
-  }, [applyThemeColors, syncLoop]);
+  }, [syncLoop]);
 
   return (
     <canvas

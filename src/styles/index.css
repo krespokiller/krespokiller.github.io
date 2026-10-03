@@ -11,54 +11,16 @@
   --color-gray-600: #525252;
 }
 
-/* Light mode (default): warm paper + burnt amber. The network gets the same
-   brand energy as dark mode, translated to a light ground (amber strokes
-   instead of near-black stone), and every surface follows the warm system. */
-:root,
-[data-theme="light"] {
-  --bg: #FAF8F3;
-  --bg-card: #FFFEFB;
-  --bg-card-hover: #F6F1E7;
-  --bg-tag: rgba(217, 119, 6, 0.06);
-  --border: #DAD3C6;
-  --border-card: rgba(180, 83, 9, 0.16);
-  --border-card-hover: rgba(180, 83, 9, 0.32);
-  --text: #1C1917;
-  --text-secondary: #57534E;
-  --text-muted: #78716C;
-  /* One step deeper than --color-primary: tag text is small text sitting on
-     the amber-tinted chip fill, where #B45309 lands at 4.45:1 on the page
-     layer. #AD4E08 clears 4.5:1 on every surface (worst case 4.81:1). */
-  --text-tag: #AD4E08;
-  --border-tag: rgba(180, 83, 9, 0.3);
-  /* Burnt amber network: a typical link (half max distance, mid depth) lands
-     at ~13% blue-channel delta on this paper — clearly there, not shouting;
-     near links reach ~23% while far layers recede below ~7%. */
-  --line-color: rgba(180, 83, 9, 0.37);
-  --node-color: rgba(180, 83, 9, 0.2);
-  --gradient-line: rgba(180, 83, 9, 0.18);
-  /* Warm umber shadows keep elevation diffuse; amber glows do not read on
-     near-white grounds. */
-  --card-shadow: 0 1px 3px rgba(74, 55, 35, 0.08), 0 8px 24px rgba(74, 55, 35, 0.06);
-  --card-shadow-hover: 0 2px 6px rgba(74, 55, 35, 0.1), 0 12px 32px rgba(74, 55, 35, 0.1);
-  /* Toasted amber for text-level accents: bright #F59E0B sits at ~2.1:1 on
-     this background, so --color-primary resolves to amber-700 in light mode
-     (gradient text, focus rings, timeline dot/edge, CTA fill). */
-  --color-primary: #B45309;
-  /* Gradient endpoint pinned for the warm paper: the @theme #D97706 lands
-     exactly at 3.00:1 here (large-text threshold with zero margin), so the
-     hero gradient ends at #C2680C (3.75:1) instead. */
-  --color-secondary: #C2680C;
-}
-
-/* Dark mode */
-[data-theme="dark"] {
+/* The theme: amber signature on near-black. There is a single theme (dark is
+   the brand); every var below resolves at :root. */
+:root {
   --bg: #0C0A09;
   --bg-card: rgba(28, 25, 23, 0.5);
   --bg-card-hover: rgba(28, 25, 23, 0.6);
   --bg-tag: rgba(245, 158, 11, 0.1);
   --border: #292524;
   --border-card: rgba(41, 37, 36, 0.5);
+  --border-card-hover: rgba(245, 158, 11, 0.2);
   --text: #FAFAF9;
   --text-secondary: #A8A29E;
   --text-muted: #57534E;
@@ -67,16 +29,7 @@
   --line-color: rgba(245, 158, 11, 0.08);
   --node-color: rgba(245, 158, 11, 0.04);
   --gradient-line: rgba(245, 158, 11, 0.15);
-  /* Pinned re-declaration: the :root light block above also matches <html>
-     when data-theme="dark" is set, so bright amber must be re-declared here
-     to beat the light toasted override. Value unchanged from @theme. */
-  --color-primary: #F59E0B;
-  /* Same leak rule for the new light gradient-endpoint override: dark keeps
-     the @theme value. */
-  --color-secondary: #D97706;
-  /* New vars pinned to the previous dark rendering, keeping the light-mode
-     elevation system a visual no-op here (amber glow reads on dark). */
-  --border-card-hover: rgba(245, 158, 11, 0.2);
+  /* Amber glow reads on dark, so elevation is glow-only (no drop shadow). */
   --card-shadow: none;
   --card-shadow-hover: 0 8px 30px rgba(245, 158, 11, 0.1);
 }
@@ -152,8 +105,7 @@
   }
   .card:hover {
     background: var(--bg-card-hover);
-    /* Hover elevates with shadow + border darkening (light) or the amber
-       glow (dark); both are var-driven so components stay theme-agnostic. */
+    /* Hover elevates with the amber glow (border + shadow), var-driven. */
     border-color: var(--border-card-hover);
     box-shadow: var(--card-shadow-hover);
   }
