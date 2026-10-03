@@ -1,0 +1,34 @@
+# David Santiago Vargas (krespokiller)
+
+> Tech Lead specialized in fintech payment platforms and multi-tenant systems for Latin American markets. Leads teams of 5-6 engineers building event-driven architecture and cloud infrastructure with TypeScript, Python, NestJS, React, PostgreSQL, and AWS.
+
+This site is a single-page 3D portfolio (React, TypeScript, three.js). Content sections:
+
+## Selected Work (#work)
+Four case studies:
+- **Loopay Suite** — multi-tenant, cloud-native fintech payments platform for Latin American markets; led a team of 5 engineers; 60% faster deploys (15 to 6 minutes) via the SOBERANA deploy monorepo (Terraform, AWS, GitHub Actions).
+  - https://soberana.loopay.com/
+  - https://app.loopay.com/api/v1/explorer/
+- **Galgo** — motorcycle e-commerce with embedded financing in Colombia; event-driven microservices processing 1,000+ leads per day.
+  - https://www.galgo.com/co
+- **Trebet** — mobile super-app for residential communities (payments, digital intercom, bookings, assembly voting); co-founded and led a team of 6 engineers; MVP to production in 1 month.
+  - https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO
+  - https://apps.apple.com/us/app/trebet/id6748287035
+- **This Portfolio** — hand-built interactive 3D portfolio with a custom three.js particle-network engine, bilingual EN/ES, dual WCAG-tuned themes.
+  - https://github.com/krespokiller/krespokiller.github.io
+
+## About (#about)
+Bio and core stack: TypeScript, Python, NestJS, React, PostgreSQL, AWS, Terraform, Docker, event-driven and clean architecture, CI/CD automation.
+
+## Experience (#experience)
+Five roles: Loopay (Tech Lead, Oct 2025-present; Full Stack Developer, 2023-2024), Galgo (Software Engineer, 2023-2025), Trebet (Co-founder & Lead Engineer, 2024-2025), Tribuu Technologies (Full Stack Developer, 2021-2022).
+
+## Contact (#contact)
+- GitHub: https://github.com/krespokiller
+- LinkedIn: https://www.linkedin.com/in/david-vargas-krespokiller
+
+## Key facts
+- Role: Tech Lead · Fintech & Cloud
+- Domains: multi-tenant payments, event-driven microservices, deploy automation (SOBERANA, Terraform, GitHub Actions, Docker)
+- Market focus: Latin America; teams of 5-6 engineers
+- Site languages: English and Spanish
