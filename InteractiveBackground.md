@@ -66,11 +66,24 @@ Press-and-drag on the background network:
 - **Affordance**: the grabbed node's vertex alpha is raised to 1.0 (the
   per-particle color buffer) and `body` gets `cursor: grabbing` while the
   drag is active.
+- **Layer model ("playground total")**: the canvas owns the click everywhere.
+  Page content roots (`<main>` in Home, the Footer organism) carry the
+  `.layer-content` class: `pointer-events: none` makes them transparent to
+  the pointer, and `.layer-content a, .layer-content button,
+  .layer-content [role="button"]` re-enable links and buttons inside them
+  (descendants inherit the re-enabled value). The Navbar is fully interactive
+  chrome and does not use the class. Text selection is intentionally
+  disabled by this owner-of-click tradeoff (user decision, 2026-10-03);
+  keyboard navigation is unaffected — `pointer-events` does not apply to
+  focus, Tab order or `:focus-visible`.
+- **Cursor**: the page body idles at `cursor: grab` (links and buttons keep
+  `pointer`); the engine sets `cursor: grabbing` on `body` while a node is
+  held and restores the stylesheet value on release.
 - **Guards**: pointerdown is ignored when the target is (or is inside) an
   interactive element (`a`, `button`, `input`, `textarea`, `select`,
-  `[role="button"]`, `[contenteditable]`) or a text-bearing element
-  (`p`, `h1`–`h6`, `li`, `span`) — clicks and text selection keep working.
-  Effective grab zones are empty areas, section containers and margins.
+  `[role="button"]`, `[contenteditable]`). This is defense-in-depth — with
+  the pointer-transparent layer those targets normally never receive the
+  event — but a grab must never win over a control. Every other pixel grabs.
 - **Release**: `pointerup`, `pointercancel`, window `blur`, tab hidden, or
   reduced-motion toggling all release the node. Pointer capture on the
   origin element keeps the release reliable outside the window. On touch, a

@@ -12,7 +12,10 @@ export function Home() {
     <div className="min-h-screen relative">
       <Navbar />
       <InteractiveBackground />
-      <main className="container relative z-20">
+      {/* Content is pointer-transparent (.layer-content): the background
+          canvas owns clicks for grab & pull; links/buttons re-enable
+          themselves via CSS. Navbar stays fully interactive (z-40 chrome). */}
+      <main className="layer-content container relative z-20">
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center px-6 md:px-4">
           <div className="container">

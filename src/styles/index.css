@@ -96,6 +96,19 @@
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
     transition: background 0.3s ease, color 0.3s ease;
+    /* The background canvas owns the click ("playground total"), so the
+       idle cursor invites grabbing; the engine swaps body to "grabbing"
+       while a node is held. Layered below utilities, so .cursor-not-allowed
+       on disabled buttons still wins. */
+    cursor: grab;
+  }
+
+  /* Interactive elements keep their familiar affordance on top of the
+     grab-everything surface. */
+  a,
+  button,
+  [role='button'] {
+    cursor: pointer;
   }
 
   * {
@@ -171,6 +184,23 @@
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Content layer model ("playground total", user decision 2026-10-03):
+     page content is pointer-transparent so the background canvas receives
+     every click and nodes can be grabbed over any pixel. Links and buttons
+     are re-enabled inside these roots; their descendants inherit the
+     re-enabled value. Text selection is intentionally sacrificed in exchange
+     (owner-of-click tradeoff). Keyboard navigation is unaffected:
+     pointer-events does not apply to focus or Tab. */
+  .layer-content {
+    pointer-events: none;
+  }
+
+  .layer-content a,
+  .layer-content button,
+  .layer-content [role='button'] {
+    pointer-events: auto;
   }
 
   .section {

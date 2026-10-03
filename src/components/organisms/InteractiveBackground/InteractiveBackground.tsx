@@ -28,14 +28,16 @@ function parseThemeColor(name: string): ThemeColorInput {
 }
 
 /**
- * Elements the grab interaction must never hijack: interactive controls keep
- * their clicks, text-bearing elements keep text selection. `closest` walks
- * ancestors, so content nested inside these is covered too.
+ * Interactive elements the grab interaction must never hijack — kept as
+ * defense-in-depth: page content is pointer-transparent (see .layer-content
+ * in index.css), so these targets normally never receive a pointerdown, but
+ * if one ever does, grabbing must still yield to it. Text-bearing elements
+ * are deliberately NOT guarded: grabbing behind text is the point of the
+ * pointer-transparent layer (text selection is knowingly disabled).
  */
 const GRAB_BLOCKED_SELECTOR = [
   'a', 'button', 'input', 'textarea', 'select',
   '[role="button"]', '[contenteditable]',
-  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'span',
 ].join(', ');
 
 function isGrabBlocked(target: EventTarget | null): boolean {
@@ -136,7 +138,8 @@ export const InteractiveBackground: React.FC = () => {
       // Reduced motion keeps the scene static: no grab, loop running or not.
       if (reducedMotionRef.current) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
-      // Never hijack interactive elements or text selection.
+      // Defense-in-depth: never hijack interactive elements, even if one
+      // somehow receives the pointerdown despite the transparent layer.
       if (isGrabBlocked(event.target)) return;
       const index = network.pickAt(event.clientX, event.clientY);
       if (index < 0) return;

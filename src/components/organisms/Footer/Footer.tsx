@@ -5,7 +5,7 @@ export const Footer: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <footer className="py-12 px-4" style={{ borderTop: '1px solid var(--border)' }}>
+    <footer className="layer-content py-12 px-4" style={{ borderTop: '1px solid var(--border)' }}>
       <div className="container">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
           <p className="text-sm font-light tracking-wide" style={{ color: 'var(--text-muted)' }}>
