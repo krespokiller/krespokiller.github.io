@@ -23,6 +23,7 @@ export const ExperienceSection: React.FC = () => {
                 company={exp.company}
                 role={exp.role}
                 dates={exp.dates}
+                note={exp.note}
                 location={exp.location}
                 description={exp.description}
                 tags={exp.tags}

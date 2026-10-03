@@ -2,27 +2,17 @@
   "experiences": [
     {
       "company": "Loopay",
-      "role": "Ingeniero de Software Senior",
+      "role": "Tech Lead",
       "dates": "Oct 2025 – Presente",
       "location": "Remoto",
       "description": [
-        "Entrega de productos de extremo a extremo: arquitectura full-stack de Soberana (frontend React/Vite, backend NestJS, esquemas optimizados de PostgreSQL, hosting en AWS ECS y GCP, Route 53 y CI/CD con GitHub Actions) y Loopay FX, plataforma de intermediación del mercado cambiario construida desde cero con Python (Django) y PostgreSQL/AWS Aurora.",
-        "Arquitectura escalable y flujo con IA: diseño multi-tenant en NestJS con patrones Strategy y Adapter para la integración desacoplada de pasarelas de pago, más Spec-Driven Development (SDD) diario con Opencode y Engram para acelerar la entrega, automatizar tareas repetitivas y asegurar la modularidad.",
-        "DevOps y liderazgo técnico: Infrastructure as Code con Terraform, observabilidad con OneUptime, auditorías de seguridad con AWS CloudTrail, automatización con GitHub Actions, resolución de incidentes en producción, refactorización SOLID de código heredado y code reviews rigurosos."
+        "Lideré un equipo de 5 ingenieros construyendo plataformas fintech cloud-native, gestionando decisiones de arquitectura, revisiones de código y soporte de producción con NestJS, React, PostgreSQL, AWS ECS y Terraform.",
+        "Escalé la infraestructura de pagos procesando $1M+ en volumen de transacciones diario para 100+ merchants activos, con servicios backend multi-tenant e integraciones de pasarelas de pago.",
+        "Construí SOBERANA, el monorepo de deploy que orquesta la infraestructura de producción de Loopay Suite: Terraform IaC para AWS (S3, Lambda, Secrets Manager, ECR), pipelines CI/CD con GitHub Actions y desarrollo local con Docker.",
+        "Construí LoopayOCR, un sistema de gestión de documentos de compliance que usa Google Gemini OCR para transacciones financieras transfronterizas, con validación dinámica de esquemas Pydantic, almacenamiento en S3 y notificaciones webhook.",
+        "Reduje el tiempo de despliegue en 60% (de 15 a 6 minutos) mediante automatización de infraestructura con Terraform y limpieza de repositorios, mejorando la confiabilidad de CI/CD y la velocidad del equipo."
       ],
-      "tags": ["NestJS", "React", "Vite", "PostgreSQL", "AWS ECS", "GCP", "Route 53", "Terraform", "Django", "Aurora", "GitHub Actions", "SDD", "OneUptime"]
-    },
-    {
-      "company": "Trebet",
-      "role": "Ingeniero de Software (Socio Tecnológico)",
-      "dates": "Sep 2024 – Sep 2025",
-      "location": "Bogotá, Colombia",
-      "description": [
-        "Desarrollo móvil híbrido para iOS y Android con TypeScript (React Native).",
-        "Servicios backend core y APIs con PHP (Laravel) y MySQL, optimizando el rendimiento de consultas y la estructura de tablas.",
-        "Funcionalidades en tiempo real: sistemas de intercomunicación con WebRTC respaldados por servidores CoTURN (STUN/TURN) en la nube, mensajería persistente vía WebSockets con notificaciones push e infraestructura en DigitalOcean automatizada con GitHub Actions."
-      ],
-      "tags": ["React Native", "Laravel", "MySQL", "WebRTC", "CoTURN", "WebSockets", "DigitalOcean", "GitHub Actions"]
+      "tags": ["NestJS", "React", "PostgreSQL", "AWS ECS", "Terraform", "SOBERANA", "Google Gemini", "Pydantic", "GitHub Actions", "Docker"]
     },
     {
       "company": "Galgo",
@@ -30,35 +20,24 @@
       "dates": "Dic 2023 – Sep 2025",
       "location": "Remoto",
       "description": [
-        "Checkout (BFF): microservicios transaccionales bajo una arquitectura Backend-for-Frontend con Next.js y NestJS, integrando MongoDB para el almacenamiento de datos de sesión de alta velocidad.",
-        "Sistemas de riesgo financiero (EDA): microservicios guiados por eventos en AWS, integrando motores de decisión con Taktile y paneles funcionales en Retool.",
-        "Operación cloud: Infrastructure as Code con Terraform gestionada vía env0, telemetría con Datadog, analítica de usuarios con Amplitude, integraciones de leads con HubSpot y pipelines de CI/CD en GitHub Actions hacia AWS."
+        "Desarrollé servicios backend para checkout, lending y evaluación de riesgo procesando 1,000+ leads diarios usando NestJS, AWS y microservicios event-driven.",
+        "Reduje la latencia de evaluación de riesgo de minutos a segundos optimizando la arquitectura de microservicios event-driven y el rendimiento de queries.",
+        "Construí 2 nuevos microservicios y mantuve 4–5 servicios existentes en los pipelines de checkout, lending y riesgo.",
+        "Gestioné infraestructura cloud, observabilidad y pipelines de despliegue usando Terraform, Datadog, GitHub Actions y AWS."
       ],
-      "tags": ["Next.js", "NestJS", "MongoDB", "AWS", "Terraform", "env0", "Datadog", "Amplitude", "HubSpot", "GitHub Actions"]
+      "tags": ["NestJS", "AWS", "Event-driven", "Terraform", "Datadog"]
     },
     {
-      "company": "Loopay",
-      "role": "Desarrollador Full Stack",
-      "dates": "Ene 2023 – 2024",
-      "location": "Remoto",
+      "company": "Trebet",
+      "role": "Co-fundador & Lead Engineer",
+      "dates": "Sep 2024 – Sep 2025",
+      "location": "Bogotá, Colombia",
+      "note": "Proyecto paralelo, concurrente con Galgo",
       "description": [
-        "Desarrollo full-stack de la plataforma principal sobre RedwoodJS: UI interactiva con React y lógica server-side en Node.js.",
-        "Consultas optimizadas mediante GraphQL y Prisma ORM.",
-        "Configuración y mantenimiento de flujos CI/CD con GitHub Actions para despliegue e integración automatizados."
+        "Co-fundé una startup y lideré un equipo de 6 ingenieros, con ownership de todas las decisiones técnicas desde arquitectura hasta producción.",
+        "Lancé una plataforma de comunicación en tiempo real de MVP a producción en 1 mes, construyendo la app móvil, los servicios backend y CI/CD con React Native, Laravel, WebRTC, WebSockets y DigitalOcean."
       ],
-      "tags": ["RedwoodJS", "React", "GraphQL", "Prisma", "Node.js", "GitHub Actions"]
-    },
-    {
-      "company": "Tribuu Technologies",
-      "role": "Desarrollador Full Stack",
-      "dates": "2021 – 2022",
-      "location": "Remoto",
-      "description": [
-        "Arquitectura de microservicios: SPA con Angular en frontend y servicios backend altamente modulares con Express / Node.js y MongoDB.",
-        "Integraciones de APIs complejas: motor de búsqueda indexada con Algolia y videoconferencia embebida con el SDK de Zoom.",
-        "Automatización CI/CD con GitHub Actions."
-      ],
-      "tags": ["Angular", "Express", "MongoDB", "Algolia", "Zoom API", "GitHub Actions"]
+      "tags": ["React Native", "Laravel", "WebRTC", "WebSockets", "DigitalOcean"]
     }
   ]
 }

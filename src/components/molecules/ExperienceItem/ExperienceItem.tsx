@@ -12,6 +12,7 @@ export const ExperienceItem: React.FC<ExperienceItemProps> = ({
   company,
   role,
   dates,
+  note,
   description,
   location,
   tags,
@@ -65,6 +66,11 @@ export const ExperienceItem: React.FC<ExperienceItemProps> = ({
           >
             {dates}
           </span>
+          {note && (
+            <p className="text-xs font-light mb-3 ml-2 inline-block" style={{ color: 'var(--text-muted)' }}>
+              {note}
+            </p>
+          )}
 
           {/* Header */}
           <div className="mb-4">

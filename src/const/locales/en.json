@@ -15,13 +15,22 @@
   "about": {
     "title": "About Me",
     "bio": [
-      "I'm a Software Engineer focused on distributed systems, cloud architecture, and AI-driven development.",
-      "My path started with full-stack product work at Tribuu Technologies, then grew into several parallel roles.",
-      "At Loopay I've had two stints — Full Stack Developer from 2023 and Senior Software Engineer today — building end-to-end platforms with React, NestJS, and PostgreSQL on AWS and GCP.",
-      "In parallel, I've built transactional BFF and financial risk services at Galgo, plus hybrid mobile apps and real-time systems at Trebet.",
-      "I care about modular, SOLID code — and I practice spec-driven development with AI tooling to ship faster without sacrificing quality."
+      "I'm a Tech Lead specialized in fintech payment platforms and multi-tenant systems.",
+      "I've built and scaled payment infrastructure processing $1M+ in daily transaction volume across Latin American markets.",
+      "I've led teams of 5+ engineers with a focus on event-driven architecture, clean architecture, and CI/CD automation using TypeScript, Python, PostgreSQL, and AWS.",
+      "I care about shipping reliable software — and about the tooling, pipelines, and code review culture that make teams faster."
     ],
-    "stackLabel": "Core Stack"
+    "stackLabel": "Core Stack",
+    "stack": {
+      "languages": "Languages",
+      "backend": "Backend",
+      "frontend": "Frontend",
+      "databases": "Databases",
+      "cloudDevops": "Cloud & DevOps",
+      "architecture": "Architecture",
+      "testing": "Testing",
+      "aiOcr": "AI & OCR"
+    }
   },
   "experience": {
     "title": "Experience",

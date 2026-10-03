@@ -25,6 +25,9 @@ const meta: Meta<typeof ExperienceItem> = {
     dates: {
       control: { type: 'text' },
     },
+    note: {
+      control: { type: 'text' },
+    },
     location: {
       control: { type: 'text' },
     },
@@ -51,42 +54,43 @@ export const Default: Story = {
     location: 'Remote',
     index: 0,
     description: [
-      'Checkout BFF: transactional microservices under a Backend-for-Frontend architecture with Next.js and NestJS, integrating MongoDB for high-speed session data storage.',
-      'Financial risk systems (EDA): event-driven microservices on AWS, integrating decision engines with Taktile and operational UI panels with Retool.',
-      'Cloud operations: Terraform Infrastructure as Code managed through env0, Datadog telemetry, Amplitude user analytics, HubSpot lead integrations, and CI/CD pipelines on GitHub Actions targeting AWS.',
+      'Developed backend services for checkout, lending, and risk evaluation processing 1,000+ daily leads using NestJS, AWS, and event-driven microservices.',
+      'Reduced risk evaluation latency from minutes to seconds by optimizing the event-driven microservices architecture and query performance.',
+      'Built 2 new microservices and maintained 4–5 existing services across the checkout, lending, and risk pipelines.',
+      'Managed cloud infrastructure, observability, and deployment pipelines using Terraform, Datadog, GitHub Actions, and AWS.',
     ],
-    tags: ['Next.js', 'NestJS', 'MongoDB', 'AWS', 'Terraform', 'env0', 'Datadog', 'Amplitude', 'HubSpot', 'GitHub Actions'],
+    tags: ['NestJS', 'AWS', 'Event-driven', 'Terraform', 'Datadog'],
   },
 };
 
 export const CurrentPosition: Story = {
   args: {
     company: 'Loopay',
-    role: 'Senior Software Engineer',
+    role: 'Tech Lead',
     dates: 'Oct 2025 – Present',
     location: 'Remote',
     index: 1,
     description: [
-      'End-to-end product delivery: full-stack architecture for Soberana (React/Vite frontend, NestJS backend, optimized PostgreSQL schemas, AWS ECS + GCP hosting, Route 53, GitHub Actions CI/CD) and Loopay FX, a foreign exchange intermediation platform built from scratch with Python (Django) and PostgreSQL/AWS Aurora.',
-      'Scalable architecture & AI-driven workflow: multi-tenant NestJS design with Strategy and Adapter patterns for decoupled payment-gateway integrations, plus daily Spec-Driven Development (SDD) with Opencode and Engram to accelerate delivery, automate repetitive tasks, and enforce modularity.',
-      'DevOps & technical leadership: Terraform Infrastructure as Code, OneUptime observability, AWS CloudTrail security audits, GitHub Actions automation, production incident resolution, SOLID refactoring of legacy code, and thorough code reviews.',
+      'Led a team of 5 engineers building cloud-native fintech platforms, owning architecture decisions, code reviews, and production support with NestJS, React, PostgreSQL, AWS ECS, and Terraform.',
+      'Scaled payment infrastructure processing $1M+ in daily transaction volume for 100+ active merchants, with multi-tenant backend services and payment-gateway integrations.',
+      'Built SOBERANA, the deploy monorepo that orchestrates Loopay Suite\'s production infrastructure: Terraform IaC for AWS (S3, Lambda, Secrets Manager, ECR), CI/CD pipelines with GitHub Actions, and local development with Docker.',
     ],
-    tags: ['NestJS', 'React', 'Vite', 'PostgreSQL', 'AWS ECS', 'GCP', 'Route 53', 'Terraform', 'Django', 'Aurora', 'GitHub Actions', 'SDD', 'OneUptime'],
+    tags: ['NestJS', 'React', 'PostgreSQL', 'AWS ECS', 'Terraform', 'Google Gemini', 'GitHub Actions', 'Docker'],
   },
 };
 
 export const CompactEntry: Story = {
   args: {
-    company: 'Loopay',
-    role: 'Full Stack Developer',
-    dates: 'Jan 2023 – 2024',
-    location: 'Remote',
+    company: 'Trebet',
+    role: 'Co-founder & Lead Engineer',
+    dates: 'Sep 2024 – Sep 2025',
+    note: 'Parallel project, concurrent with Galgo',
+    location: 'Bogotá, Colombia',
     index: 2,
     description: [
-      'Full-stack development of the main platform on RedwoodJS: interactive React UI and server-side Node.js logic.',
-      'Optimized data access via GraphQL and Prisma ORM.',
-      'CI/CD setup and maintenance with GitHub Actions for automated deployment and integration workflows.',
+      'Co-founded a startup and led a team of 6 engineers, owning every technical decision from architecture to production.',
+      'Launched a real-time communication platform from MVP to production in 1 month, building the mobile app, backend services, and CI/CD with React Native, Laravel, WebRTC, WebSockets, and DigitalOcean.',
     ],
-    tags: ['RedwoodJS', 'React', 'GraphQL', 'Prisma', 'Node.js', 'GitHub Actions'],
+    tags: ['React Native', 'Laravel', 'WebRTC', 'WebSockets', 'DigitalOcean'],
   },
 };

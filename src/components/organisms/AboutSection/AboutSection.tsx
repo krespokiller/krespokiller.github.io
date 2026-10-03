@@ -4,9 +4,43 @@ import { Heading } from '@/components/atoms';
 import { useInView } from '@/hooks';
 import { ICON_MAP } from '@/const/iconMap';
 
-// Stack highlights distilled from the technologies used across experience
-// entries. Every entry must exist in ICON_MAP so it renders with its icon.
-const STACK_HIGHLIGHTS = ['React', 'NestJS', 'AWS', 'Terraform', 'PostgreSQL', 'GitHub Actions'];
+// Full stack from the CV, grouped by category. Group labels are i18n'd via
+// about.stack.* keys; every icon'd item must exist in ICON_MAP. Concept tags
+// (Multi-tenant, CI/CD, IaC, OCR, ...) are intentionally text-only.
+const STACK_GROUPS: { labelKey: string; items: string[] }[] = [
+  {
+    labelKey: 'about.stack.languages',
+    items: ['TypeScript', 'Python', 'JavaScript', 'PHP'],
+  },
+  {
+    labelKey: 'about.stack.backend',
+    items: ['NestJS', 'Django', 'FastAPI', 'Node.js', 'Laravel', 'GraphQL', 'RedwoodJS', 'WebSockets', 'WebRTC'],
+  },
+  {
+    labelKey: 'about.stack.frontend',
+    items: ['React', 'Angular', 'React Native'],
+  },
+  {
+    labelKey: 'about.stack.databases',
+    items: ['PostgreSQL', 'Aurora', 'MongoDB', 'Redis', 'Prisma', 'SQLAlchemy'],
+  },
+  {
+    labelKey: 'about.stack.cloudDevops',
+    items: ['AWS', 'Terraform', 'DigitalOcean', 'Docker', 'GitHub Actions', 'Datadog'],
+  },
+  {
+    labelKey: 'about.stack.architecture',
+    items: ['Multi-tenant', 'Event-driven', 'Clean Architecture', 'CI/CD', 'IaC'],
+  },
+  {
+    labelKey: 'about.stack.testing',
+    items: ['Jest', 'pytest', 'Pydantic', 'Automated Testing', 'Code Reviews'],
+  },
+  {
+    labelKey: 'about.stack.aiOcr',
+    items: ['Google Gemini', 'OCR'],
+  },
+];
 
 export const AboutSection: React.FC = () => {
   const { t } = useTranslation();
@@ -45,7 +79,7 @@ export const AboutSection: React.FC = () => {
               ))}
             </div>
 
-            {/* Stack highlights */}
+            {/* Stack grouped by category */}
             <div className="mt-10">
               <p
                 className="text-xs font-medium tracking-widest uppercase mb-4"
@@ -53,17 +87,29 @@ export const AboutSection: React.FC = () => {
               >
                 {t('about.stackLabel')}
               </p>
-              <ul className="flex flex-wrap gap-2">
-                {STACK_HIGHLIGHTS.map((tech) => {
-                  const Icon = ICON_MAP[tech];
-                  return (
-                    <li key={tech} className="tag text-xs px-3 py-1.5">
-                      {Icon && <Icon size={14} />}
-                      {tech}
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="space-y-3">
+                {STACK_GROUPS.map((group) => (
+                  <div key={group.labelKey} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                    <span
+                      className="text-[11px] font-medium tracking-wider uppercase sm:w-32 sm:flex-shrink-0"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      {t(group.labelKey)}
+                    </span>
+                    <ul className="flex flex-wrap gap-1.5">
+                      {group.items.map((tech) => {
+                        const Icon = ICON_MAP[tech];
+                        return (
+                          <li key={tech} className="tag text-xs px-3 py-1">
+                            {Icon && <Icon size={13} />}
+                            {tech}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -20,15 +20,18 @@ import {
   SiGooglecloud,
   SiTerraform,
   SiDocker,
-  SiGithub,
   SiDatadog,
-  SiHubspot,
   SiDigitalocean,
   SiGraphql,
   SiVite,
   SiWebrtc,
-  SiAlgolia,
-  SiZoom,
+  SiRedis,
+  SiFastapi,
+  SiJest,
+  SiPytest,
+  SiSqlalchemy,
+  SiGooglegemini,
+  SiGithubactions,
 } from 'react-icons/si';
 
 const AwsIcon: IconType = (props) => (
@@ -37,12 +40,12 @@ const AwsIcon: IconType = (props) => (
   </svg>
 );
 
-const AmplitudeIcon: IconType = (props) => (
+// No official Pydantic mark in simple-icons; a minimal validation-shield glyph
+// in the same stroke style as the other custom icons.
+const PydanticIcon: IconType = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <rect x="2" y="14" width="4" height="8" rx="1"/>
-    <rect x="8" y="8" width="4" height="14" rx="1"/>
-    <rect x="14" y="4" width="4" height="18" rx="1"/>
-    <rect x="20" y="10" width="4" height="12" rx="1"/>
+    <path d="M12 2 20 5v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    <path d="m8.5 11.5 2.5 2.5 4.5-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -112,13 +115,16 @@ export const ICON_MAP: Record<string, IconType> = {
   'NestJS': SiNestjs,
   'Node.js': SiNodedotjs,
   'Django': SiDjango,
+  'FastAPI': SiFastapi,
   'Laravel': SiLaravel,
   'Express': SiExpress,
   'RedwoodJS': SiRedwoodjs,
   'PostgreSQL': SiPostgresql,
   'MongoDB': SiMongodb,
   'MySQL': SiMysql,
+  'Redis': SiRedis,
   'Prisma': SiPrisma,
+  'SQLAlchemy': SiSqlalchemy,
   'Eloquent': SiLaravel,
   'Mongoose': SiMongodb,
   'AWS': AwsIcon,
@@ -126,21 +132,18 @@ export const ICON_MAP: Record<string, IconType> = {
   'GCP': SiGooglecloud,
   'Terraform': SiTerraform,
   'Docker': SiDocker,
-  'GitHub Actions': SiGithub,
+  'GitHub Actions': SiGithubactions,
   'Datadog': SiDatadog,
-  'Amplitude': AmplitudeIcon,
-  'OneUptime': SiDatadog,
-  'HubSpot': SiHubspot,
   'DigitalOcean': SiDigitalocean,
   'GraphQL': SiGraphql,
   'WebSockets': WebsocketIcon,
   'WebRTC': SiWebrtc,
   'CoTURN': CoturnIcon,
-  'env0': SiTerraform,
   'Aurora': AuroraIcon,
   'Route 53': Route53Icon,
   'SDD': SddIcon,
-  'Algolia': SiAlgolia,
-  // SiZoom is the closest available brand mark for the Zoom API tag.
-  'Zoom API': SiZoom,
+  'Jest': SiJest,
+  'pytest': SiPytest,
+  'Pydantic': PydanticIcon,
+  'Google Gemini': SiGooglegemini,
 };
