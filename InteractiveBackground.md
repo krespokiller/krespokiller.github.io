@@ -80,12 +80,19 @@ Press-and-drag on the background network:
   `[role="button"]`, `[contenteditable]`). This is defense-in-depth — with
   the pointer-transparent layer those targets normally never receive the
   event — but a grab must never win over a control. Every other pixel grabs.
-- **Release**: `pointerup`, `pointercancel`, window `blur`, tab hidden, or
-  reduced-motion toggling all release the node. Pointer capture on the
-  origin element keeps the release reliable outside the window. On touch, a
-  drag that turns into a page scroll is handed to the browser via
-  `pointercancel` (the node springs back) — short drags in non-scrolling
-  areas work the same as with a mouse.
+- **Release**: `pointerup`, `pointercancel`, window `blur`, tab hidden, a
+  second finger landing, or reduced-motion toggling all release the node.
+  Pointer capture on the origin element keeps the release reliable outside
+  the window.
+- **Touch gestures**: a non-passive `touchstart` listener arbitrates each
+  touch. `pointerdown` fires before `touchstart`, so when a touch grabbed a
+  node the listener calls `preventDefault()` — cancelling the browser's
+  scroll claim for that gesture, so no `pointercancel` interrupts the drag
+  and the pointer stream drives it. Touches that hit nothing (or a guarded
+  interactive element) are never prevented: the page scrolls normally and
+  link taps keep their clicks. Tradeoff: touching a node means dragging it,
+  not scrolling from that touch; `pointercancel` (e.g. a browser-claimed
+  pinch) remains the release safety net.
 - **Reduced motion**: grab is disabled entirely — the static frame stays
   static regardless of user input.
 

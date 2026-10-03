@@ -130,6 +130,13 @@ export const InteractiveBackground: React.FC = () => {
     };
 
     const handleGrabStart = (event: PointerEvent) => {
+      // A second finger (or a stray click) while a drag is active ends the
+      // gesture instead of switching grabs; pointercancel remains the safety
+      // net for browser-claimed gestures.
+      if (grabActiveRef.current) {
+        releaseGrab();
+        return;
+      }
       // Reduced motion keeps the scene static: no grab, loop running or not.
       if (reducedMotionRef.current) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -154,6 +161,21 @@ export const InteractiveBackground: React.FC = () => {
       document.addEventListener('pointercancel', handleGrabEnd);
     };
 
+    /**
+     * Touch gesture arbitration (non-passive: preventDefault must be
+     * available). pointerdown fires BEFORE touchstart on touch input, so by
+     * the time this runs, grabActiveRef tells us whether this touch grabbed
+     * a node (its pick passed all guards). preventDefault cancels the
+     * browser's scroll claim for that gesture, so no pointercancel fires and
+     * the pointer stream keeps driving the grab. Touches that hit nothing
+     * (or a guarded interactive element) do NOT preventDefault and scroll as
+     * usual — the pointercancel release path stays as the safety net.
+     */
+    const handleTouchStart = (event: TouchEvent) => {
+      if (reducedMotionRef.current) return;
+      if (grabActiveRef.current) event.preventDefault();
+    };
+
     const handleResize = () => {
       if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
       resizeRafRef.current = requestAnimationFrame(() => {
@@ -165,6 +187,7 @@ export const InteractiveBackground: React.FC = () => {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseleave', handlePointerLeave);
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
     document.addEventListener('touchend', handlePointerLeave);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('pointerdown', handleGrabStart);
@@ -176,6 +199,7 @@ export const InteractiveBackground: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handlePointerLeave);
       document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handlePointerLeave);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('pointerdown', handleGrabStart);
