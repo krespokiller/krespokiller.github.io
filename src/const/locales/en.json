@@ -16,7 +16,7 @@
     "title": "About Me",
     "bio": [
       "I'm a Tech Lead specialized in fintech payment platforms and multi-tenant systems.",
-      "I've built and scaled payment infrastructure processing $1M+ in daily transaction volume across Latin American markets.",
+      "I've built and scaled payment infrastructure across Latin American markets.",
       "I've led teams of 5+ engineers with a focus on event-driven architecture, clean architecture, and CI/CD automation using TypeScript, Python, PostgreSQL, and AWS.",
       "I care about shipping reliable software — and about the tooling, pipelines, and code review culture that make teams faster."
     ],
