@@ -25,6 +25,7 @@ import {
   SiGraphql,
   SiVite,
   SiWebrtc,
+  SiAlgolia,
   SiRedis,
   SiFastapi,
   SiJest,
@@ -32,6 +33,7 @@ import {
   SiSqlalchemy,
   SiGooglegemini,
   SiGithubactions,
+  SiZoom,
 } from 'react-icons/si';
 
 const AwsIcon: IconType = (props) => (
@@ -146,4 +148,7 @@ export const ICON_MAP: Record<string, IconType> = {
   'pytest': SiPytest,
   'Pydantic': PydanticIcon,
   'Google Gemini': SiGooglegemini,
+  'Algolia': SiAlgolia,
+  // SiZoom is the closest available brand mark for the Zoom API tag.
+  'Zoom API': SiZoom,
 };
