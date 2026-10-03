@@ -34,10 +34,15 @@ the network keeps the reactive feel of the old Canvas 2D version with real depth
   hidden tab never causes a jump on resume.
 - **Theme**: colors come from the `--line-color` / `--node-color` CSS vars.
   A `MutationObserver` on the root `data-theme` attribute re-reads them, so
-  theme switches update particles and links live. Light mode uses dark
-  strokes at higher alpha (`0.3` lines / `0.16` nodes) because low-alpha dark
-  on the near-white background blends below the visibility threshold; dark
-  mode keeps its amber values.
+  theme switches update particles and links live. Dark mode keeps its amber
+  values. Light mode uses burnt amber at higher alpha (`0.37` lines /
+  `0.20` nodes on warm paper `#FAF8F3`): a typical link (half max distance,
+  mid depth) lands at a ~13% blue-channel delta against the paper — clearly
+  present without shouting — while near links reach ~23% and far layers
+  recede below ~7% so depth still reads. An earlier near-black-stone light
+  variant was replaced because a desaturated gray network reads as dust on
+  a light ground even at similar channel deltas; hue contrast is what makes
+  the network visible here.
 
 ## Configuration
 
