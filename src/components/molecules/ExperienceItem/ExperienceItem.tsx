@@ -50,7 +50,7 @@ export const ExperienceItem: React.FC<ExperienceItemProps> = ({
       </div>
 
       {/* Card */}
-      <article className="card relative flex-1 min-w-0 mb-8 overflow-hidden hover:-translate-y-1 hover:border-[color:var(--border-tag)] hover:shadow-[0_8px_30px_rgba(245,158,11,0.10)]">
+      <article className="card relative flex-1 min-w-0 mb-8 overflow-hidden hover:-translate-y-1">
         {/* Timeline accent edge */}
         <span
           aria-hidden="true"

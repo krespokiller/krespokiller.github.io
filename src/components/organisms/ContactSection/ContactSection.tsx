@@ -79,7 +79,7 @@ export const ContactSection: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={channel.ariaLabel}
-                  className="card group flex items-center gap-5 px-6 py-7 hover:-translate-y-1 hover:border-[color:var(--border-tag)] hover:shadow-[0_8px_30px_rgba(245,158,11,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="card group flex items-center gap-5 px-6 py-7 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   <span
                     aria-hidden="true"
