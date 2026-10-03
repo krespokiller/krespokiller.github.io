@@ -28,6 +28,21 @@ function parseThemeColor(name: string): ThemeColorInput {
 }
 
 /**
+ * Elements the grab interaction must never hijack: interactive controls keep
+ * their clicks, text-bearing elements keep text selection. `closest` walks
+ * ancestors, so content nested inside these is covered too.
+ */
+const GRAB_BLOCKED_SELECTOR = [
+  'a', 'button', 'input', 'textarea', 'select',
+  '[role="button"]', '[contenteditable]',
+  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'span',
+].join(', ');
+
+function isGrabBlocked(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(GRAB_BLOCKED_SELECTOR) !== null;
+}
+
+/**
  * Fullscreen fixed 3D particle-network background.
  * The canvas is decorative: pointer events pass through and it is hidden
  * from assistive technology.
@@ -38,6 +53,7 @@ export const InteractiveBackground: React.FC = () => {
   const resizeRafRef = useRef<number | null>(null);
   const reducedMotionRef = useRef(false);
   const hiddenTabRef = useRef(false);
+  const grabActiveRef = useRef(false);
 
   const applyThemeColors = useCallback(() => {
     networkRef.current?.setThemeColors(parseThemeColor('--line-color'), parseThemeColor('--node-color'));
@@ -85,12 +101,59 @@ export const InteractiveBackground: React.FC = () => {
 
     const handleVisibilityChange = () => {
       hiddenTabRef.current = document.hidden;
+      // A hidden tab may swallow the pointerup: release rather than keep a
+      // node held across the pause.
+      if (document.hidden) releaseGrab();
       syncLoop();
     };
 
     const handleReducedMotionChange = (event: MediaQueryListEvent) => {
       reducedMotionRef.current = event.matches;
+      // Grab is disabled under reduced motion: drop any active drag.
+      releaseGrab();
       syncLoop();
+    };
+
+    // --- Grab & pull (pointer events; mouse and touch unified) ---
+
+    const handleGrabMove = (event: PointerEvent) => {
+      network.moveGrab(event.clientX, event.clientY);
+    };
+
+    const handleGrabEnd = () => releaseGrab();
+
+    const releaseGrab = () => {
+      if (!grabActiveRef.current) return;
+      grabActiveRef.current = false;
+      network.endGrab();
+      document.body.style.cursor = '';
+      document.removeEventListener('pointermove', handleGrabMove);
+      document.removeEventListener('pointerup', handleGrabEnd);
+      document.removeEventListener('pointercancel', handleGrabEnd);
+    };
+
+    const handleGrabStart = (event: PointerEvent) => {
+      // Reduced motion keeps the scene static: no grab, loop running or not.
+      if (reducedMotionRef.current) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      // Never hijack interactive elements or text selection.
+      if (isGrabBlocked(event.target)) return;
+      const index = network.pickAt(event.clientX, event.clientY);
+      if (index < 0) return;
+      network.beginGrab(index);
+      grabActiveRef.current = true;
+      document.body.style.cursor = 'grabbing';
+      // Capture so the pointerup is delivered even if the drag leaves the
+      // window; capture retargets events to the origin element, and they
+      // still bubble up to the document listeners added below.
+      try {
+        (event.target as Element).setPointerCapture(event.pointerId);
+      } catch {
+        // Capture is best-effort; the release listeners above still apply.
+      }
+      document.addEventListener('pointermove', handleGrabMove);
+      document.addEventListener('pointerup', handleGrabEnd);
+      document.addEventListener('pointercancel', handleGrabEnd);
     };
 
     const handleResize = () => {
@@ -109,6 +172,8 @@ export const InteractiveBackground: React.FC = () => {
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handlePointerLeave);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('pointerdown', handleGrabStart);
+    window.addEventListener('blur', releaseGrab);
     window.addEventListener('resize', handleResize);
     reducedMotionQuery.addEventListener('change', handleReducedMotionChange);
 
@@ -119,8 +184,13 @@ export const InteractiveBackground: React.FC = () => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handlePointerLeave);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('pointerdown', handleGrabStart);
+      window.removeEventListener('blur', releaseGrab);
       window.removeEventListener('resize', handleResize);
       reducedMotionQuery.removeEventListener('change', handleReducedMotionChange);
+      // Detach any listeners added while a drag was in progress and restore
+      // the cursor before tearing the engine down.
+      releaseGrab();
       if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
       network.dispose();
       networkRef.current = null;

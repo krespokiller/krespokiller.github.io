@@ -44,6 +44,7 @@ export class ParticleNetwork {
   private linkCapacity = CONFIG.LINK_MAX_SEGMENTS;
   private linkPositions: Float32Array = new Float32Array(this.linkCapacity * 2 * 3);
   private linkColors: Float32Array = new Float32Array(this.linkCapacity * 2 * 4);
+  private linkIndices: Int32Array = new Int32Array(this.linkCapacity * 2);
   private linkPositionAttribute!: THREE.BufferAttribute;
   private linkColorAttribute!: THREE.BufferAttribute;
   private linkCount = 0;
@@ -72,8 +73,18 @@ export class ParticleNetwork {
   private pointerActive = false;
   private parallaxTarget = new THREE.Vector2();
 
+  // Grab & pull: one held node at a time. The drag rides on the per-particle
+  // offset system (basePositions are never written by grab logic), so release
+  // springs back through the existing offset decay.
+  private grabIndex = -1;
+  private grabZ = 0;
+  private grabTarget = new THREE.Vector3();
+  // Scratch screen-space projection cache for the one-shot pick (seed-sized).
+  private screenPositions: Float32Array = new Float32Array(0);
+
   private rafId: number | null = null;
   private tmpVector = new THREE.Vector3();
+  private tmpVectorB = new THREE.Vector3();
   private wasRunningBeforeContextLoss = false;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -125,6 +136,122 @@ export class ParticleNetwork {
   clearPointer(): void {
     this.pointerActive = false;
     this.parallaxTarget.set(0, 0);
+  }
+
+  /**
+   * One-shot hit test for grab & pull (event-driven, runs once per
+   * pointerdown; O(n) + O(live segments)). Projects every live particle to
+   * CSS pixels and returns the nearest node within GRAB_PICK_RADIUS, or —
+   * when the pointer sits near a connecting line — the nearest endpoint of
+   * that line (the "line snaps a node to the hand" behavior). Returns -1
+   * when nothing is in range.
+   */
+  pickAt(clientX: number, clientY: number): number {
+    const canvas = this.renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+    const width = canvas.clientWidth || window.innerWidth;
+    const height = canvas.clientHeight || window.innerHeight;
+    const pointerX = clientX - rect.left;
+    const pointerY = clientY - rect.top;
+    const halfW = width / 2;
+    const halfH = height / 2;
+
+    this.camera.updateMatrixWorld();
+    const positions = this.renderPositions;
+    for (let i = 0; i < this.count; i++) {
+      const i3 = i * 3;
+      this.tmpVector.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
+      // View-space guard: particles behind the camera project to mirrored
+      // NDC, so mark them invalid (NaN never wins the nearest test).
+      this.tmpVectorB.copy(this.tmpVector).applyMatrix4(this.camera.matrixWorldInverse);
+      if (this.tmpVectorB.z > -0.1) {
+        this.screenPositions[i * 2] = NaN;
+        this.screenPositions[i * 2 + 1] = NaN;
+        continue;
+      }
+      this.tmpVector.project(this.camera);
+      this.screenPositions[i * 2] = (this.tmpVector.x + 1) * halfW;
+      this.screenPositions[i * 2 + 1] = (1 - this.tmpVector.y) * halfH;
+    }
+
+    let best = -1;
+    let bestDistSq = CONFIG.GRAB_PICK_RADIUS * CONFIG.GRAB_PICK_RADIUS;
+    for (let i = 0; i < this.count; i++) {
+      const dx = this.screenPositions[i * 2] - pointerX;
+      const dy = this.screenPositions[i * 2 + 1] - pointerY;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq;
+        best = i;
+      }
+    }
+    if (best >= 0) return best;
+
+    // Line pass: 2D point-to-segment distance against the live segments; the
+    // candidate is the endpoint closer to the pointer.
+    let segmentBest = -1;
+    let segmentDistSq = CONFIG.GRAB_LINE_PICK_RADIUS * CONFIG.GRAB_LINE_PICK_RADIUS;
+    for (let s = 0; s < this.linkCount; s++) {
+      const a = this.linkIndices[s * 2];
+      const b = this.linkIndices[s * 2 + 1];
+      const ax = this.screenPositions[a * 2];
+      const ay = this.screenPositions[a * 2 + 1];
+      const bx = this.screenPositions[b * 2];
+      const by = this.screenPositions[b * 2 + 1];
+      const abx = bx - ax;
+      const aby = by - ay;
+      const lengthSq = abx * abx + aby * aby;
+      let t = 0;
+      if (lengthSq > 1e-6) {
+        t = ((pointerX - ax) * abx + (pointerY - ay) * aby) / lengthSq;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+      }
+      const dx = ax + abx * t - pointerX;
+      const dy = ay + aby * t - pointerY;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < segmentDistSq) {
+        segmentDistSq = distSq;
+        // Closest endpoint of the closest segment.
+        const daSq = (ax - pointerX) * (ax - pointerX) + (ay - pointerY) * (ay - pointerY);
+        const dbSq = (bx - pointerX) * (bx - pointerX) + (by - pointerY) * (by - pointerY);
+        segmentBest = daSq <= dbSq ? a : b;
+      }
+    }
+    return segmentBest;
+  }
+
+  /** Starts holding a node; the drag plane is frozen at its current depth. */
+  beginGrab(index: number): void {
+    if (index < 0 || index >= this.count) return;
+    this.grabIndex = index;
+    const i3 = index * 3;
+    this.grabZ = this.renderPositions[i3 + 2];
+    this.grabTarget.set(this.renderPositions[i3], this.renderPositions[i3 + 1], this.grabZ);
+  }
+
+  /** Moves the grab target to the pointer ray intersected with the z = grabZ plane. */
+  moveGrab(clientX: number, clientY: number): void {
+    if (this.grabIndex < 0) return;
+    const canvas = this.renderer.domElement;
+    const width = canvas.clientWidth || window.innerWidth;
+    const height = canvas.clientHeight || window.innerHeight;
+    const ndcX = (clientX / width) * 2 - 1;
+    const ndcY = -(clientY / height) * 2 + 1;
+
+    this.camera.updateMatrixWorld();
+    // Pointer ray; keeping z fixed at the grabbed node's depth is what makes
+    // background layers draggable "in their own plane".
+    this.tmpVector.set(ndcX, ndcY, 0.5).unproject(this.camera);
+    this.tmpVector.sub(this.camera.position).normalize();
+    const directionZ = this.tmpVector.z;
+    if (Math.abs(directionZ) < 1e-6) return;
+    const t = (this.grabZ - this.camera.position.z) / directionZ;
+    if (t <= 0) return;
+    this.grabTarget.copy(this.camera.position).addScaledVector(this.tmpVector, t);
+  }
+
+  endGrab(): void {
+    this.grabIndex = -1;
   }
 
   /** Recomputes projection and volume on viewport changes; reseeds when the target count changes. */
@@ -281,7 +408,8 @@ export class ParticleNetwork {
       this.basePositions[i3 + 2] = bz;
 
       // Gentle repulsion from the smoothed pointer, clamped, springing back.
-      if (dt > 0 && this.pointerActive) {
+      // The held node is exempt: the grab spring owns its offset.
+      if (dt > 0 && this.pointerActive && i !== this.grabIndex) {
         const dx = bx - this.pointerSmoothed.x;
         const dy = by - this.pointerSmoothed.y;
         const dz = bz - this.pointerSmoothed.z;
@@ -295,9 +423,20 @@ export class ParticleNetwork {
           this.offsets[i3 + 2] = clamp(this.offsets[i3 + 2] + dz * push, CONFIG.REPEL_MAX_OFFSET);
         }
       }
-      this.offsets[i3] *= damp;
-      this.offsets[i3 + 1] *= damp;
-      this.offsets[i3 + 2] *= damp;
+
+      if (i === this.grabIndex) {
+        // Held: spring the offset toward (grabTarget - base) so the drag rides
+        // on the offset system — basePositions stay untouched and release
+        // decays back through the regular spring path below.
+        const stiffness = 1 - Math.exp(-CONFIG.GRAB_STIFFNESS * dt);
+        this.offsets[i3] += (this.grabTarget.x - bx - this.offsets[i3]) * stiffness;
+        this.offsets[i3 + 1] += (this.grabTarget.y - by - this.offsets[i3 + 1]) * stiffness;
+        this.offsets[i3 + 2] += (this.grabTarget.z - bz - this.offsets[i3 + 2]) * stiffness;
+      } else {
+        this.offsets[i3] *= damp;
+        this.offsets[i3 + 1] *= damp;
+        this.offsets[i3 + 2] *= damp;
+      }
 
       this.renderPositions[i3] = this.basePositions[i3] + this.offsets[i3];
       this.renderPositions[i3 + 1] = this.basePositions[i3 + 1] + this.offsets[i3 + 1];
@@ -305,11 +444,12 @@ export class ParticleNetwork {
 
       // Fog cue on top of size attenuation: alpha falls toward the floor at
       // the far plane so distant particles dim instead of just shrinking.
+      // The grabbed node lights up at full alpha as a "caught" affordance.
       const i4 = i * 4;
       const depth = (this.renderPositions[i3 + 2] + halfZ) / (halfZ * 2);
       const nodeFade = CONFIG.NODE_DEPTH_FLOOR
         + (1 - CONFIG.NODE_DEPTH_FLOOR) * Math.min(Math.max(depth, 0), 1);
-      this.nodeColors[i4 + 3] = nodeFade;
+      this.nodeColors[i4 + 3] = i === this.grabIndex ? 1 : nodeFade;
     }
   }
 
@@ -346,6 +486,9 @@ export class ParticleNetwork {
         if (alpha < 0.004) continue;
 
         this.writeSegment(segment, xi, yi, zi, positions[j3], positions[j3 + 1], positions[j3 + 2], alpha);
+        // Endpoint indices let the grab pick resolve a line to its nodes.
+        this.linkIndices[segment * 2] = i;
+        this.linkIndices[segment * 2 + 1] = j;
         if (++segment >= this.linkCapacity) break;
       }
     }
@@ -386,6 +529,9 @@ export class ParticleNetwork {
     this.drifts = new Float32Array(count * 3);
     this.renderPositions = new Float32Array(count * 3);
     this.nodeColors = new Float32Array(count * 4);
+    this.screenPositions = new Float32Array(count * 2);
+    // Reseeding invalidates particle indices: drop any active grab.
+    this.grabIndex = -1;
     this.scatterParticles();
     this.points.geometry.dispose();
     this.points.geometry = new THREE.BufferGeometry();

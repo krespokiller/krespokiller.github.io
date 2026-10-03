@@ -32,6 +32,9 @@ the network keeps the reactive feel of the old Canvas 2D version with real depth
   clock is integrated from rAF deltas, never wall time — a zero delta (the
   reduced-motion static frame) cannot move the camera, and pausing on a
   hidden tab never causes a jump on resume.
+- **Grab & pull**: press near a node (or on a line — the line's nearest
+  endpoint snaps to the hand) and drag to pull it; connected lines stretch
+  with it; release and it springs back. Nodes are grabbable at any depth.
 - **Theme**: colors come from the `--line-color` / `--node-color` CSS vars.
   A `MutationObserver` on the root `data-theme` attribute re-reads them, so
   theme switches update particles and links live. Dark mode keeps its amber
@@ -43,6 +46,39 @@ the network keeps the reactive feel of the old Canvas 2D version with real depth
   variant was replaced because a desaturated gray network reads as dust on
   a light ground even at similar channel deltas; hue contrast is what makes
   the network visible here.
+
+## Grab & Pull
+
+Press-and-drag on the background network:
+
+- **Pick** (once per pointerdown, O(n) + O(live segments)): all particles are
+  projected to CSS pixels; the nearest node within `GRAB_PICK_RADIUS` wins.
+  If no node is close, the live line segments are tested with 2D
+  point-to-segment distance (`GRAB_LINE_PICK_RADIUS`) and that segment's
+  nearest endpoint node is grabbed — pressing a line pulls a node to you.
+- **Depth model**: the drag target is the intersection of the pointer ray
+  with the plane `z = node z at pick time`. Depth is preserved, so deep
+  background layers are dragged within their own plane — that is what makes
+  far nodes grabbable despite the parallax. The held position is a damped
+  spring (`GRAB_STIFFNESS`) riding on the per-particle offset system, so
+  `basePositions` are never touched and release springs back through the
+  normal decay. Idle drift and pointer parallax keep running underneath.
+- **Affordance**: the grabbed node's vertex alpha is raised to 1.0 (the
+  per-particle color buffer) and `body` gets `cursor: grabbing` while the
+  drag is active.
+- **Guards**: pointerdown is ignored when the target is (or is inside) an
+  interactive element (`a`, `button`, `input`, `textarea`, `select`,
+  `[role="button"]`, `[contenteditable]`) or a text-bearing element
+  (`p`, `h1`–`h6`, `li`, `span`) — clicks and text selection keep working.
+  Effective grab zones are empty areas, section containers and margins.
+- **Release**: `pointerup`, `pointercancel`, window `blur`, tab hidden, or
+  reduced-motion toggling all release the node. Pointer capture on the
+  origin element keeps the release reliable outside the window. On touch, a
+  drag that turns into a page scroll is handed to the browser via
+  `pointercancel` (the node springs back) — short drags in non-scrolling
+  areas work the same as with a mouse.
+- **Reduced motion**: grab is disabled entirely — the static frame stays
+  static regardless of user input.
 
 ## Configuration
 
@@ -60,6 +96,8 @@ All tunables live in `interactiveBackground.config.ts` next to the component:
 | `POINTER_DAMPING` / `OFFSET_DAMPING` | Smoothing rates (frame-rate independent) |
 | `PARALLAX_STRENGTH` | Camera offset at the screen edge |
 | `IDLE_DRIFT_AMPLITUDE` / `_PERIOD` / `IDLE_BLEND_RATE` | Autonomous at-rest camera motion |
+| `GRAB_PICK_RADIUS` / `GRAB_LINE_PICK_RADIUS` | Grab hit ranges in CSS px (node / line) |
+| `GRAB_STIFFNESS` | Damped ease rate while holding a node |
 | `MAX_DPR` | Device pixel ratio cap for rendering |
 
 ## Performance & Accessibility

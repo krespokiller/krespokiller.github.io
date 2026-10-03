@@ -46,4 +46,12 @@ export const INTERACTIVE_BACKGROUND_CONFIG = {
   IDLE_DRIFT_AMPLITUDE: 2.4,
   IDLE_DRIFT_PERIOD: 40,
   IDLE_BLEND_RATE: 1.2,
+
+  // Grab & pull: pick runs once per pointerdown (O(n) + O(segments)); the
+  // drag itself is O(1) per frame. GRAB_STIFFNESS is the damped ease rate
+  // toward the pointer while held (stiffer than OFFSET_DAMPING for a
+  // "caught" feel); release falls back to the regular spring-back.
+  GRAB_PICK_RADIUS: 24,
+  GRAB_LINE_PICK_RADIUS: 16,
+  GRAB_STIFFNESS: 12,
 } as const;
