@@ -10,12 +10,12 @@ export const INTERACTIVE_BACKGROUND_CONFIG = {
   MAX_DPR: 2,
 
   // Particles
-  PARTICLE_COUNT_DESKTOP: 150,
-  PARTICLE_COUNT_MOBILE: 70,
+  PARTICLE_COUNT_DESKTOP: 190,
+  PARTICLE_COUNT_MOBILE: 90,
   MOBILE_BREAKPOINT: 768,
   PARTICLE_SIZE: 0.55,
   VOLUME_MARGIN: 1.15,
-  VOLUME_DEPTH_RATIO: 0.5,
+  VOLUME_DEPTH_RATIO: 0.85,
 
   // Links
   LINK_DISTANCE: 14,
@@ -31,8 +31,19 @@ export const INTERACTIVE_BACKGROUND_CONFIG = {
   REPEL_MAX_OFFSET: 6,
   OFFSET_DAMPING: 4,
   POINTER_DAMPING: 8,
-  PARALLAX_STRENGTH: 2.5,
+  PARALLAX_STRENGTH: 5,
 
   // Link depth fade: links near the far plane render at this fraction of alpha
-  LINK_DEPTH_FLOOR: 0.55,
+  LINK_DEPTH_FLOOR: 0.35,
+
+  // Node depth fade: per-particle alpha floor at the far plane (size already
+  // attenuates with distance via sizeAttenuation)
+  NODE_DEPTH_FLOOR: 0.35,
+
+  // Idle camera drift: slow autonomous Lissajous motion so the 3D reads at
+  // rest. Fades out while the pointer is active. Time is integrated from rAF
+  // deltas (never wall clock), so reduced motion and tab pauses stay static.
+  IDLE_DRIFT_AMPLITUDE: 2.4,
+  IDLE_DRIFT_PERIOD: 40,
+  IDLE_BLEND_RATE: 1.2,
 } as const;

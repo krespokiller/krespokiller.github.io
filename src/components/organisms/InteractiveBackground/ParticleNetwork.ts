@@ -53,6 +53,18 @@ export class ParticleNetwork {
   private lineAlpha = 0.08;
   private nodeAlpha = 0.04;
 
+  // Per-particle RGBA buffer (RGB fixed at white; alpha carries depth fade).
+  // Material color + opacity provide the theme tint and base alpha, so the
+  // vertex alpha only has to encode the per-particle fog factor.
+  private nodeColors: Float32Array = new Float32Array(0);
+  private nodeColorAttribute!: THREE.BufferAttribute;
+
+  // Idle camera drift: animation clock integrated from rAF deltas (never wall
+  // time) and a weight that eases toward 1 at rest and 0 while the pointer is
+  // active. With dt = 0 (reduced-motion static frame) nothing advances.
+  private elapsed = 0;
+  private idleWeight = 0;
+
   // Pointer state, smoothed with exponential damping
   private pointerTarget = new THREE.Vector3();
   private pointerSmoothed = new THREE.Vector3();
@@ -211,10 +223,14 @@ export class ParticleNetwork {
   };
 
   private update(dt: number): void {
+    this.elapsed += dt;
+    const idleTarget = this.pointerActive ? 0 : 1;
+    this.idleWeight += (idleTarget - this.idleWeight) * (1 - Math.exp(-CONFIG.IDLE_BLEND_RATE * dt));
     this.smoothPointer(dt);
     this.updateParticles(dt);
     this.rebuildLinks();
     this.positionAttribute.needsUpdate = true;
+    this.nodeColorAttribute.needsUpdate = true;
     this.linkPositionAttribute.needsUpdate = true;
     this.linkColorAttribute.needsUpdate = true;
     this.links.geometry.setDrawRange(0, this.linkCount * 2);
@@ -228,6 +244,20 @@ export class ParticleNetwork {
     const parallaxFactor = 1 - Math.exp(-CONFIG.POINTER_DAMPING * dt);
     this.camera.position.x += (this.parallaxTarget.x - this.camera.position.x) * parallaxFactor;
     this.camera.position.y += (this.parallaxTarget.y - this.camera.position.y) * parallaxFactor;
+
+    // Autonomous Lissajous drift so depth reads without pointer input.
+    // Offsets derive from the integrated clock (deterministic per frame), so
+    // a zero delta keeps the camera frozen for the reduced-motion frame.
+    const w = this.idleWeight;
+    const omega = (Math.PI * 2) / CONFIG.IDLE_DRIFT_PERIOD;
+    const t = this.elapsed;
+    const amplitude = CONFIG.IDLE_DRIFT_AMPLITUDE;
+    if (w > 0.001) {
+      this.camera.position.x += amplitude * w * Math.sin(omega * t);
+      this.camera.position.y += amplitude * w * 0.75 * Math.sin(omega * 1.618 * t + 1.3);
+    }
+    this.camera.position.z = CONFIG.CAMERA_Z
+      + amplitude * w * 0.5 * Math.sin(omega * 0.618 * t + 0.7);
     this.camera.lookAt(0, 0, 0);
   }
 
@@ -272,11 +302,19 @@ export class ParticleNetwork {
       this.renderPositions[i3] = this.basePositions[i3] + this.offsets[i3];
       this.renderPositions[i3 + 1] = this.basePositions[i3 + 1] + this.offsets[i3 + 1];
       this.renderPositions[i3 + 2] = this.basePositions[i3 + 2] + this.offsets[i3 + 2];
+
+      // Fog cue on top of size attenuation: alpha falls toward the floor at
+      // the far plane so distant particles dim instead of just shrinking.
+      const i4 = i * 4;
+      const depth = (this.renderPositions[i3 + 2] + halfZ) / (halfZ * 2);
+      const nodeFade = CONFIG.NODE_DEPTH_FLOOR
+        + (1 - CONFIG.NODE_DEPTH_FLOOR) * Math.min(Math.max(depth, 0), 1);
+      this.nodeColors[i4 + 3] = nodeFade;
     }
   }
 
   /**
-   * Recomputes connections with a capped O(n^2) pass (~11k pairs at 150
+   * Recomputes connections with a capped O(n^2) pass (~18k pairs at 190
    * particles, squared-distance early-out). Line alpha falls off with pair
    * distance and with depth so far links read as background.
    */
@@ -347,11 +385,23 @@ export class ParticleNetwork {
     this.offsets = new Float32Array(count * 3);
     this.drifts = new Float32Array(count * 3);
     this.renderPositions = new Float32Array(count * 3);
+    this.nodeColors = new Float32Array(count * 4);
     this.scatterParticles();
     this.points.geometry.dispose();
     this.points.geometry = new THREE.BufferGeometry();
     this.positionAttribute = new THREE.BufferAttribute(this.renderPositions, 3);
     this.points.geometry.setAttribute('position', this.positionAttribute);
+    // White vertex RGB keeps the material tint authoritative; the per-particle
+    // alpha channel is rewritten every frame in updateParticles.
+    for (let i = 0; i < count; i++) {
+      const i4 = i * 4;
+      this.nodeColors[i4] = 1;
+      this.nodeColors[i4 + 1] = 1;
+      this.nodeColors[i4 + 2] = 1;
+      this.nodeColors[i4 + 3] = 1;
+    }
+    this.nodeColorAttribute = new THREE.BufferAttribute(this.nodeColors, 4);
+    this.points.geometry.setAttribute('color', this.nodeColorAttribute);
   }
 
   /** Distributes particles uniformly in the volume with random drift vectors. */
@@ -397,6 +447,9 @@ export class ParticleNetwork {
       transparent: true,
       opacity: this.nodeAlpha,
       depthWrite: false,
+      // 4-component vertex colors enable USE_COLOR_ALPHA, so each particle
+      // carries its own depth-fade alpha in the buffer.
+      vertexColors: true,
     });
     this.points = new THREE.Points(new THREE.BufferGeometry(), this.pointsMaterial);
     this.points.frustumCulled = false;

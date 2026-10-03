@@ -9,21 +9,35 @@ the network keeps the reactive feel of the old Canvas 2D version with real depth
 
 ## How It Works
 
-- **Particles** (`150` desktop / `70` mobile) are spread uniformly in a volume
-  sized from the camera frustum, each with its own slow random drift vector
-  and wrap-around at the volume edges.
+- **Particles** (`190` desktop / `90` mobile) are spread uniformly in a volume
+  sized from the camera frustum (`VOLUME_DEPTH_RATIO` controls how deep the
+  z axis is), each with its own slow random drift vector and wrap-around at
+  the volume edges. A 4-component vertex color buffer gives every particle
+  its own alpha: a fog falloff (`NODE_DEPTH_FLOOR`) dims far particles on top
+  of the size attenuation, which already makes them smaller.
 - **Links** are recomputed every frame with a capped O(n^2) pass (squared
   distance early-out, hard cap `LINK_MAX_SEGMENTS`). Line alpha falls off with
-  pair distance and with depth, so far links read as background. Segments are
-  written into preallocated `Float32Array` buffers (positions + RGBA vertex
-  colors) — no per-frame allocations; only `needsUpdate` flags flip.
+  pair distance and with depth (`LINK_DEPTH_FLOOR`), so far links read as
+  background. Segments are written into preallocated `Float32Array` buffers
+  (positions + RGBA vertex colors) — no per-frame allocations; only
+  `needsUpdate` flags flip.
 - **Pointer model**: the pointer is unprojected onto the `z = 0` plane and
   smoothed with exponential damping. Particles inside `REPEL_RADIUS` get a
   clamped repulsion offset that springs back to rest; the camera offsets
   toward the pointer (`PARALLAX_STRENGTH`) and eases back when it leaves.
+- **Idle drift**: with no pointer activity the camera follows a slow
+  Lissajous path (`IDLE_DRIFT_AMPLITUDE` / `IDLE_DRIFT_PERIOD`) plus a slight
+  dolly, so the 3D reads even at rest. A weight eases the drift in and out
+  (`IDLE_BLEND_RATE`) so it hands off smoothly to pointer parallax. The drift
+  clock is integrated from rAF deltas, never wall time — a zero delta (the
+  reduced-motion static frame) cannot move the camera, and pausing on a
+  hidden tab never causes a jump on resume.
 - **Theme**: colors come from the `--line-color` / `--node-color` CSS vars.
   A `MutationObserver` on the root `data-theme` attribute re-reads them, so
-  theme switches update particles and links live.
+  theme switches update particles and links live. Light mode uses dark
+  strokes at higher alpha (`0.3` lines / `0.16` nodes) because low-alpha dark
+  on the near-white background blends below the visibility threshold; dark
+  mode keeps its amber values.
 
 ## Configuration
 
@@ -32,12 +46,15 @@ All tunables live in `interactiveBackground.config.ts` next to the component:
 | Knob | Meaning |
 |------|---------|
 | `PARTICLE_COUNT_DESKTOP` / `_MOBILE` | Particle count per breakpoint |
+| `VOLUME_DEPTH_RATIO` | Depth of the particle volume vs. frustum height |
 | `LINK_DISTANCE` | 3D distance threshold for connections |
 | `LINK_MAX_SEGMENTS` | Pooled link buffer capacity |
+| `LINK_DEPTH_FLOOR` / `NODE_DEPTH_FLOOR` | Alpha floor at the far plane for links / particles |
 | `DRIFT_SPEED` | Base per-particle drift speed |
 | `REPEL_RADIUS` / `REPEL_STRENGTH` / `REPEL_MAX_OFFSET` | Repulsion field |
 | `POINTER_DAMPING` / `OFFSET_DAMPING` | Smoothing rates (frame-rate independent) |
 | `PARALLAX_STRENGTH` | Camera offset at the screen edge |
+| `IDLE_DRIFT_AMPLITUDE` / `_PERIOD` / `IDLE_BLEND_RATE` | Autonomous at-rest camera motion |
 | `MAX_DPR` | Device pixel ratio cap for rendering |
 
 ## Performance & Accessibility
@@ -47,8 +64,8 @@ All tunables live in `interactiveBackground.config.ts` next to the component:
 - The rAF loop pauses when `document.hidden`; unmount disposes geometries,
   materials, renderer, listeners and observers.
 - `prefers-reduced-motion: reduce` renders a single static frame (particles +
-  links, no loop, no pointer reaction); the media query is observed live, so
-  the loop starts/stops if the setting changes.
+  links, no loop, no pointer reaction, idle drift off); the media query is
+  observed live, so the loop starts/stops if the setting changes.
 - Canvas is `aria-hidden="true"`, `role="presentation"`, `pointer-events-none`.
 
 Note: the old 800ms interaction fade was dropped on purpose — the scene is
