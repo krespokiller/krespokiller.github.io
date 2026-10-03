@@ -48,8 +48,7 @@
         ],
         "metric": { "value": "60%", "label": "faster deploys · 15 → 6 minutes" },
         "links": [
-          { "label": "SOBERANA", "href": "https://soberana.loopay.com/", "ariaLabel": "Open SOBERANA (opens in a new tab)" },
-          { "label": "API Docs", "href": "https://app.loopay.com/api/v1/explorer/", "ariaLabel": "Open the Loopay API explorer (opens in a new tab)" }
+          { "label": "SOBERANA", "href": "https://soberana.loopay.com/", "ariaLabel": "Open SOBERANA (opens in a new tab)" }
         ],
         "tags": ["NestJS", "React", "PostgreSQL", "Terraform", "Docker"]
       },
@@ -63,7 +62,6 @@
           "Cut risk-evaluation latency from minutes to seconds with an event-driven architecture and query performance work.",
           "Built 2 new microservices and maintained 4–5 across checkout, lending, and risk pipelines — cloud infrastructure and observability with Terraform, Datadog, and GitHub Actions."
         ],
-        "metric": { "value": "1,000+", "label": "leads processed per day" },
         "links": [
           { "label": "galgo.com", "href": "https://www.galgo.com/co", "ariaLabel": "Visit galgo.com (opens in a new tab)" }
         ],
@@ -78,28 +76,11 @@
           "Co-founded and led a team of 6 engineers, owning every technical decision from architecture to production.",
           "Shipped the MVP to production in 1 month — mobile app, backend services, and CI/CD (React Native, Laravel, DigitalOcean)."
         ],
-        "metric": { "value": "1 month", "label": "MVP → production" },
         "links": [
           { "label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO", "ariaLabel": "Open Trebet on Google Play (opens in a new tab)" },
           { "label": "App Store", "href": "https://apps.apple.com/us/app/trebet/id6748287035", "ariaLabel": "Open Trebet on the App Store (opens in a new tab)" }
         ],
         "tags": ["React Native", "Laravel", "WebRTC", "DigitalOcean"]
-      },
-      {
-        "eyebrow": "Personal · Design & Engineering · 2026",
-        "note": "You're inside the demo right now.",
-        "title": "This Portfolio",
-        "summary": "The site you're browsing — a hand-built interactive 3D portfolio.",
-        "bullets": [
-          "Custom three.js particle-network engine written from scratch — depth parallax, idle drift, per-vertex fog, no effect libraries.",
-          "Depth-aware grab & pull interaction: pick nodes in screen space, drag them within their own z-layer, and let spring-back physics settle them home.",
-          "WCAG-tuned dual themes — toasted-amber light and signature dark — bilingual EN/ES, with prefers-reduced-motion respected end to end."
-        ],
-        "metric": null,
-        "links": [
-          { "label": "Source", "href": "https://github.com/krespokiller/krespokiller.github.io", "ariaLabel": "View this site's source code on GitHub (opens in a new tab)" }
-        ],
-        "tags": ["React", "TypeScript", "three.js", "Tailwind CSS"]
       }
     ]
   },

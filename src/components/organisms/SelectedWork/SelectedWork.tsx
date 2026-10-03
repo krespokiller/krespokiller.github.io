@@ -6,9 +6,9 @@ import { FeaturedWorkCard } from './FeaturedWorkCard';
 import { WorkCard } from './WorkCard';
 
 /**
- * Selected Work — flagship case studies (Loopay featured, Galgo, Trebet,
- * this portfolio). Card content lives entirely in i18n (`work.cards`),
- * with identical shape and URLs across en/es.
+ * Selected Work — flagship case studies (Loopay featured, Galgo, Trebet).
+ * Card content lives entirely in i18n (`work.cards`), with identical shape
+ * and URLs across en/es.
  */
 export const SelectedWork: React.FC = () => {
   const { t } = useTranslation();
@@ -35,7 +35,7 @@ export const SelectedWork: React.FC = () => {
 
         <FeaturedWorkCard card={featured} />
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
           {rest.map((card, i) => (
             <WorkCard key={card.title} card={card} index={i + 1} />
           ))}

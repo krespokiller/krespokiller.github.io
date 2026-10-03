@@ -48,8 +48,7 @@
         ],
         "metric": { "value": "60%", "label": "despliegues más rápidos · de 15 a 6 minutos" },
         "links": [
-          { "label": "SOBERANA", "href": "https://soberana.loopay.com/", "ariaLabel": "Abrir SOBERANA (se abre en una pestaña nueva)" },
-          { "label": "API Docs", "href": "https://app.loopay.com/api/v1/explorer/", "ariaLabel": "Abrir el explorador de la API de Loopay (se abre en una pestaña nueva)" }
+          { "label": "SOBERANA", "href": "https://soberana.loopay.com/", "ariaLabel": "Abrir SOBERANA (se abre en una pestaña nueva)" }
         ],
         "tags": ["NestJS", "React", "PostgreSQL", "Terraform", "Docker"]
       },
@@ -63,7 +62,6 @@
           "Reduje la latencia de evaluación de riesgo de minutos a segundos con arquitectura event-driven y optimización de consultas.",
           "Construí 2 microservicios nuevos y mantuve 4–5 en los pipelines de checkout, crédito y riesgo — infraestructura cloud y observabilidad con Terraform, Datadog y GitHub Actions."
         ],
-        "metric": { "value": "1,000+", "label": "leads procesados al día" },
         "links": [
           { "label": "galgo.com", "href": "https://www.galgo.com/co", "ariaLabel": "Visitar galgo.com (se abre en una pestaña nueva)" }
         ],
@@ -78,28 +76,11 @@
           "Co-fundé y lidere un equipo de 6 ingenieros, siendo responsable de cada decisión técnica desde la arquitectura hasta producción.",
           "Llevamos el MVP a producción en 1 mes — app móvil, servicios de backend y CI/CD (React Native, Laravel, DigitalOcean)."
         ],
-        "metric": { "value": "1 mes", "label": "del MVP a producción" },
         "links": [
           { "label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO", "ariaLabel": "Abrir Trebet en Google Play (se abre en una pestaña nueva)" },
           { "label": "App Store", "href": "https://apps.apple.com/us/app/trebet/id6748287035", "ariaLabel": "Abrir Trebet en el App Store (se abre en una pestaña nueva)" }
         ],
         "tags": ["React Native", "Laravel", "WebRTC", "DigitalOcean"]
-      },
-      {
-        "eyebrow": "Personal · Diseño & Ingeniería · 2026",
-        "note": "Estás dentro de la demo ahora mismo.",
-        "title": "Este Portafolio",
-        "summary": "El sitio que estás navegando — un portafolio 3D interactivo construido a mano.",
-        "bullets": [
-          "Motor de red de partículas con three.js escrito desde cero — parallax de profundidad, deriva en reposo y fog por vértice, sin librerías de efectos.",
-          "Interacción de agarre y tracción con conciencia de profundidad: toma nodos en el espacio de pantalla, arrástralos dentro de su propia capa z y suéltalos para que la física de retorno los lleve de vuelta.",
-          "Temas duales afinados a WCAG — claro ámbar tostado y oscuro distintivo — bilingüe EN/ES, con prefers-reduced-motion respetado de punta a punta."
-        ],
-        "metric": null,
-        "links": [
-          { "label": "Código fuente", "href": "https://github.com/krespokiller/krespokiller.github.io", "ariaLabel": "Ver el código fuente de este sitio en GitHub (se abre en una pestaña nueva)" }
-        ],
-        "tags": ["React", "TypeScript", "three.js", "Tailwind CSS"]
       }
     ]
   },

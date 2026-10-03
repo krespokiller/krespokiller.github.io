@@ -10,7 +10,7 @@ interface WorkCardProps {
 }
 
 /**
- * Standard case-study card (numbers "02"–"04"). The reveal transition lives
+ * Standard case-study card (numbers "02"–"03"). The reveal transition lives
  * on the wrapper while the hover lift lives on the article, so the stagger
  * delay never slows down the hover micro-interaction.
  */
