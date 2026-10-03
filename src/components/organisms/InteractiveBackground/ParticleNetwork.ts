@@ -49,6 +49,18 @@ export class ParticleNetwork {
   private linkColorAttribute!: THREE.BufferAttribute;
   private linkCount = 0;
 
+  // Persistent node bonds: fixed-capacity pair list + dedicated render mesh.
+  // Pairs reference particle indices; positions/colors are rewritten per
+  // frame from the live render positions (no allocations).
+  private bondPairs: Int32Array = new Int32Array(CONFIG.BOND_MAX_COUNT * 2);
+  private bondCount = 0;
+  private bondPositions: Float32Array = new Float32Array(CONFIG.BOND_MAX_COUNT * 2 * 3);
+  private bondColors: Float32Array = new Float32Array(CONFIG.BOND_MAX_COUNT * 2 * 4);
+  private bonds!: THREE.LineSegments;
+  private bondMaterial!: THREE.LineBasicMaterial;
+  private bondPositionAttribute!: THREE.BufferAttribute;
+  private bondColorAttribute!: THREE.BufferAttribute;
+
   private bounds: VolumeBounds = { halfW: 1, halfH: 1, halfZ: 1 };
   private lineColor = new THREE.Color(1, 1, 1);
   private lineAlpha = 0.08;
@@ -79,8 +91,11 @@ export class ParticleNetwork {
   private grabIndex = -1;
   private grabZ = 0;
   private grabTarget = new THREE.Vector3();
-  // Scratch screen-space projection cache for the one-shot pick (seed-sized).
+  // Scratch screen-space projection caches for the one-shot pick (seed-sized):
+  // visual positions AND lattice (base) positions, so a node displaced by the
+  // repulsion field or still springing home is grabbable at either spot.
   private screenPositions: Float32Array = new Float32Array(0);
+  private screenBasePositions: Float32Array = new Float32Array(0);
 
   private rafId: number | null = null;
   private tmpVector = new THREE.Vector3();
@@ -101,6 +116,7 @@ export class ParticleNetwork {
 
     this.createCloud();
     this.createLinks();
+    this.createBonds();
     this.attachContextLossHandling();
     this.resize(window.innerWidth, window.innerHeight);
   }
@@ -158,28 +174,42 @@ export class ParticleNetwork {
 
     this.camera.updateMatrixWorld();
     const positions = this.renderPositions;
+    const basePositions = this.basePositions;
     for (let i = 0; i < this.count; i++) {
       const i3 = i * 3;
       this.tmpVector.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
       // View-space guard: particles behind the camera project to mirrored
-      // NDC, so mark them invalid (NaN never wins the nearest test).
+      // NDC, so mark them invalid (NaN never wins the nearest test). Offsets
+      // are tiny next to the camera distance, so the guard from the visual
+      // position also covers the lattice position.
       this.tmpVectorB.copy(this.tmpVector).applyMatrix4(this.camera.matrixWorldInverse);
       if (this.tmpVectorB.z > -0.1) {
         this.screenPositions[i * 2] = NaN;
         this.screenPositions[i * 2 + 1] = NaN;
+        this.screenBasePositions[i * 2] = NaN;
+        this.screenBasePositions[i * 2 + 1] = NaN;
         continue;
       }
       this.tmpVector.project(this.camera);
       this.screenPositions[i * 2] = (this.tmpVector.x + 1) * halfW;
       this.screenPositions[i * 2 + 1] = (1 - this.tmpVector.y) * halfH;
+      // Second projection of the lattice position: grabbing is instant even
+      // when the node is visually displaced by the repulsion field or still
+      // springing home after a release.
+      this.tmpVector.set(basePositions[i3], basePositions[i3 + 1], basePositions[i3 + 2]);
+      this.tmpVector.project(this.camera);
+      this.screenBasePositions[i * 2] = (this.tmpVector.x + 1) * halfW;
+      this.screenBasePositions[i * 2 + 1] = (1 - this.tmpVector.y) * halfH;
     }
 
     let best = -1;
     let bestDistSq = CONFIG.GRAB_PICK_RADIUS * CONFIG.GRAB_PICK_RADIUS;
     for (let i = 0; i < this.count; i++) {
-      const dx = this.screenPositions[i * 2] - pointerX;
-      const dy = this.screenPositions[i * 2 + 1] - pointerY;
-      const distSq = dx * dx + dy * dy;
+      const dxr = this.screenPositions[i * 2] - pointerX;
+      const dyr = this.screenPositions[i * 2 + 1] - pointerY;
+      const dxb = this.screenBasePositions[i * 2] - pointerX;
+      const dyb = this.screenBasePositions[i * 2 + 1] - pointerY;
+      const distSq = Math.min(dxr * dxr + dyr * dyr, dxb * dxb + dyb * dyb);
       if (distSq < bestDistSq) {
         bestDistSq = distSq;
         best = i;
@@ -250,8 +280,124 @@ export class ParticleNetwork {
     this.grabTarget.copy(this.camera.position).addScaledVector(this.tmpVector, t);
   }
 
+  /**
+   * Releases the held node. If the drop point sits within BOND_SNAP_DISTANCE
+   * of another node, the two combine: the dropped node's home relocates to
+   * the drop point (it stays there) and a persistent bond line is drawn.
+   */
   endGrab(): void {
+    const index = this.grabIndex;
     this.grabIndex = -1;
+    if (index < 0 || index >= this.count) return;
+    this.tryFormBond(index);
+  }
+
+  /**
+   * Bond formation on release (event-driven, O(n)): find the nearest other
+   * node within snap distance of the drop point, relocate the dropped node's
+   * home there (clamped into the volume, offset zeroed so it rests exactly
+   * at the drop point — one home in ~190 is a negligible density shift), and
+   * register the pair. Duplicate pairs are skipped; the list is a hard FIFO
+   * capped at BOND_MAX_COUNT (oldest bond gives way when full).
+   */
+  private tryFormBond(dropped: number): void {
+    const positions = this.renderPositions;
+    const d3 = dropped * 3;
+    const dropX = positions[d3];
+    const dropY = positions[d3 + 1];
+    const dropZ = positions[d3 + 2];
+
+    let neighbor = -1;
+    let bestDistSq = CONFIG.BOND_SNAP_DISTANCE * CONFIG.BOND_SNAP_DISTANCE;
+    for (let i = 0; i < this.count; i++) {
+      if (i === dropped) continue;
+      const i3 = i * 3;
+      const dx = positions[i3] - dropX;
+      const dy = positions[i3 + 1] - dropY;
+      const dz = positions[i3 + 2] - dropZ;
+      const distSq = dx * dx + dy * dy + dz * dz;
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq;
+        neighbor = i;
+      }
+    }
+    if (neighbor < 0) return;
+
+    const { halfW, halfH, halfZ } = this.bounds;
+    this.basePositions[d3] = clamp(dropX, halfW);
+    this.basePositions[d3 + 1] = clamp(dropY, halfH);
+    this.basePositions[d3 + 2] = clamp(dropZ, halfZ);
+    this.offsets[d3] = 0;
+    this.offsets[d3 + 1] = 0;
+    this.offsets[d3 + 2] = 0;
+    this.renderPositions[d3] = this.basePositions[d3];
+    this.renderPositions[d3 + 1] = this.basePositions[d3 + 1];
+    this.renderPositions[d3 + 2] = this.basePositions[d3 + 2];
+
+    for (let k = 0; k < this.bondCount; k++) {
+      const a = this.bondPairs[k * 2];
+      const b = this.bondPairs[k * 2 + 1];
+      if ((a === dropped && b === neighbor) || (a === neighbor && b === dropped)) return;
+    }
+
+    if (this.bondCount >= CONFIG.BOND_MAX_COUNT) {
+      this.bondPairs.copyWithin(0, 2, this.bondCount * 2);
+      this.bondCount--;
+    }
+    this.bondPairs[this.bondCount * 2] = dropped;
+    this.bondPairs[this.bondCount * 2 + 1] = neighbor;
+    this.bondCount++;
+  }
+
+  /** Order-preserving removal (rare event; the list holds at most 64 pairs). */
+  private removeBond(k: number): void {
+    this.bondPairs.copyWithin(k * 2, (k + 1) * 2, this.bondCount * 2);
+    this.bondCount--;
+  }
+
+  /**
+   * Per-frame bond pass (≤64 pairs, trivial): rewrite endpoint positions from
+   * the live render positions, and dissolve bonds whose endpoints drifted
+   * beyond BOND_BREAK_DISTANCE. A break only removes the line — homes never
+   * spring back, so relocated nodes keep their new place.
+   */
+  private updateBonds(): void {
+    const positions = this.renderPositions;
+    const alpha = Math.min(1, this.lineAlpha * CONFIG.BOND_ALPHA_MULTIPLIER);
+    const { r, g, b } = this.lineColor;
+    const breakDistSq = CONFIG.BOND_BREAK_DISTANCE * CONFIG.BOND_BREAK_DISTANCE;
+    let k = 0;
+    while (k < this.bondCount) {
+      const a3 = this.bondPairs[k * 2] * 3;
+      const b3 = this.bondPairs[k * 2 + 1] * 3;
+      const dx = positions[a3] - positions[b3];
+      const dy = positions[a3 + 1] - positions[b3 + 1];
+      const dz = positions[a3 + 2] - positions[b3 + 2];
+      if (dx * dx + dy * dy + dz * dz > breakDistSq) {
+        this.removeBond(k);
+        continue;
+      }
+      const p = k * 6;
+      this.bondPositions[p] = positions[a3];
+      this.bondPositions[p + 1] = positions[a3 + 1];
+      this.bondPositions[p + 2] = positions[a3 + 2];
+      this.bondPositions[p + 3] = positions[b3];
+      this.bondPositions[p + 4] = positions[b3 + 1];
+      this.bondPositions[p + 5] = positions[b3 + 2];
+      const c = k * 8;
+      this.bondColors[c] = r;
+      this.bondColors[c + 1] = g;
+      this.bondColors[c + 2] = b;
+      this.bondColors[c + 3] = alpha;
+      this.bondColors[c + 4] = r;
+      this.bondColors[c + 5] = g;
+      this.bondColors[c + 6] = b;
+      this.bondColors[c + 7] = alpha;
+      k++;
+    }
+    this.bondPositionAttribute.needsUpdate = true;
+    this.bondColorAttribute.needsUpdate = true;
+    this.bonds.geometry.setDrawRange(0, this.bondCount * 2);
   }
 
   /** Recomputes projection and volume on viewport changes; reseeds when the target count changes. */
@@ -306,8 +452,10 @@ export class ParticleNetwork {
     this.detachContextLossHandling();
     this.points.geometry.dispose();
     this.links.geometry.dispose();
+    this.bonds.geometry.dispose();
     this.pointsMaterial.dispose();
     this.linksMaterial.dispose();
+    this.bondMaterial.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }
@@ -356,6 +504,7 @@ export class ParticleNetwork {
     this.smoothPointer(dt);
     this.updateParticles(dt);
     this.rebuildLinks();
+    this.updateBonds();
     this.positionAttribute.needsUpdate = true;
     this.nodeColorAttribute.needsUpdate = true;
     this.linkPositionAttribute.needsUpdate = true;
@@ -530,8 +679,11 @@ export class ParticleNetwork {
     this.renderPositions = new Float32Array(count * 3);
     this.nodeColors = new Float32Array(count * 4);
     this.screenPositions = new Float32Array(count * 2);
-    // Reseeding invalidates particle indices: drop any active grab.
+    this.screenBasePositions = new Float32Array(count * 2);
+    // Reseeding invalidates particle indices: drop any active grab and all
+    // bonds (base positions regenerate).
     this.grabIndex = -1;
+    this.bondCount = 0;
     this.scatterParticles();
     this.points.geometry.dispose();
     this.points.geometry = new THREE.BufferGeometry();
@@ -617,6 +769,26 @@ export class ParticleNetwork {
     this.links = new THREE.LineSegments(geometry, this.linksMaterial);
     this.links.frustumCulled = false;
     this.scene.add(this.links);
+  }
+
+  /** Dedicated mesh for persistent bonds: same theme-driven vertex-color
+   *  pipeline as the links, at BOND_ALPHA_MULTIPLIER x the line alpha so a
+   *  bond reads as special next to the transient proximity lines. */
+  private createBonds(): void {
+    const geometry = new THREE.BufferGeometry();
+    this.bondPositionAttribute = new THREE.BufferAttribute(this.bondPositions, 3);
+    this.bondColorAttribute = new THREE.BufferAttribute(this.bondColors, 4);
+    geometry.setAttribute('position', this.bondPositionAttribute);
+    geometry.setAttribute('color', this.bondColorAttribute);
+    geometry.setDrawRange(0, 0);
+    this.bondMaterial = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      depthWrite: false,
+    });
+    this.bonds = new THREE.LineSegments(geometry, this.bondMaterial);
+    this.bonds.frustumCulled = false;
+    this.scene.add(this.bonds);
   }
 }
 

@@ -50,8 +50,21 @@ export const INTERACTIVE_BACKGROUND_CONFIG = {
   // Grab & pull: pick runs once per pointerdown (O(n) + O(segments)); the
   // drag itself is O(1) per frame. GRAB_STIFFNESS is the damped ease rate
   // toward the pointer while held (stiffer than OFFSET_DAMPING for a
-  // "caught" feel); release falls back to the regular spring-back.
-  GRAB_PICK_RADIUS: 24,
-  GRAB_LINE_PICK_RADIUS: 16,
+  // "caught" feel); release falls back to the regular spring-back. The pick
+  // measures against BOTH the visual and the lattice (base) position, so a
+  // node displaced by the repulsion field or still springing is grabbable
+  // instantly — including the node released a moment ago.
+  GRAB_PICK_RADIUS: 36,
+  GRAB_LINE_PICK_RADIUS: 24,
   GRAB_STIFFNESS: 12,
+
+  // Node bonds: dropping a node within BOND_SNAP_DISTANCE of another relocates
+  // its home to the drop point ("it stays there") and draws a permanent,
+  // brighter bond line to the neighbor. A bond dissolves when its endpoints
+  // drift beyond BOND_BREAK_DISTANCE (homes never spring back on a break).
+  // Capacity is a hard FIFO cap; bonds clear on breakpoint reseeds.
+  BOND_SNAP_DISTANCE: 11.2,
+  BOND_BREAK_DISTANCE: 35,
+  BOND_MAX_COUNT: 64,
+  BOND_ALPHA_MULTIPLIER: 1.6,
 } as const;

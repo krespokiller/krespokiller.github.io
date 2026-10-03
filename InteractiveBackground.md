@@ -52,10 +52,14 @@ the network keeps the reactive feel of the old Canvas 2D version with real depth
 Press-and-drag on the background network:
 
 - **Pick** (once per pointerdown, O(n) + O(live segments)): all particles are
-  projected to CSS pixels; the nearest node within `GRAB_PICK_RADIUS` wins.
-  If no node is close, the live line segments are tested with 2D
-  point-to-segment distance (`GRAB_LINE_PICK_RADIUS`) and that segment's
-  nearest endpoint node is grabbed — pressing a line pulls a node to you.
+  projected to CSS pixels at BOTH their visual and lattice (base) positions;
+  the nearest node within `GRAB_PICK_RADIUS` of either wins. Measuring both
+  spots is what makes re-grabbing instant: the repulsion field keeps nearby
+  nodes displaced away from a resting cursor and a released node is still
+  springing home, so aiming at only the visual position used to miss. If no
+  node is close, the live line segments are tested with 2D point-to-segment
+  distance (`GRAB_LINE_PICK_RADIUS`) and that segment's nearest endpoint node
+  is grabbed — pressing a line pulls a node to you.
 - **Depth model**: the drag target is the intersection of the pointer ray
   with the plane `z = node z at pick time`. Depth is preserved, so deep
   background layers are dragged within their own plane — that is what makes
@@ -93,6 +97,31 @@ Press-and-drag on the background network:
 - **Reduced motion**: grab is disabled entirely — the static frame stays
   static regardless of user input.
 
+## Bonds (combine nodes)
+
+Dropping a grabbed node within `BOND_SNAP_DISTANCE` (3D, ~0.8 x
+`LINK_DISTANCE`) of another node combines them:
+
+- **Formation**: the nearest neighbor at the drop point wins. The dropped
+  node's home relocates to the clamped drop point and its offset is zeroed,
+  so it stays where you left it instead of springing home (it keeps the same
+  slow ambient drift as every other particle — the scene stays alive; it
+  just never flies back).
+- **Rendering**: bonds are a dedicated `LineSegments` mesh (own preallocated
+  buffers, FIFO-capped at `BOND_MAX_COUNT` pairs), drawn with the same
+  theme-driven vertex-color pipeline as the links at
+  `BOND_ALPHA_MULTIPLIER` x the line alpha, so a bond reads brighter than
+  the transient proximity lines. Bond endpoints are rewritten every frame
+  from the live render positions — bonds stretch and follow.
+- **Breaking**: when both endpoints of a bond drift beyond
+  `BOND_BREAK_DISTANCE` (~2.5 x `LINK_DISTANCE`), the bond dissolves — only
+  the line disappears; homes never spring back on a break.
+- **Lifecycle**: duplicate pairs are skipped; one node can hold several
+  bonds. Bonds clear on breakpoint reseeds (base positions regenerate) and
+  never form under reduced motion (no grab, no release).
+- The grabbed-node alpha glow keeps working for relocated homes — it is a
+  per-frame write keyed on the grab index, independent of where the home is.
+
 ## Configuration
 
 All tunables live in `interactiveBackground.config.ts` next to the component:
@@ -111,6 +140,8 @@ All tunables live in `interactiveBackground.config.ts` next to the component:
 | `IDLE_DRIFT_AMPLITUDE` / `_PERIOD` / `IDLE_BLEND_RATE` | Autonomous at-rest camera motion |
 | `GRAB_PICK_RADIUS` / `GRAB_LINE_PICK_RADIUS` | Grab hit ranges in CSS px (node / line) |
 | `GRAB_STIFFNESS` | Damped ease rate while holding a node |
+| `BOND_SNAP_DISTANCE` / `BOND_BREAK_DISTANCE` | 3D combine radius on drop / drift distance that dissolves a bond |
+| `BOND_MAX_COUNT` / `BOND_ALPHA_MULTIPLIER` | FIFO cap on persistent bonds / bond brightness vs. links |
 | `MAX_DPR` | Device pixel ratio cap for rendering |
 
 ## Performance & Accessibility
