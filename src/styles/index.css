@@ -166,10 +166,15 @@
   }
 
   .tag {
-    @apply inline-flex items-center gap-1.5 rounded-full text-xs font-medium px-3 py-1 transition-colors duration-200;
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full text-xs font-medium px-3 py-1 transition-colors duration-200;
     background: var(--bg-tag);
     color: var(--text-tag);
     border: 1px solid var(--border-tag);
+  }
+  /* Icons never yield width to the label; nowrap keeps the label on one
+     line, so chips wrap as whole units in their flex-wrap containers. */
+  .tag > svg {
+    flex-shrink: 0;
   }
   .tag:hover {
     opacity: 0.8;
