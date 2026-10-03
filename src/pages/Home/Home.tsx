@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar } from "@/components";
+import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar, SelectedWork } from "@/components";
 import { Button } from "@/components/atoms";
 import { usePrefersReducedMotion } from "@/hooks";
 
@@ -34,7 +34,7 @@ export function Home() {
               <div className="flex justify-center pt-8">
                 <Button
                   onClick={() => {
-                    const element = document.getElementById('experience');
+                    const element = document.getElementById('work');
                     element?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
                   }}
                 >
@@ -44,6 +44,9 @@ export function Home() {
             </div>
           </div>
         </section>
+
+        {/* Selected Work Section */}
+        <SelectedWork />
 
         {/* About Section */}
         <AboutSection />

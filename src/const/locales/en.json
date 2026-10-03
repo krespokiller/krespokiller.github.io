@@ -8,6 +8,7 @@
   "nav": {
     "ariaLabel": "Main navigation",
     "home": "Back to top",
+    "work": "Work",
     "about": "About",
     "experience": "Experience",
     "contact": "Contact"
@@ -31,6 +32,76 @@
       "testing": "Testing",
       "aiOcr": "AI & OCR"
     }
+  },
+  "work": {
+    "title": "Selected Work",
+    "cards": [
+      {
+        "eyebrow": "Loopay · Tech Lead · Oct 2025–Present",
+        "note": null,
+        "title": "Loopay Suite",
+        "summary": "Multi-tenant, cloud-native fintech payments platform for Latin American markets.",
+        "bullets": [
+          "Lead a team of 5 engineers — architecture decisions, code reviews, and production support (NestJS, React, PostgreSQL, AWS ECS, Terraform).",
+          "Built SOBERANA, the deploy monorepo orchestrating Loopay Suite production infrastructure: Terraform IaC for AWS (S3, Lambda, Secrets Manager, ECR), GitHub Actions CI/CD, and local Docker.",
+          "Built LoopayOCR, compliance document management with Google Gemini OCR, dynamic Pydantic schema validation, S3 storage, and webhook notifications."
+        ],
+        "metric": { "value": "60%", "label": "faster deploys · 15 → 6 minutes" },
+        "links": [
+          { "label": "SOBERANA", "href": "https://soberana.loopay.com/", "ariaLabel": "Open SOBERANA (opens in a new tab)" },
+          { "label": "API Docs", "href": "https://app.loopay.com/api/v1/explorer/", "ariaLabel": "Open the Loopay API explorer (opens in a new tab)" }
+        ],
+        "tags": ["NestJS", "React", "PostgreSQL", "Terraform", "Docker"]
+      },
+      {
+        "eyebrow": "Galgo · Software Engineer · Dec 2023–Sep 2025",
+        "note": null,
+        "title": "Galgo",
+        "summary": "Motorcycle e-commerce with embedded financing in Colombia.",
+        "bullets": [
+          "Backend services for checkout, lending, and risk evaluation on event-driven microservices (NestJS, AWS).",
+          "Cut risk-evaluation latency from minutes to seconds with an event-driven architecture and query performance work.",
+          "Built 2 new microservices and maintained 4–5 across checkout, lending, and risk pipelines — cloud infrastructure and observability with Terraform, Datadog, and GitHub Actions."
+        ],
+        "metric": { "value": "1,000+", "label": "leads processed per day" },
+        "links": [
+          { "label": "galgo.com", "href": "https://www.galgo.com/co", "ariaLabel": "Visit galgo.com (opens in a new tab)" }
+        ],
+        "tags": ["NestJS", "AWS", "Datadog", "Event-driven"]
+      },
+      {
+        "eyebrow": "Trebet · Co-founder & Lead Engineer · Sep 2024–Sep 2025",
+        "note": "Parallel project",
+        "title": "Trebet",
+        "summary": "Mobile super-app for residential communities — payments, digital intercom, amenity bookings, and assembly voting, with real-time built on WebRTC and WebSockets.",
+        "bullets": [
+          "Co-founded and led a team of 6 engineers, owning every technical decision from architecture to production.",
+          "Shipped the MVP to production in 1 month — mobile app, backend services, and CI/CD (React Native, Laravel, DigitalOcean)."
+        ],
+        "metric": { "value": "1 month", "label": "MVP → production" },
+        "links": [
+          { "label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO", "ariaLabel": "Open Trebet on Google Play (opens in a new tab)" },
+          { "label": "App Store", "href": "https://apps.apple.com/us/app/trebet/id6748287035", "ariaLabel": "Open Trebet on the App Store (opens in a new tab)" }
+        ],
+        "tags": ["React Native", "Laravel", "WebRTC", "DigitalOcean"]
+      },
+      {
+        "eyebrow": "Personal · Design & Engineering · 2026",
+        "note": "You're inside the demo right now.",
+        "title": "This Portfolio",
+        "summary": "The site you're browsing — a hand-built interactive 3D portfolio.",
+        "bullets": [
+          "Custom three.js particle-network engine written from scratch — depth parallax, idle drift, per-vertex fog, no effect libraries.",
+          "Depth-aware grab & pull interaction: pick nodes in screen space, drag them within their own z-layer, and let spring-back physics settle them home.",
+          "WCAG-tuned dual themes — toasted-amber light and signature dark — bilingual EN/ES, with prefers-reduced-motion respected end to end."
+        ],
+        "metric": null,
+        "links": [
+          { "label": "Source", "href": "https://github.com/krespokiller/krespokiller.github.io", "ariaLabel": "View this site's source code on GitHub (opens in a new tab)" }
+        ],
+        "tags": ["React", "TypeScript", "three.js", "Tailwind CSS"]
+      }
+    ]
   },
   "experience": {
     "title": "Experience",

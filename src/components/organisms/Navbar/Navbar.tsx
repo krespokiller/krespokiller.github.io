@@ -10,6 +10,7 @@ interface NavItem {
 // Module-level constants keep referential identity stable so the
 // IntersectionObserver in useActiveSection is created once per mount.
 const NAV_ITEMS: NavItem[] = [
+  { id: 'work', labelKey: 'nav.work' },
   { id: 'about', labelKey: 'nav.about' },
   { id: 'experience', labelKey: 'nav.experience' },
   { id: 'contact', labelKey: 'nav.contact' },
