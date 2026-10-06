@@ -63,8 +63,8 @@ export class ParticleNetwork {
 
   private bounds: VolumeBounds = { halfW: 1, halfH: 1, halfZ: 1 };
   private lineColor = new THREE.Color(1, 1, 1);
-  private lineAlpha = 0.08;
-  private nodeAlpha = 0.04;
+  private lineAlpha = 0.14;
+  private nodeAlpha = 0.1;
 
   // Per-particle RGBA buffer (RGB fixed at white; alpha carries depth fade).
   // Material color + opacity provide the theme tint and base alpha, so the

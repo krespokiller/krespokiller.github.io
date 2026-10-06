@@ -26,8 +26,8 @@
   --text-muted: #57534E;
   --text-tag: #F59E0B;
   --border-tag: rgba(245, 158, 11, 0.2);
-  --line-color: rgba(245, 158, 11, 0.08);
-  --node-color: rgba(245, 158, 11, 0.04);
+  --line-color: rgba(245, 158, 11, 0.14);
+  --node-color: rgba(245, 158, 11, 0.1);
   --gradient-line: rgba(245, 158, 11, 0.15);
   /* Amber glow reads on dark, so elevation is glow-only (no drop shadow). */
   --card-shadow: none;
