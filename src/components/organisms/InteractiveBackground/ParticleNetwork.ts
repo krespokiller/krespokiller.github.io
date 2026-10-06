@@ -25,7 +25,7 @@ export class ParticleNetwork {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
   private readonly camera: THREE.PerspectiveCamera;
-  private readonly clock = new THREE.Clock();
+  private readonly timer = new THREE.Timer();
 
   private points!: THREE.Points;
   private links!: THREE.LineSegments;
@@ -430,7 +430,7 @@ export class ParticleNetwork {
 
   start(): void {
     if (this.rafId !== null) return;
-    this.clock.getDelta(); // discard the pause gap
+    this.timer.reset(); // discard the pause gap
     this.rafId = requestAnimationFrame(this.tick);
   }
 
@@ -490,9 +490,10 @@ export class ParticleNetwork {
     }
   };
 
-  private tick = (): void => {
+  private tick = (timestamp: number): void => {
     this.rafId = requestAnimationFrame(this.tick);
-    const delta = Math.min(this.clock.getDelta(), CONFIG.MAX_DELTA);
+    this.timer.update(timestamp);
+    const delta = Math.min(this.timer.getDelta(), CONFIG.MAX_DELTA);
     this.update(delta);
     this.renderer.render(this.scene, this.camera);
   };
