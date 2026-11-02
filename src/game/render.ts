@@ -1,8 +1,9 @@
 /**
  * Procedural pixel art. No image assets: the world is painted once into an
- * offscreen canvas (static layer); the engine blits a window of it per frame.
+ * offscreen canvas (static layer); the engine blits a window of it per frame
+ * and draws the live parts (doors, cars, lights, actors) on top.
  */
-import { BUILDINGS, COLORS, CRATES, MAP_H, MAP_W, RACKS, TILE, T, WORLD_H, WORLD_W } from './world';
+import { AVENUE_Y0, AVENUE_Y1, BUILDINGS, COLORS, CRATES, MAP_H, MAP_W, RACKS, TILE, T, WORLD_H, WORLD_W, sideStreetAt } from './world';
 import type { Building } from './world';
 
 // ---------------------------------------------------------------- pixel font
@@ -48,6 +49,7 @@ const G: Record<string, string[]> = {
   '.': ['...', '...', '...', '...', '.#.'],
   '/': ['..#', '..#', '.#.', '#..', '#..'],
   '+': ['...', '.#.', '###', '.#.', '...'],
+  '>': ['#..', '.#.', '..#', '.#.', '#..'],
   ' ': ['...', '...', '...', '...', '...'],
 };
 
@@ -79,7 +81,7 @@ function rng(seed: number) {
   };
 }
 
-function rgba(hex: string, a: number): string {
+export function rgba(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
@@ -103,7 +105,28 @@ const PAL = {
   wall: '#0f0b25',
   wallLight: '#19133a',
   win: '#17123a',
+  brick: '#2a1a2e',
+  concrete: '#1b1735',
 };
+
+// ------------------------------------------------------------- door / sign
+
+/** Door rect in px. The static layer draws the frame; the engine animates the leaf. */
+export function doorRect(b: Building): { x: number; y: number; w: number; h: number } {
+  const cx = b.x * TILE + (b.w * TILE) / 2;
+  const h = b.kind === 'garage' ? 22 : 19;
+  const w = b.kind === 'garage' ? 34 : b.kind === 'residential' ? 12 : 14;
+  return { x: Math.round(cx - w / 2), y: (b.y + b.h) * TILE - h, w, h };
+}
+
+/** Sign plate rect (px), right above the door so it is on screen where the player stands. */
+export function signRect(b: Building): { x: number; y: number; w: number; h: number; scale: number } {
+  const scale = b.sign.length > 6 ? 2 : 3;
+  const plateW = Math.min(b.w * TILE - 12, textWidth(b.sign, scale) + 14);
+  const plateH = scale * 5 + 8 + (b.sub ? 12 : 0);
+  const door = doorRect(b);
+  return { x: Math.round(b.x * TILE + (b.w * TILE) / 2 - plateW / 2), y: door.y - plateH - 10, w: plateW, h: plateH, scale };
+}
 
 // -------------------------------------------------------------- world render
 
@@ -133,7 +156,7 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
     }
   }
   // Grain
-  for (let i = 0; i < 5200; i++) {
+  for (let i = 0; i < 7800; i++) {
     const x = Math.floor(rand() * WORLD_W);
     const y = Math.floor(rand() * WORLD_H);
     ctx.fillStyle = rand() > 0.5 ? 'rgba(120,90,255,0.06)' : 'rgba(0,240,255,0.04)';
@@ -148,32 +171,58 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
   for (let tx = 21; tx <= 58; tx += 4) for (let ty = 25; ty < MAP_H; ty += 4) ctx.fillRect(tx * TILE - 1, ty * TILE - 1, 3, 3);
   drawText(ctx, 'TERRAFORM YARD', 28 * TILE, 26 * TILE + 4, 3, 'rgba(0,240,255,0.16)');
 
-  // Road lane dashes
-  const isVRoad = (tx: number) => (tx >= 17 && tx <= 20) || (tx >= 38 && tx <= 41) || (tx >= 59 && tx <= 62);
+  // Avenue center line (dashed amber) and side-street dashes
   ctx.fillStyle = 'rgba(245,158,11,0.55)';
   for (let x = 0; x < WORLD_W; x += 20) {
-    if (isVRoad(Math.floor(x / TILE)) || isVRoad(Math.floor((x + 10) / TILE))) continue;
+    if (sideStreetAt(Math.floor(x / TILE)) || sideStreetAt(Math.floor((x + 10) / TILE))) continue;
     ctx.fillRect(x, 23 * TILE - 1, 10, 2);
   }
-  for (const cx of [19 * TILE, 40 * TILE, 61 * TILE]) {
-    const yMax = cx === 40 * TILE ? 21 * TILE : WORLD_H;
+  for (let tx = 0; tx < MAP_W; tx++) {
+    const s = sideStreetAt(tx);
+    if (!s || tx !== s.x0 + 2) continue;
+    const cx = tx * TILE;
+    const yMax = s.south ? WORLD_H : AVENUE_Y0 * TILE;
     for (let y = 0; y < yMax; y += 20) {
-      if (y >= 21 * TILE - 4 && y < 25 * TILE) continue;
+      if (y >= AVENUE_Y0 * TILE - 4 && y < (AVENUE_Y1 + 1) * TILE) continue;
       ctx.fillRect(cx - 1, y, 2, 10);
     }
   }
-  // Crosswalks
+  // Crosswalks at every side street
   ctx.fillStyle = 'rgba(220,220,255,0.18)';
-  for (const vx of [17, 38, 59]) {
+  for (let tx = 0; tx < MAP_W; tx++) {
+    const s = sideStreetAt(tx);
+    if (!s || tx !== s.x0) continue;
     for (let i = 0; i < 4; i++) {
-      ctx.fillRect((vx + i) * TILE + 2, 20 * TILE + 3, 12, 3);
-      ctx.fillRect((vx + i) * TILE + 2, 25 * TILE + 8, 12, 3);
+      ctx.fillRect((tx + i) * TILE + 2, AVENUE_Y0 * TILE - 13, 12, 3);
+      if (s.south) ctx.fillRect((tx + i) * TILE + 2, (AVENUE_Y1 + 1) * TILE + 8, 12, 3);
     }
+  }
+
+  // Timeline path: dotted trail on the north sidewalk linking the doors, west → east.
+  ctx.fillStyle = 'rgba(245,158,11,0.35)';
+  for (let x = 2 * TILE; x < WORLD_W - 2 * TILE; x += 6) ctx.fillRect(x, 20 * TILE + 7, 3, 2);
+  // then down to the HQ door
+  const hq = BUILDINGS.find((b) => b.id === 'hub')!;
+  for (let y = 20 * TILE + 7; y < hq.doorY * TILE; y += 6) ctx.fillRect(hq.doorX * TILE + 7, y, 2, 3);
+
+  // Year posts on the sidewalk, one per building, with an arrow pointing east.
+  for (const b of BUILDINGS) {
+    if (b.id === 'hub') continue;
+    const px = b.doorX * TILE - 22;
+    const py = 20 * TILE + 2;
+    ctx.fillStyle = '#2a2250';
+    ctx.fillRect(px + 4, py - 6, 2, 16);
+    glowRect(ctx, px - 2, py - 14, 24, 9, b.accent, 0.6);
+    ctx.fillStyle = '#07041a';
+    ctx.fillRect(px - 2, py - 14, 24, 9);
+    ctx.fillStyle = b.accent;
+    ctx.fillRect(px - 2, py - 14, 24, 1);
+    drawText(ctx, b.year, px + 10 - textWidth(b.year, 1) / 2, py - 12, 1, b.accent);
   }
 
   // Puddles with neon reflections
   const reflect = [COLORS.cyan, COLORS.magenta, COLORS.amber];
-  for (let i = 0; i < 46; i++) {
+  for (let i = 0; i < 70; i++) {
     const tx = Math.floor(rand() * MAP_W);
     const ty = Math.floor(rand() * MAP_H);
     const t = tiles[ty * MAP_W + tx];
@@ -187,44 +236,52 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
     ctx.fillRect(px + 2, py + 1, 6, 2);
   }
 
-  // Lot clutter (dumpsters, vents)
-  for (let i = 0; i < 70; i++) {
+  // Lot clutter (dumpsters, vents, trees)
+  for (let i = 0; i < 110; i++) {
     const tx = Math.floor(rand() * MAP_W);
     const ty = Math.floor(rand() * MAP_H);
     if (tiles[ty * MAP_W + tx] !== T.LOT) continue;
     const px = tx * TILE + 2;
     const py = ty * TILE + 4;
-    if (rand() > 0.5) {
+    const r = rand();
+    if (r > 0.66) {
       ctx.fillStyle = '#0b1f1c';
       ctx.fillRect(px, py, 10, 6);
       ctx.fillStyle = '#143b35';
       ctx.fillRect(px, py, 10, 2);
-    } else {
+    } else if (r > 0.33) {
       ctx.fillStyle = '#1b1538';
       ctx.fillRect(px, py, 8, 8);
       ctx.fillStyle = '#0a0720';
       for (let k = 0; k < 3; k++) ctx.fillRect(px + 1, py + 2 + k * 2, 6, 1);
+    } else {
+      // neon tree
+      ctx.fillStyle = '#2a2250';
+      ctx.fillRect(px + 4, py + 4, 2, 6);
+      ctx.fillStyle = '#143b35';
+      ctx.fillRect(px + 1, py, 8, 6);
+      ctx.fillStyle = '#1f6b4f';
+      ctx.fillRect(px + 2, py - 2, 6, 4);
     }
   }
 
   // Dock pads (provider colors are drawn live by the engine)
-  for (const [tx, ty, color] of [[24, 35, COLORS.violet], [55, 35, COLORS.violet]] as const) {
+  for (const [tx, ty] of [[24, 35], [55, 35]] as const) {
     const x = tx * TILE - 8;
     const y = ty * TILE - 8;
-    ctx.fillStyle = rgba(color, 0.08);
+    ctx.fillStyle = rgba(COLORS.violet, 0.08);
     ctx.fillRect(x - 4, y - 4, 40, 40);
-    ctx.fillStyle = rgba(color, 0.55);
+    ctx.fillStyle = rgba(COLORS.violet, 0.55);
     ctx.fillRect(x - 4, y - 4, 40, 1);
     ctx.fillRect(x - 4, y + 35, 40, 1);
     ctx.fillRect(x - 4, y - 4, 1, 40);
     ctx.fillRect(x + 35, y - 4, 1, 40);
   }
 
-  // Lamps
-  for (let ty = 0; ty < MAP_H; ty++) {
-    for (let tx = 0; tx < MAP_W; tx++) {
+  // Lamps along both sidewalks of the avenue
+  for (let tx = 3; tx < MAP_W; tx += 7) {
+    for (const ty of [AVENUE_Y0 - 1, AVENUE_Y1 + 1]) {
       if (tiles[ty * MAP_W + tx] !== T.WALK) continue;
-      if (!((ty === 20 || ty === 25) && tx % 7 === 3)) continue;
       const x = tx * TILE + 8;
       const y = ty * TILE + 12;
       const g = ctx.createRadialGradient(x, y, 1, x, y, 30);
@@ -260,7 +317,7 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
     glowRect(ctx, x, y, w, h, COLORS.cyan, 0.4);
   }
 
-  // Cargo stacks (neutral; the engine tints and labels them per migration)
+  // Cargo stacks (neutral; the engine tints them per migration)
   for (const c of CRATES) {
     const color = '#8f87c9';
     const x = c.x * TILE;
@@ -303,102 +360,225 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
   return cv;
 }
 
-/** Sign plate rect (px). Sits right above the door so it is on screen where the player stands. */
-export function signRect(b: Building): { x: number; y: number; w: number; h: number; scale: number } {
-  const scale = b.sign.length > 6 ? 2 : 3;
-  const plateW = Math.min(b.w * TILE - 12, textWidth(b.sign, scale) + 14);
-  const plateH = scale * 5 + 8 + (b.sub ? 12 : 0);
-  const doorTop = (b.y + b.h) * TILE - 19;
-  return { x: Math.round(b.x * TILE + (b.w * TILE) / 2 - plateW / 2), y: doorTop - plateH - 12, w: plateW, h: plateH, scale };
+// ------------------------------------------------------------- buildings
+
+type Rand = () => number;
+
+function windows(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, accent: string, rand: Rand, stepX = 9, stepY = 10, w = 4, h = 5, litChance = 0.38) {
+  const lit = [accent, '#ffd27a', '#7df9ff', '#ff7ad9'];
+  for (let wy = y0; wy + h <= y1; wy += stepY) {
+    for (let wx = x0; wx + w <= x1; wx += stepX) {
+      const on = rand() < litChance;
+      ctx.fillStyle = on ? rgba(lit[Math.floor(rand() * lit.length)], 0.85) : PAL.win;
+      ctx.fillRect(wx, wy, w, h);
+    }
+  }
 }
 
-function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, rand: () => number) {
+function signPlate(ctx: CanvasRenderingContext2D, b: Building) {
+  const sr = signRect(b);
+  const cx = b.x * TILE + (b.w * TILE) / 2;
+  const mainW = textWidth(b.sign, sr.scale);
+  glowRect(ctx, sr.x, sr.y, sr.w, sr.h, b.accent, 0.8);
+  ctx.fillStyle = '#07041a';
+  ctx.fillRect(sr.x, sr.y, sr.w, sr.h);
+  ctx.fillStyle = rgba(b.accent, 0.9);
+  ctx.fillRect(sr.x, sr.y, sr.w, 1);
+  ctx.fillRect(sr.x, sr.y + sr.h - 1, sr.w, 1);
+  drawText(ctx, b.sign, cx - mainW / 2, sr.y + 4, sr.scale, b.accent);
+  if (b.sub) {
+    const sw = textWidth(b.sub, 2);
+    drawText(ctx, b.sub, cx - sw / 2, sr.y + 4 + sr.scale * 5 + 3, 2, '#ffffff');
+  }
+}
+
+function doorFrame(ctx: CanvasRenderingContext2D, b: Building) {
+  const d = doorRect(b);
+  glowRect(ctx, d.x, d.y, d.w, d.h, b.accent, 0.9);
+  ctx.fillStyle = '#05030f';
+  ctx.fillRect(d.x, d.y, d.w, d.h);
+  ctx.fillStyle = b.accent;
+  ctx.fillRect(d.x, d.y, d.w, 1);
+  ctx.fillRect(d.x, d.y, 1, d.h);
+  ctx.fillRect(d.x + d.w - 1, d.y, 1, d.h);
+  // warm light spilling onto the sidewalk
+  const g = ctx.createLinearGradient(0, d.y + d.h, 0, d.y + d.h + 14);
+  g.addColorStop(0, rgba(b.accent, 0.22));
+  g.addColorStop(1, rgba(b.accent, 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(d.x - 4, d.y + d.h, d.w + 8, 14);
+}
+
+function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, rand: Rand) {
   const x = b.x * TILE;
   const y = b.y * TILE;
   const w = b.w * TILE;
   const h = b.h * TILE;
   const cx = x + w / 2;
   const accent = b.accent;
+  const sr = signRect(b);
+  const d = doorRect(b);
 
   glowRect(ctx, x, y, w, h, accent, 0.5);
-  ctx.fillStyle = PAL.wall;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = PAL.wallLight;
-  ctx.fillRect(x, y, w, 8);
-  ctx.fillStyle = rgba(accent, 0.9);
-  ctx.fillRect(x, y, w, 1);
-  ctx.fillStyle = rgba(accent, 0.35);
-  ctx.fillRect(x, y, 1, h);
-  ctx.fillRect(x + w - 1, y, 1, h);
 
-  // Sign plate (above the door)
-  const sr = signRect(b);
-  const mainW = textWidth(b.sign, sr.scale);
-
-  // Windows fill the facade above the sign
-  const winTop = y + 14;
-  const winBottom = sr.y - 8;
-  const lit = [accent, '#ffd27a', '#7df9ff', '#ff7ad9'];
-  for (let wy = winTop; wy < winBottom; wy += 10) {
-    for (let wx = x + 9; wx < x + w - 10; wx += 9) {
-      const on = rand() < 0.38;
-      ctx.fillStyle = on ? rgba(lit[Math.floor(rand() * lit.length)], 0.85) : PAL.win;
-      ctx.fillRect(wx, wy, 4, 5);
+  switch (b.kind) {
+    case 'garage': {
+      // Low concrete box with a flat roof, a workbench window and a big roll-up door.
+      ctx.fillStyle = PAL.concrete;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#231d44';
+      ctx.fillRect(x, y, w, 6);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      // corrugated wall lines
+      ctx.fillStyle = '#16122f';
+      for (let yy = y + 10; yy < y + h; yy += 4) ctx.fillRect(x + 2, yy, w - 4, 1);
+      // side window with the monitor glow
+      ctx.fillStyle = PAL.win;
+      ctx.fillRect(x + 8, y + 12, 18, 12);
+      ctx.fillStyle = rgba(COLORS.cyan, 0.75);
+      ctx.fillRect(x + 11, y + 15, 7, 5);
+      ctx.fillStyle = '#ffd27a';
+      ctx.fillRect(x + 20, y + 14, 3, 2);
+      // oil stain + tyre by the door
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x + w - 30, y + h + 2, 12, 4);
+      ctx.fillStyle = '#0a0720';
+      ctx.fillRect(x + w - 14, y + h - 10, 8, 8);
+      ctx.fillStyle = '#2a2250';
+      ctx.fillRect(x + w - 12, y + h - 8, 4, 4);
+      // roll-up door frame (leaf drawn live)
+      ctx.fillStyle = '#05030f';
+      ctx.fillRect(d.x, d.y, d.w, d.h);
+      ctx.fillStyle = accent;
+      ctx.fillRect(d.x - 1, d.y - 1, d.w + 2, 1);
+      ctx.fillRect(d.x - 1, d.y, 1, d.h);
+      ctx.fillRect(d.x + d.w, d.y, 1, d.h);
+      break;
+    }
+    case 'loft': {
+      // Wide brick coworking loft with big grid windows and screens inside.
+      ctx.fillStyle = PAL.brick;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#1b1020';
+      for (let yy = y + 3; yy < y + h; yy += 4) for (let xx = x + ((yy / 4) % 2 ? 0 : 4); xx < x + w; xx += 8) ctx.fillRect(xx, yy, 6, 1);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      // big windows
+      for (let wx = x + 8; wx + 22 <= x + w - 8; wx += 26) {
+        ctx.fillStyle = '#0d1a30';
+        ctx.fillRect(wx, y + 10, 22, 16);
+        ctx.fillStyle = '#2a2250';
+        ctx.fillRect(wx + 10, y + 10, 2, 16);
+        ctx.fillRect(wx, y + 17, 22, 2);
+        // video-call screens
+        ctx.fillStyle = rgba(COLORS.cyan, 0.7);
+        ctx.fillRect(wx + 3, y + 12, 5, 3);
+        ctx.fillStyle = rgba('#7df9ff', 0.6);
+        ctx.fillRect(wx + 14, y + 20, 5, 3);
+      }
+      doorFrame(ctx, b);
+      break;
+    }
+    case 'office': {
+      ctx.fillStyle = PAL.wall;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = PAL.wallLight;
+      ctx.fillRect(x, y, w, 8);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      windows(ctx, x + 9, y + 14, x + w - 8, sr.y - 6, accent, rand);
+      // rooftop AC units
+      ctx.fillStyle = '#2a2250';
+      ctx.fillRect(x + 10, y - 5, 12, 5);
+      ctx.fillRect(x + w - 24, y - 5, 12, 5);
+      doorFrame(ctx, b);
+      break;
+    }
+    case 'ops': {
+      // Operations center: dark glass, server-rack windows, alert antenna.
+      ctx.fillStyle = '#0a0d1f';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      ctx.fillStyle = rgba(accent, 0.3);
+      ctx.fillRect(x, y, 1, h);
+      ctx.fillRect(x + w - 1, y, 1, h);
+      for (let wy = y + 12; wy < sr.y - 8; wy += 9) {
+        ctx.fillStyle = '#101a33';
+        ctx.fillRect(x + 8, wy, w - 16, 6);
+        for (let k = x + 12; k < x + w - 12; k += 7) {
+          ctx.fillStyle = rand() > 0.5 ? COLORS.green : rand() > 0.5 ? COLORS.cyan : '#2a3b6a';
+          ctx.fillRect(k, wy + 2, 2, 2);
+        }
+      }
+      // antenna with red beacon (lit live)
+      ctx.fillStyle = '#2a2250';
+      ctx.fillRect(x + w - 16, y - 16, 2, 16);
+      ctx.fillRect(x + w - 20, y - 8, 10, 1);
+      doorFrame(ctx, b);
+      break;
+    }
+    case 'residential': {
+      // Apartment block: balconies, warm windows, an intercom by the door.
+      ctx.fillStyle = '#1a1230';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      for (let wy = y + 10; wy < sr.y - 8; wy += 14) {
+        // balcony slab
+        ctx.fillStyle = '#2a2250';
+        ctx.fillRect(x + 4, wy + 9, w - 8, 2);
+        ctx.fillStyle = rgba(accent, 0.35);
+        ctx.fillRect(x + 4, wy + 6, w - 8, 1);
+        windows(ctx, x + 8, wy, x + w - 6, wy + 9, '#ffd27a', rand, 11, 10, 5, 6, 0.55);
+      }
+      doorFrame(ctx, b);
+      // intercom panel
+      ctx.fillStyle = '#2a2250';
+      ctx.fillRect(d.x + d.w + 3, d.y + 4, 5, 8);
+      ctx.fillStyle = COLORS.green;
+      ctx.fillRect(d.x + d.w + 4, d.y + 5, 3, 1);
+      ctx.fillStyle = accent;
+      ctx.fillRect(d.x + d.w + 5, d.y + 9, 1, 1);
+      break;
+    }
+    case 'tower': {
+      ctx.fillStyle = PAL.wall;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = PAL.wallLight;
+      ctx.fillRect(x, y, w, 8);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      ctx.fillStyle = rgba(accent, 0.35);
+      ctx.fillRect(x, y, 1, h);
+      ctx.fillRect(x + w - 1, y, 1, h);
+      windows(ctx, x + 9, y + 14, x + w - 8, sr.y - 8, accent, rand);
+      // helipad + mast
+      ctx.fillStyle = '#1a1440';
+      ctx.fillRect(cx - 14, y - 6, 28, 6);
+      ctx.fillStyle = rgba(accent, 0.5);
+      ctx.fillRect(cx - 10, y - 4, 20, 1);
+      ctx.fillRect(cx - 1, y - 5, 2, 4);
+      ctx.fillStyle = '#2a2250';
+      ctx.fillRect(cx - 1, y - 20, 2, 14);
+      doorFrame(ctx, b);
+      break;
+    }
+    case 'hq': {
+      ctx.fillStyle = '#0d0a22';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = rgba(accent, 0.9);
+      ctx.fillRect(x, y, w, 1);
+      ctx.fillStyle = rgba(accent, 0.25);
+      for (let yy = y + 6; yy < y + h; yy += 6) ctx.fillRect(x + 3, yy, w - 6, 1);
+      windows(ctx, x + 10, y + 12, x + w - 8, sr.y - 8, accent, rand, 10, 10, 5, 5, 0.45);
+      doorFrame(ctx, b);
+      break;
     }
   }
-  // A few windows below the sign, flanking the door
-  for (let wy = sr.y + sr.h + 5; wy < y + h - 24; wy += 10) {
-    for (const wx of [x + 10, x + 19, x + w - 14, x + w - 23]) {
-      const on = rand() < 0.38;
-      ctx.fillStyle = on ? rgba(lit[Math.floor(rand() * lit.length)], 0.85) : PAL.win;
-      ctx.fillRect(wx, wy, 4, 5);
-    }
-  }
 
-  glowRect(ctx, sr.x, sr.y, sr.w, sr.h, accent, 0.8);
-  ctx.fillStyle = '#07041a';
-  ctx.fillRect(sr.x, sr.y, sr.w, sr.h);
-  ctx.fillStyle = rgba(accent, 0.9);
-  ctx.fillRect(sr.x, sr.y, sr.w, 1);
-  ctx.fillRect(sr.x, sr.y + sr.h - 1, sr.w, 1);
-  drawText(ctx, b.sign, cx - mainW / 2, sr.y + 4, sr.scale, accent);
-  if (b.sub) {
-    const sw = textWidth(b.sub, 2);
-    drawText(ctx, b.sub, cx - sw / 2, sr.y + 4 + sr.scale * 5 + 3, 2, '#ffffff');
-  }
-
-  // Roof details
-  if (b.id === 'loopay') {
-    ctx.fillStyle = '#2a2250';
-    ctx.fillRect(cx - 1, y - 12, 2, 12);
-    ctx.fillStyle = COLORS.red;
-    ctx.fillRect(cx - 1, y - 14, 3, 3);
-    ctx.fillStyle = rgba(accent, 0.25);
-    ctx.fillRect(x + 12, y - 4, 20, 4);
-    ctx.fillRect(x + w - 32, y - 4, 20, 4);
-  }
-
-  // Door
-  const doorY = y + h - 19;
-  if (b.id === 'garage') {
-    const dw = 30;
-    ctx.fillStyle = '#05030f';
-    ctx.fillRect(cx - dw / 2, doorY, dw, 19);
-    ctx.fillStyle = rgba(accent, 0.45);
-    for (let sy = doorY + 2; sy < doorY + 19; sy += 3) ctx.fillRect(cx - dw / 2 + 1, sy, dw - 2, 1);
-    ctx.fillStyle = accent;
-    ctx.fillRect(cx - dw / 2 - 1, doorY - 1, dw + 2, 1);
-  } else {
-    glowRect(ctx, cx - 7, doorY, 14, 19, accent, 0.9);
-    ctx.fillStyle = '#05030f';
-    ctx.fillRect(cx - 7, doorY, 14, 19);
-    ctx.fillStyle = accent;
-    ctx.fillRect(cx - 7, doorY, 14, 1);
-    ctx.fillRect(cx - 7, doorY, 1, 19);
-    ctx.fillRect(cx + 6, doorY, 1, 19);
-    ctx.fillStyle = rgba(accent, 0.3);
-    ctx.fillRect(cx - 5, doorY + 3, 10, 13);
-  }
+  signPlate(ctx, b);
 }
 
 // ------------------------------------------------------------------ minimap

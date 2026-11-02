@@ -31,6 +31,7 @@ const GITHUB_URL = 'https://github.com/krespokiller';
 const ACCENT: Record<DialogId, string> = {
   garage: COLORS.amber,
   tribuu: COLORS.cyan,
+  loopayjs: COLORS.teal,
   loopay: COLORS.magenta,
   galgo: COLORS.green,
   trebet: COLORS.orange,

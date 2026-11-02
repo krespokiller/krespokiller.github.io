@@ -60,7 +60,7 @@ export interface GameText {
     carrying: string;
     allDone: string;
   };
-  zones: Record<'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'hub', DialogText>;
+  zones: Record<'garage' | 'tribuu' | 'loopayjs' | 'galgo' | 'trebet' | 'loopay' | 'hub', DialogText>;
   locked: (missing: { districts: number; shards: number; migration: number }) => DialogText;
   hubActions: { linkedin: string; github: string; contact: string };
   names: Record<string, string>;
@@ -99,7 +99,7 @@ const en: GameText = {
     kicker: 'SETTLE ONCE // OPEN-WORLD RESUME',
     title: 'David Vargas',
     lead: 'A small night city built from my career. Walk around, read the terminals and unlock the hub.',
-    goals: ['Visit the 5 districts of my career', 'Collect the 8 stack shards', 'Complete one cloud migration at the Terraform Yard'],
+    goals: ['Walk the 6 stops of my timeline, west to east', 'Collect the 8 stack shards', 'Complete one cloud migration at the Terraform Yard'],
     controlsDesktop: 'WASD / ARROWS to move · E or SPACE to act · ESC to exit',
     controlsTouch: 'Drag on the left to move · tap ACT to interact',
     start: 'EXPLORE',
@@ -107,7 +107,7 @@ const en: GameText = {
   },
   hud: {
     objectives: 'OBJECTIVES',
-    districts: 'DISTRICTS',
+    districts: 'TIMELINE',
     shards: 'STACK SHARDS',
     migration: 'MIGRATION',
     hubOpen: 'CONTACT HUB OPEN → go to SETTLE ONCE',
@@ -119,11 +119,11 @@ const en: GameText = {
     actTouch: 'ACT',
     next: 'NEXT ▶',
     close: 'CLOSE ✕',
-    hint: 'Walk to a glowing door',
+    hint: 'Follow the dotted path east — start at the garage',
   },
   toast: {
     shard: (l) => `+ ${l.toUpperCase()}`,
-    district: (n, t) => `DISTRICT EXPLORED ${n}/${t}`,
+    district: (n, t) => `STOP ${n}/${t} EXPLORED`,
     loaded: 'CONTAINER LOADED → bring it to Azure',
     delivered: (n, t) => `DELIVERED ${n}/${t}`,
     hit: 'DRONE HIT — CONTAINER LOST',
@@ -149,12 +149,19 @@ const en: GameText = {
         'CI/CD automation with GitHub Actions.',
       ],
     },
+    loopayjs: {
+      title: 'LOOPAY · 2023',
+      tag: 'Feb 2023 – Dec 2023 · JavaScript Developer',
+      pages: [
+        'Full-stack on RedwoodJS (React + Node.js) for the main platform: interactive UI and server-side logic.',
+        'Optimized data access with GraphQL and Prisma, and kept the CI/CD flows on GitHub Actions running.',
+      ],
+    },
     loopay: {
       title: 'LOOPAY TOWER',
-      tag: 'Feb 2023 – Present · JavaScript Dev → Tech Lead',
+      tag: 'Oct 2025 – Present · Tech Lead',
       pages: [
-        '2023 — Full-stack on RedwoodJS (React + Node.js), GraphQL and Prisma, with CI/CD on GitHub Actions.',
-        'Since Oct 2025 — Tech Lead. I lead a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies.',
+        'I lead a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies.',
         'We closed 12 findings from a security audit: idempotency of money-moving operations, SSRF protection, API key lifecycle and encrypted secrets.',
         'CI/CD on GitHub Actions with OIDC, an ephemeral environment per pull request and 6,000+ automated tests. Deployments got 60% faster (15 → 6 minutes) on AWS.',
       ],
@@ -190,11 +197,11 @@ const en: GameText = {
     title: 'ACCESS DENIED',
     tag: 'The contact hub is locked',
     pages: [
-      `Still missing — districts: ${districts} · stack shards: ${shards} · containers: ${migration}. Come back when all three objectives are done.`,
+      `Still missing — timeline stops: ${districts} · stack shards: ${shards} · containers: ${migration}. Come back when all three objectives are done.`,
     ],
   }),
   hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Back to the classic resume' },
-  names: { garage: 'Chía Garage', tribuu: 'Tribuu', loopay: 'Loopay Tower', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', src: 'Source dock', dst: 'Target dock', console: 'Migration console' },
+  names: { garage: 'Chía Garage', tribuu: 'Tribuu', loopayjs: 'Loopay 2023', loopay: 'Loopay Tower', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', src: 'Source dock', dst: 'Target dock', console: 'Migration console' },
   migration: {
     console: {
       title: 'MIGRATION CONSOLE',
@@ -312,7 +319,7 @@ const es: GameText = {
     kicker: 'SETTLE ONCE // CV DE MUNDO ABIERTO',
     title: 'David Vargas',
     lead: 'Una pequeña ciudad nocturna hecha con mi carrera. Camina, lee las terminales y desbloquea el hub.',
-    goals: ['Visita los 5 distritos de mi carrera', 'Recoge los 8 fragmentos de stack', 'Completa una migración de nube en el Patio Terraform'],
+    goals: ['Recorre las 6 paradas de mi línea de tiempo, de oeste a este', 'Recoge los 8 fragmentos de stack', 'Completa una migración de nube en el Patio Terraform'],
     controlsDesktop: 'WASD / FLECHAS para moverte · E o ESPACIO para actuar · ESC para salir',
     controlsTouch: 'Arrastra a la izquierda para moverte · toca ACT para interactuar',
     start: 'EXPLORAR',
@@ -320,7 +327,7 @@ const es: GameText = {
   },
   hud: {
     objectives: 'OBJETIVOS',
-    districts: 'DISTRITOS',
+    districts: 'LÍNEA DE TIEMPO',
     shards: 'FRAGMENTOS',
     migration: 'MIGRACIÓN',
     hubOpen: 'HUB DE CONTACTO ABIERTO → ve a SETTLE ONCE',
@@ -332,11 +339,11 @@ const es: GameText = {
     actTouch: 'ACT',
     next: 'SIGUIENTE ▶',
     close: 'CERRAR ✕',
-    hint: 'Camina hacia una puerta brillante',
+    hint: 'Sigue el camino punteado hacia el este — empieza en el garaje',
   },
   toast: {
     shard: (l) => `+ ${l.toUpperCase()}`,
-    district: (n, t) => `DISTRITO EXPLORADO ${n}/${t}`,
+    district: (n, t) => `PARADA ${n}/${t} EXPLORADA`,
     loaded: 'CONTENEDOR CARGADO → llévalo a Azure',
     delivered: (n, t) => `ENTREGADO ${n}/${t}`,
     hit: 'DRON TE ALCANZÓ — CONTENEDOR PERDIDO',
@@ -362,12 +369,19 @@ const es: GameText = {
         'Automatización CI/CD con GitHub Actions.',
       ],
     },
+    loopayjs: {
+      title: 'LOOPAY · 2023',
+      tag: 'Feb 2023 – Dic 2023 · Desarrollador JavaScript',
+      pages: [
+        'Full-stack en RedwoodJS (React + Node.js) para la plataforma principal: UI interactiva y lógica del servidor.',
+        'Consultas optimizadas con GraphQL y Prisma, y mantenimiento de los flujos CI/CD en GitHub Actions.',
+      ],
+    },
     loopay: {
       title: 'TORRE LOOPAY',
-      tag: 'Feb 2023 – Presente · Dev JavaScript → Tech Lead',
+      tag: 'Oct 2025 – Presente · Tech Lead',
       pages: [
-        '2023 — Full-stack en RedwoodJS (React + Node.js), GraphQL y Prisma, con CI/CD en GitHub Actions.',
-        'Desde oct 2025 — Tech Lead. Lidero un equipo de 5 ingenieros en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos para empresas fintech.',
+        'Lidero un equipo de 5 ingenieros en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos para empresas fintech.',
         'Cerramos 12 hallazgos de una auditoría de seguridad: idempotencia de operaciones que mueven dinero, protección contra SSRF, ciclo de vida de claves API y secretos cifrados.',
         'CI/CD en GitHub Actions con OIDC, un entorno efímero por pull request y más de 6.000 pruebas automatizadas. Los despliegues fueron 60% más rápidos (de 15 a 6 minutos) en AWS.',
       ],
@@ -403,11 +417,11 @@ const es: GameText = {
     title: 'ACCESO DENEGADO',
     tag: 'El hub de contacto está bloqueado',
     pages: [
-      `Aún falta — distritos: ${districts} · fragmentos: ${shards} · contenedores: ${migration}. Vuelve cuando los tres objetivos estén completos.`,
+      `Aún falta — paradas: ${districts} · fragmentos: ${shards} · contenedores: ${migration}. Vuelve cuando los tres objetivos estén completos.`,
     ],
   }),
   hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Volver al CV clásico' },
-  names: { garage: 'Garaje en Chía', tribuu: 'Tribuu', loopay: 'Torre Loopay', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', src: 'Muelle de origen', dst: 'Muelle destino', console: 'Consola de migración' },
+  names: { garage: 'Garaje en Chía', tribuu: 'Tribuu', loopayjs: 'Loopay 2023', loopay: 'Torre Loopay', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', src: 'Muelle de origen', dst: 'Muelle destino', console: 'Consola de migración' },
   migration: {
     console: {
       title: 'CONSOLA DE MIGRACIÓN',

@@ -2,9 +2,10 @@
  * Game engine: input, physics, quests and drawing. Framework-agnostic —
  * React (PlayMode.tsx) only mounts it and renders the DOM HUD / dialogs.
  */
-import { drawText, renderMini, renderWorld, signRect, textWidth } from './render';
+import { doorRect, drawText, renderMini, renderWorld, signRect, textWidth } from './render';
 import {
   BUILDINGS,
+  CARS,
   COLORS,
   DISTRICTS,
   DRONES,
@@ -16,6 +17,7 @@ import {
   WORLD_H,
   WORLD_W,
   buildTiles,
+  carPosition,
   collides,
   dronePosition,
 } from './world';
@@ -25,7 +27,7 @@ import { Migration, PROVIDER_META, TF_SHARDS, pieceOf } from './migration';
 import type { Delivery, MigrationHud, MigrationResult, Provider, StepId } from './migration';
 import type { CombatEvent, CombatHud } from './combat';
 
-export type DialogId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'hub' | 'locked';
+export type DialogId = 'garage' | 'tribuu' | 'loopayjs' | 'galgo' | 'trebet' | 'loopay' | 'hub' | 'locked';
 
 export type GameEvent =
   | { k: 'dialog'; id: DialogId }
@@ -118,6 +120,13 @@ export class Game {
   private hudSig = '';
   private mouseAimAt = -10;
   private flicker = { building: -1, until: 0, next: 2 };
+  /** Per-building door openness 0..1 (opens when the player stands at the door). */
+  private doorOpen = new Float32Array(BUILDINGS.length);
+  private parts: { x: number; y: number; vx: number; vy: number; life: number; max: number; c: string }[] = [];
+  private camSX = -1;
+  private camSY = -1;
+  /** Seconds since the loop started: drives the neon power-on sequence. */
+  private bootT = 0;
   private miniAcc = 0;
 
   constructor(
@@ -285,7 +294,17 @@ export class Game {
     this.ctx.imageSmoothingEnabled = false;
   }
 
-  /** Dev/QA helper. */
+  /** Dev/QA helpers. */
+  terminalPos(id: ZoneId): { x: number; y: number } | null {
+    const t = TERMINALS.find((q) => q.id === id);
+    return t ? { x: t.x, y: t.y + 4 } : null;
+  }
+
+  shardPos(i: number): { x: number; y: number } {
+    const s = SHARDS[i];
+    return { x: (s.tx + 0.5) * TILE, y: (s.ty + 0.5) * TILE + 4 };
+  }
+
   teleport(x: number, y: number): void {
     this.player.x = x;
     this.player.y = y;
@@ -335,9 +354,10 @@ export class Game {
     switch (id) {
       case 'garage':
       case 'tribuu':
-      case 'loopay':
+      case 'loopayjs':
       case 'galgo':
-      case 'trebet': {
+      case 'trebet':
+      case 'loopay': {
         if (!this.visited.has(id)) {
           this.visited.add(id);
           this.cb.onEvent({ k: 'district', n: this.visited.size });
@@ -418,6 +438,7 @@ export class Game {
     this.raf = requestAnimationFrame(this.frame);
     const dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
+    this.lastDt = dt;
     this.vt += dt;
     if (!this.paused) this.update(dt);
     this.stepRain(dt);
@@ -471,7 +492,7 @@ export class Game {
       if (!collides(this.tiles, p.x, ny)) p.y = ny;
       p.x = Math.max(6, Math.min(WORLD_W - 6, p.x));
       p.y = Math.max(8, Math.min(WORLD_H - 2, p.y));
-      p.step += dt * 9;
+      p.step += dt * 10;
       p.dir = Math.abs(ix) > Math.abs(iy) ? (ix < 0 ? 'left' : 'right') : iy < 0 ? 'up' : 'down';
       // Keyboard/joystick aim unless the mouse aimed recently.
       if (this.vt - this.mouseAimAt > 1.5) this.combat.setAim(ix, iy);
@@ -485,6 +506,7 @@ export class Game {
       if (this.shards.has(s.id)) continue;
       if (Math.hypot((s.tx + 0.5) * TILE - cx, (s.ty + 0.5) * TILE - cy) <= SHARD_RADIUS) {
         this.shards.add(s.id);
+        this.burst((s.tx + 0.5) * TILE, (s.ty + 0.5) * TILE, 14, COLORS.cyan, 70, 0.5);
         this.cb.onEvent({ k: 'shard', label: s.label });
         this.checkDone();
         this.emitHud();
@@ -543,6 +565,14 @@ export class Game {
       this.emitHud();
     }
 
+    // Doors open while the player stands at them (sealed in combat).
+    for (let i = 0; i < BUILDINGS.length; i++) {
+      const b = BUILDINGS[i];
+      const want = this.combat.doors > 0.01 ? 0 : Math.hypot((b.doorX + 0.5) * TILE - cx, (b.doorY + 0.5) * TILE - cy) < 26 ? 1 : 0;
+      const k = this.reducedMotion ? 1 : 1 - Math.exp(-7 * dt);
+      this.doorOpen[i] += (want - this.doorOpen[i]) * k;
+    }
+
     // Neon flicker
     if (!this.reducedMotion) {
       if (this.vt > this.flicker.next) {
@@ -554,6 +584,15 @@ export class Game {
   }
 
   private stepRain(dt: number): void {
+    this.bootT += dt;
+    for (const q of this.parts) {
+      q.life -= dt;
+      q.x += q.vx * dt;
+      q.y += q.vy * dt;
+      q.vx *= 0.9;
+      q.vy *= 0.9;
+    }
+    if (this.parts.length) this.parts = this.parts.filter((q) => q.life > 0);
     if (this.reducedMotion) return;
     for (const d of this.rain) {
       d.y += d.v * dt;
@@ -565,6 +604,16 @@ export class Game {
     }
   }
 
+  private burst(x: number, y: number, n: number, c: string, sp: number, life: number): void {
+    if (this.reducedMotion) n = Math.min(n, 3);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = sp * (0.4 + Math.random() * 0.8);
+      this.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life, max: life, c });
+    }
+    if (this.parts.length > 200) this.parts.splice(0, this.parts.length - 200);
+  }
+
   // --------------------------------------------------------------------- draw
 
   private draw(): void {
@@ -572,25 +621,39 @@ export class Game {
     ctx.fillStyle = '#05030f';
     ctx.fillRect(0, 0, vw, vh);
 
-    let camX = vw >= WORLD_W ? (WORLD_W - vw) / 2 : Math.max(0, Math.min(WORLD_W - vw, player.x - vw / 2));
-    let camY = vh >= WORLD_H ? (WORLD_H - vh) / 2 : Math.max(0, Math.min(WORLD_H - vh, player.y - vh / 2));
-    camX = Math.round(camX);
-    camY = Math.round(camY);
+    const tx = vw >= WORLD_W ? (WORLD_W - vw) / 2 : Math.max(0, Math.min(WORLD_W - vw, player.x - vw / 2));
+    const ty = vh >= WORLD_H ? (WORLD_H - vh) / 2 : Math.max(0, Math.min(WORLD_H - vh, player.y - vh / 2));
+    // Camera eases toward the player (snaps on the first frame and under reduced motion).
+    if (this.camSX < 0 || this.reducedMotion) {
+      this.camSX = tx;
+      this.camSY = ty;
+    } else {
+      const k = 1 - Math.exp(-9 * Math.min(0.05, this.lastDt));
+      this.camSX += (tx - this.camSX) * k;
+      this.camSY += (ty - this.camSY) * k;
+    }
+    const camX = Math.round(this.camSX);
+    const camY = Math.round(this.camSY);
 
     ctx.save();
     ctx.translate(-camX, -camY);
     ctx.drawImage(this.world, 0, 0);
 
+    this.drawBoot();
     this.drawFlicker();
+    this.drawDoors();
     this.drawHubDoor();
+    this.drawCars();
     this.drawTerminals();
     this.drawShards();
     this.drawYard();
     this.combat.drawWorld(ctx, this.vt);
     this.drawPlayer();
+    this.drawParticles();
     this.drawDrones();
     ctx.restore();
 
+    this.drawClouds();
     this.combat.drawOverlay(ctx, vw, vh, this.vt);
     this.drawRain();
     this.camX = camX;
@@ -599,6 +662,117 @@ export class Game {
 
   private camX = 0;
   private camY = 0;
+  private lastDt = 0.016;
+
+  /** Neon power-on: during the first 1.6 s the signs flicker in, west to east. */
+  private drawBoot(): void {
+    if (this.reducedMotion || this.bootT > 1.8) return;
+    const ctx = this.ctx;
+    BUILDINGS.forEach((b, i) => {
+      const start = 0.15 + i * 0.18;
+      const t = this.bootT - start;
+      if (t >= 0.5) return;
+      const on = t > 0 && (Math.floor(t * 26) % 3 !== 0 || t > 0.4);
+      if (on) return;
+      const r = signRect(b);
+      ctx.fillStyle = 'rgba(5,3,15,0.85)';
+      ctx.fillRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
+      const d = doorRect(b);
+      ctx.fillStyle = 'rgba(5,3,15,0.6)';
+      ctx.fillRect(d.x - 4, d.y + d.h, d.w + 8, 14);
+    });
+  }
+
+  /** Door leaves: slide up (roll-up for the garage) as the player approaches. */
+  private drawDoors(): void {
+    const ctx = this.ctx;
+    BUILDINGS.forEach((b, i) => {
+      const d = doorRect(b);
+      const open = this.doorOpen[i];
+      const lit = open * 0.9;
+      // lit interior behind the leaf
+      ctx.fillStyle = hexA(b.accent, 0.08 + 0.22 * lit);
+      ctx.fillRect(d.x + 1, d.y + 1, d.w - 2, d.h - 2);
+      if (open > 0.05) {
+        ctx.fillStyle = `rgba(255,220,160,${0.25 * lit})`;
+        ctx.fillRect(d.x + 2, d.y + 2, d.w - 4, d.h - 4);
+      }
+      const leafH = Math.round((d.h - 1) * (1 - open));
+      if (leafH <= 0) return;
+      if (b.kind === 'garage') {
+        ctx.fillStyle = '#0d0a22';
+        ctx.fillRect(d.x, d.y + 1, d.w, leafH);
+        ctx.fillStyle = hexA(b.accent, 0.4);
+        for (let yy = d.y + 3; yy < d.y + 1 + leafH; yy += 3) ctx.fillRect(d.x + 1, yy, d.w - 2, 1);
+      } else {
+        ctx.fillStyle = '#09061a';
+        ctx.fillRect(d.x + 1, d.y + 1, d.w - 2, leafH);
+        ctx.fillStyle = hexA(b.accent, 0.3);
+        ctx.fillRect(d.x + 3, d.y + 3, d.w - 6, Math.max(0, leafH - 4));
+        ctx.fillStyle = hexA(b.accent, 0.9);
+        ctx.fillRect(d.x + d.w - 4, d.y + Math.min(leafH - 1, 9), 1, 2);
+      }
+    });
+    // Galgo's alert beacon (2 Hz, photosensitivity-safe)
+    const galgo = BUILDINGS.find((b) => b.id === 'galgo')!;
+    const on = this.reducedMotion || Math.floor(this.vt * 2) % 2 === 0;
+    ctx.fillStyle = on ? COLORS.red : '#5a1020';
+    ctx.fillRect((galgo.x + galgo.w) * TILE - 16, galgo.y * TILE - 18, 2, 2);
+  }
+
+  private drawCars(): void {
+    const ctx = this.ctx;
+    for (const c of CARS) {
+      const pos = carPosition(c, this.reducedMotion ? 0 : this.vt);
+      const x = Math.round(pos.x);
+      const y = Math.round(pos.y);
+      // headlight beam
+      ctx.fillStyle = 'rgba(255,230,180,0.08)';
+      const bx = c.dir > 0 ? x + 8 : x - 26;
+      ctx.fillRect(bx, y - 4, 18, 8);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x - 8, y + 3, 16, 2);
+      ctx.fillStyle = '#1a1235';
+      ctx.fillRect(x - 8, y - 3, 16, 6);
+      ctx.fillStyle = c.color;
+      ctx.fillRect(x - 7, y - 4, 14, 1);
+      ctx.fillStyle = '#0d1a30';
+      ctx.fillRect(x - 4, y - 2, 8, 3);
+      ctx.fillStyle = '#ffd27a';
+      ctx.fillRect(c.dir > 0 ? x + 7 : x - 8, y - 2, 1, 2);
+      ctx.fillStyle = COLORS.red;
+      ctx.fillRect(c.dir > 0 ? x - 8 : x + 7, y - 2, 1, 2);
+      ctx.fillStyle = '#05030f';
+      ctx.fillRect(x - 6, y + 2, 3, 2);
+      ctx.fillRect(x + 3, y + 2, 3, 2);
+    }
+  }
+
+  private drawParticles(): void {
+    const ctx = this.ctx;
+    for (const q of this.parts) {
+      ctx.globalAlpha = Math.max(0, q.life / q.max);
+      ctx.fillStyle = q.c;
+      ctx.fillRect(Math.round(q.x), Math.round(q.y), 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Soft clouds drifting over the city (screen space, slow parallax). */
+  private drawClouds(): void {
+    if (this.reducedMotion) return;
+    const ctx = this.ctx;
+    const t = this.vt;
+    ctx.fillStyle = 'rgba(5,3,15,0.16)';
+    for (let i = 0; i < 3; i++) {
+      const w = 160 + i * 60;
+      const x = ((t * (4 + i * 2) + i * 230 - this.camX * 0.15) % (this.vw + w + 80)) - w - 40;
+      const y = 20 + i * 70 - this.camY * 0.05;
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y, w / 2, 18 + i * 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
   private drawFlicker(): void {
     if (this.reducedMotion || this.vt > this.flicker.until || this.flicker.building < 0) return;
@@ -789,8 +963,11 @@ export class Game {
     }
     const x = Math.round(p.x);
     const y = Math.round(p.y);
-    const walk = p.moving ? Math.floor(p.step) % 2 : 0;
-    const bob = p.moving && walk ? -1 : 0;
+    const frame = p.moving ? Math.floor(p.step) % 4 : 0;
+    const walk = frame === 1 || frame === 3 ? 1 : 0;
+    const legA = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+    const breathe = !p.moving && !this.reducedMotion && Math.floor(this.vt * 1.5) % 2 === 1 ? 1 : 0;
+    const bob = p.moving ? (walk ? -1 : 0) : breathe;
 
     // glow + shadow
     ctx.fillStyle = 'rgba(0,240,255,0.14)';
@@ -800,8 +977,8 @@ export class Game {
 
     // legs
     ctx.fillStyle = '#1a1235';
-    ctx.fillRect(x - 3, y - 4 + (walk ? 0 : 1), 2, 4 - (walk ? 0 : 1));
-    ctx.fillRect(x + 1, y - 4 + (walk ? 1 : 0), 2, 4 - (walk ? 1 : 0));
+    ctx.fillRect(x - 3 + (legA > 0 ? 1 : 0), y - 4 + (legA < 0 ? 1 : 0), 2, 4 - (legA < 0 ? 1 : 0));
+    ctx.fillRect(x + 1 - (legA < 0 ? 1 : 0), y - 4 + (legA > 0 ? 1 : 0), 2, 4 - (legA > 0 ? 1 : 0));
     // jacket
     const top = y - 11 + bob;
     ctx.fillStyle = COLORS.magenta;
@@ -866,11 +1043,18 @@ export class Game {
       m.fillRect(Math.round((s.tx + 0.5) * TILE * sx) - 1, Math.round((s.ty + 0.5) * TILE * sy) - 1, 2, 2);
     }
     for (const t of TERMINALS) {
+      const order = DISTRICTS.indexOf(t.id);
       const done = t.id === 'hub' ? false : this.visited.has(t.id);
-      if (done) continue;
       if (t.id === 'hub' && !this.hubOpen && !blink) continue;
-      m.fillStyle = t.id === 'hub' ? (this.hubOpen ? COLORS.green : COLORS.red) : t.accent;
-      m.fillRect(Math.round(t.x * sx) - 2, Math.round(t.y * sy) - 2, 4, 4);
+      m.fillStyle = t.id === 'hub' ? (this.hubOpen ? COLORS.green : COLORS.red) : done ? '#4b4470' : t.accent;
+      const mx = Math.round(t.x * sx);
+      const my = Math.round(t.y * sy);
+      if (order >= 0) {
+        m.fillRect(mx - 3, my - 7, 7, 7);
+        drawText(m, String(order + 1), mx - 1, my - 6, 1, done ? '#8f87c9' : '#05030f');
+      } else {
+        m.fillRect(mx - 2, my - 2, 4, 4);
+      }
     }
     // viewport
     m.strokeStyle = 'rgba(255,255,255,0.35)';

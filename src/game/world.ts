@@ -1,12 +1,17 @@
 /**
  * World data for the open-world resume ("Settle Once").
  *
+ * The city is a timeline: the main avenue runs west (2019) → east (today)
+ * and every career stop is a distinct building on its north side, in
+ * chronological order. South of the avenue: the Terraform Yard (migration)
+ * and, at the east end, the Settle Once HQ (contact hub).
+ *
  * Pure data + pure functions (no DOM) so the layout can be validated in Node:
  * spawn, shards and terminals must be walkable and reachable.
  */
 
 export const TILE = 16;
-export const MAP_W = 80;
+export const MAP_W = 120;
 export const MAP_H = 48;
 export const WORLD_W = MAP_W * TILE;
 export const WORLD_H = MAP_H * TILE;
@@ -22,10 +27,10 @@ export const T = {
   CRATE: 6,
 } as const;
 
-export type ZoneId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'hub' | 'src' | 'dst' | 'console';
+export type ZoneId = 'garage' | 'tribuu' | 'loopayjs' | 'galgo' | 'trebet' | 'loopay' | 'hub' | 'src' | 'dst' | 'console';
 
-/** The five career districts, in chronological order. */
-export const DISTRICTS: ZoneId[] = ['garage', 'tribuu', 'loopay', 'galgo', 'trebet'];
+/** The six career districts, in chronological order (= the timeline). */
+export const DISTRICTS: ZoneId[] = ['garage', 'tribuu', 'loopayjs', 'galgo', 'trebet', 'loopay'];
 
 export const COLORS = {
   amber: '#f59e0b',
@@ -37,10 +42,14 @@ export const COLORS = {
   aws: '#ff9900',
   azure: '#2f8bff',
   red: '#ff3860',
+  teal: '#2dd4bf',
 } as const;
+
+export type BuildingKind = 'garage' | 'loft' | 'office' | 'ops' | 'residential' | 'tower' | 'hq';
 
 export interface Building {
   id: ZoneId;
+  kind: BuildingKind;
   /** Footprint in tiles. */
   x: number;
   y: number;
@@ -49,18 +58,25 @@ export interface Building {
   accent: string;
   sign: string;
   sub?: string;
+  /** Year label shown on the sidewalk post. */
+  year: string;
   /** Door tile (the terminal sits here). */
   doorX: number;
   doorY: number;
 }
 
+/** Avenue rows (inclusive). */
+export const AVENUE_Y0 = 21;
+export const AVENUE_Y1 = 24;
+
 export const BUILDINGS: Building[] = [
-  { id: 'garage', x: 3, y: 10, w: 11, h: 9, accent: COLORS.amber, sign: 'CHIA', sub: 'GARAGE', doorX: 8, doorY: 19 },
-  { id: 'tribuu', x: 23, y: 7, w: 12, h: 12, accent: COLORS.cyan, sign: 'TRIBUU', doorX: 29, doorY: 19 },
-  { id: 'loopay', x: 44, y: 1, w: 12, h: 18, accent: COLORS.magenta, sign: 'LOOPAY', sub: 'SOBERANA', doorX: 50, doorY: 19 },
-  { id: 'galgo', x: 65, y: 8, w: 12, h: 11, accent: COLORS.green, sign: 'GALGO', doorX: 70, doorY: 19 },
-  { id: 'trebet', x: 3, y: 28, w: 11, h: 12, accent: COLORS.orange, sign: 'TREBET', doorX: 8, doorY: 40 },
-  { id: 'hub', x: 65, y: 28, w: 12, h: 14, accent: COLORS.violet, sign: 'SETTLE', sub: 'ONCE', doorX: 70, doorY: 42 },
+  { id: 'garage', kind: 'garage', x: 3, y: 13, w: 10, h: 6, accent: COLORS.amber, sign: 'CHIA', sub: 'GARAGE', year: '2019', doorX: 8, doorY: 19 },
+  { id: 'tribuu', kind: 'loft', x: 19, y: 11, w: 12, h: 8, accent: COLORS.cyan, sign: 'TRIBUU', year: '2021', doorX: 25, doorY: 19 },
+  { id: 'loopayjs', kind: 'office', x: 37, y: 9, w: 10, h: 10, accent: COLORS.teal, sign: 'LOOPAY', year: '2023', doorX: 42, doorY: 19 },
+  { id: 'galgo', kind: 'ops', x: 53, y: 8, w: 12, h: 11, accent: COLORS.green, sign: 'GALGO', year: '2023', doorX: 59, doorY: 19 },
+  { id: 'trebet', kind: 'residential', x: 71, y: 6, w: 11, h: 13, accent: COLORS.orange, sign: 'TREBET', year: '2024', doorX: 76, doorY: 19 },
+  { id: 'loopay', kind: 'tower', x: 88, y: 1, w: 13, h: 18, accent: COLORS.magenta, sign: 'LOOPAY', sub: 'SOBERANA', year: '2025', doorX: 94, doorY: 19 },
+  { id: 'hub', kind: 'hq', x: 103, y: 28, w: 13, h: 14, accent: COLORS.violet, sign: 'SETTLE', sub: 'ONCE', year: 'NOW', doorX: 109, doorY: 42 },
 ];
 
 export interface Terminal {
@@ -88,16 +104,16 @@ export interface ShardDef {
   ty: number;
 }
 
-/** Stack shards scattered around the city. */
+/** Stack shards scattered along the timeline and the yard. */
 export const SHARDS: ShardDef[] = [
-  { id: 'ts', label: 'TypeScript', tx: 10, ty: 23 },
-  { id: 'nest', label: 'NestJS', tx: 19, ty: 12 },
-  { id: 'react', label: 'React', tx: 30, ty: 22 },
-  { id: 'pg', label: 'PostgreSQL', tx: 40, ty: 8 },
-  { id: 'docker', label: 'Docker', tx: 60, ty: 12 },
-  { id: 'tf', label: 'Terraform', tx: 43, ty: 34 },
-  { id: 'azure', label: 'Azure', tx: 19, ty: 38 },
-  { id: 'gha', label: 'GitHub Actions', tx: 54, ty: 44 },
+  { id: 'ts', label: 'TypeScript', tx: 15, ty: 12 },
+  { id: 'nest', label: 'NestJS', tx: 33, ty: 14 },
+  { id: 'react', label: 'React', tx: 49, ty: 13 },
+  { id: 'pg', label: 'PostgreSQL', tx: 67, ty: 12 },
+  { id: 'docker', label: 'Docker', tx: 85, ty: 10 },
+  { id: 'tf', label: 'Terraform', tx: 43, ty: 40 },
+  { id: 'azure', label: 'Azure', tx: 70, ty: 36 },
+  { id: 'gha', label: 'GitHub Actions', tx: 90, ty: 42 },
 ];
 
 export interface DroneDef {
@@ -129,15 +145,33 @@ export const RACKS = [
   { x: 51, y: 29, w: 2, h: 2 },
 ];
 
-/** AWS / Azure cargo stacks (solid). */
+/** Source / target cargo stacks (solid). */
 export const CRATES = [
   { x: 21, y: 33, w: 2, h: 5, dock: 'src' as const },
   { x: 57, y: 33, w: 2, h: 5, dock: 'dst' as const },
 ];
 
-export const SPAWN = { x: 40 * TILE, y: 23 * TILE };
+/** Cars drive along the avenue: lane y (tiles), direction, speed (px/s). */
+export const CARS = [
+  { laneY: 21.5, dir: 1, speed: 46, color: COLORS.cyan, phase: 0.1 },
+  { laneY: 23.5, dir: -1, speed: 38, color: COLORS.magenta, phase: 0.55 },
+  { laneY: 21.5, dir: 1, speed: 52, color: COLORS.amber, phase: 0.7 },
+];
 
-const inRoadX = (x: number) => (x >= 17 && x <= 20) || (x >= 38 && x <= 41) || (x >= 59 && x <= 62);
+/** The journey starts at the beginning of the timeline, in front of the garage. */
+export const SPAWN = { x: 12 * TILE, y: 23 * TILE };
+
+/** Side streets (x ranges, inclusive); the middle ones only north of the avenue. */
+const SIDE_STREETS: { x0: number; x1: number; south: boolean }[] = [
+  { x0: 15, x1: 18, south: true },
+  { x0: 33, x1: 36, south: false },
+  { x0: 49, x1: 52, south: false },
+  { x0: 67, x1: 70, south: true },
+  { x0: 84, x1: 87, south: false },
+  { x0: 99, x1: 102, south: true },
+];
+
+export const sideStreetAt = (x: number) => SIDE_STREETS.find((s) => x >= s.x0 && x <= s.x1) ?? null;
 
 /** Builds the tile grid. Deterministic. */
 export function buildTiles(): Uint8Array {
@@ -147,17 +181,16 @@ export function buildTiles(): Uint8Array {
   };
   const get = (x: number, y: number) => (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H ? -1 : tiles[y * MAP_W + x]);
 
-  // Roads: one main avenue + three side streets (the middle one only north of the avenue).
-  for (let y = 21; y <= 24; y++) for (let x = 0; x < MAP_W; x++) set(x, y, T.ROAD);
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      if (!inRoadX(x)) continue;
-      if (x >= 38 && x <= 41 && y > 24) continue;
-      set(x, y, T.ROAD);
+  // Main avenue + side streets.
+  for (let y = AVENUE_Y0; y <= AVENUE_Y1; y++) for (let x = 0; x < MAP_W; x++) set(x, y, T.ROAD);
+  for (const s of SIDE_STREETS) {
+    for (let y = 0; y < MAP_H; y++) {
+      if (y > AVENUE_Y1 && !s.south) continue;
+      for (let x = s.x0; x <= s.x1; x++) set(x, y, T.ROAD);
     }
   }
-  // Plaza ("Terraform Yard") south of the avenue between the side streets.
-  for (let y = 25; y < MAP_H; y++) for (let x = 21; x <= 58; x++) set(x, y, T.PLAZA);
+  // Plaza ("Terraform Yard") south of the avenue.
+  for (let y = AVENUE_Y1 + 1; y < MAP_H; y++) for (let x = 21; x <= 58; x++) set(x, y, T.PLAZA);
 
   // Sidewalks: any lot tile touching a road.
   const sidewalks: number[] = [];
@@ -209,4 +242,12 @@ export function dronePosition(d: DroneDef, t: number): { x: number; y: number } 
   const m = travelled % (span * 2);
   const y = DRONE_Y_MIN + (m < span ? m : span * 2 - m);
   return { x: center(d.laneX), y };
+}
+
+/** Car position along the avenue at time `t` (wraps around the world). */
+export function carPosition(c: (typeof CARS)[number], t: number): { x: number; y: number } {
+  const span = WORLD_W + 64;
+  const travelled = (c.phase * span + t * c.speed) % span;
+  const x = c.dir > 0 ? travelled - 32 : WORLD_W + 32 - travelled;
+  return { x, y: c.laneY * TILE };
 }

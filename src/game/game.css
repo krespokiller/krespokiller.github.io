@@ -94,8 +94,9 @@
 .pm-toast {
   background: var(--pm-panel); border: 2px solid var(--pm-line); padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
   text-align: center; max-width: 92vw; box-shadow: 0 0 0 2px #000;
-  animation: pm-pop 0.22s ease-out;
+  animation: pm-slide 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+@keyframes pm-slide { from { opacity: 0; transform: translateY(-10px) scale(0.96); } to { opacity: 1; transform: none; } }
 .pm-toast.good { border-color: var(--pm-green); color: var(--pm-green); }
 .pm-toast.bad { border-color: #ff3860; color: #ff7a94; }
 .pm-prompt {
@@ -331,3 +332,14 @@
 .pm-recap > b { color: #ff9fb4; letter-spacing: 0.1em; }
 .pm-recap ul { padding-left: 16px; margin-top: 4px !important; color: var(--pm-text); line-height: 1.45; }
 @media (max-width: 560px) { .pm-medals { grid-template-columns: 1fr; } .pm-mig-picker > span { width: 100%; } }
+
+/* Console boot: lines reveal top to bottom like a terminal powering on. */
+.pm-mig-console > * { animation: pm-boot-line 0.35s both; }
+.pm-mig-console > *:nth-child(2) { animation-delay: 0.06s; }
+.pm-mig-console > *:nth-child(3) { animation-delay: 0.12s; }
+.pm-mig-console > *:nth-child(4) { animation-delay: 0.18s; }
+.pm-mig-console > *:nth-child(5) { animation-delay: 0.24s; }
+.pm-mig-console > *:nth-child(6) { animation-delay: 0.3s; }
+.pm-mig-console > *:nth-child(7) { animation-delay: 0.36s; }
+@keyframes pm-boot-line { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+.pm-reduced .pm-toast, .pm-reduced .pm-mig-console > * { animation: none; }

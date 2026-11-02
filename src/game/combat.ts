@@ -441,7 +441,8 @@ export class Combat {
       ctx.fillStyle = COLORS.red;
       ctx.fillRect(cx - w / 2, dy + h - 1, w, 1);
       // alarm light
-      const on = this.reducedMotion ? true : Math.floor(vt * 4) % 2 === 0;
+      // 2 Hz: below the 3 Hz photosensitivity threshold (XAG 118).
+      const on = this.reducedMotion ? true : Math.floor(vt * 2) % 2 === 0;
       ctx.fillStyle = on ? COLORS.red : '#5a1020';
       ctx.fillRect(cx - 1, dy - 5, 3, 2);
       if (on) {
@@ -497,6 +498,14 @@ export class Combat {
   /** Screen-space overlay (after the camera transform is restored). */
   drawOverlay(ctx: CanvasRenderingContext2D, vw: number, vh: number, vt: number): void {
     if (this.phase === 'off' && this.doors <= 0) return;
+    if ((this.phase === 'closing' || this.phase === 'opening') && !this.reducedMotion) {
+      // Lockdown sweep: a scan line crosses the screen with the door animation.
+      const y = Math.round((this.phase === 'closing' ? this.doors : 1 - this.doors) * vh);
+      ctx.fillStyle = 'rgba(255,56,96,0.35)';
+      ctx.fillRect(0, y - 1, vw, 2);
+      ctx.fillStyle = 'rgba(255,56,96,0.06)';
+      ctx.fillRect(0, this.phase === 'closing' ? 0 : y, vw, this.phase === 'closing' ? y : vh - y);
+    }
     const a = this.phase === 'dead' ? 0.35 : 0.1 + 0.08 * (this.reducedMotion ? 0.5 : 0.5 + 0.5 * Math.sin(vt * 3));
     const g = ctx.createRadialGradient(vw / 2, vh / 2, Math.min(vw, vh) * 0.3, vw / 2, vh / 2, Math.max(vw, vh) * 0.7);
     g.addColorStop(0, 'rgba(255,40,80,0)');
