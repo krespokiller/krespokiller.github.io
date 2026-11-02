@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar, SelectedWork } from "@/components";
 import { Brain } from '@/components/organisms/Brain/Brain';
 import type { ParticleNetwork } from '@/components/organisms/InteractiveBackground/ParticleNetwork';
-import { Button } from "@/components/atoms";
 import { usePrefersReducedMotion } from "@/hooks";
 
 // The game is a separate chunk: it is only fetched on intent (hover / focus /
@@ -95,44 +94,32 @@ export function Home() {
     <div className={`min-h-screen relative page-shell${shell === 'entering' || shell === 'game' ? ' page-dim' : ''}`}>
       <Navbar />
       <InteractiveBackground onNetwork={setNetwork} />
-      <Brain network={network} onPlay={openGame} suspended={shell !== 'page'} />
+      <Brain network={network} onPlay={openGame} onPlayIntent={loadPlayMode} suspended={shell !== 'page'} />
       {/* Content is pointer-transparent (.layer-content): the background
           canvas owns clicks for grab & pull; links/buttons re-enable
           themselves via CSS. Navbar stays fully interactive (z-40 chrome). */}
       <main className="layer-content container relative z-20">
-        {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center px-6 md:px-4">
-          <div className="container">
-            <div className="text-center space-y-6 max-w-4xl mx-auto">
-              <div className="space-y-3 group cursor-default">
-                <h1 className="text-5xl md:text-7xl font-light tracking-tight" style={{ color: 'var(--text)' }}>
-                  {t('hero.name')}
-                </h1>
-                <p className="text-xl md:text-2xl font-light tracking-wide text-gradient">
-                  {t('hero.title')}
-                </p>
-                <p className="text-sm md:text-base font-light tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
-                  {t('hero.subtitle')}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-8">
-                <Button
-                  onClick={() => {
-                    const element = document.getElementById('work');
-                    element?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-                  }}
-                >
-                  {t('hero.viewWork')}
-                </Button>
-                {/* Prefetch the game chunk when the user shows intent. */}
-                <span onPointerEnter={loadPlayMode} onFocusCapture={loadPlayMode} onTouchStart={loadPlayMode}>
-                  <Button variant="secondary" onClick={openGame} disabled={shell !== 'page' || loadingGame}>
-                    <span aria-hidden="true">{loadingGame ? '… ' : '▶ '}</span>
-                    {t('hero.play')}
-                  </Button>
-                </span>
-              </div>
-            </div>
+        {/* Hero: compact signature (top-left); the constellation + core live in <Brain/> above */}
+        <section className="hero-signature min-h-screen px-6 md:px-8 pt-24 md:pt-28" aria-label={t('hero.name')}>
+          <div className="max-w-xs space-y-1">
+            <h1 className="text-2xl md:text-3xl font-light tracking-tight" style={{ color: 'var(--text)' }}>
+              {t('hero.name')}
+            </h1>
+            <p className="text-base md:text-lg font-light tracking-wide text-gradient">{t('hero.title')}</p>
+            <p className="hidden sm:block text-[11px] md:text-xs font-light tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+              {t('hero.subtitle')}
+            </p>
+            <a
+              href="#work"
+              className="hero-more inline-flex items-center gap-1 pt-3 text-xs md:text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('work')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+              }}
+            >
+              {t('hero.viewWork')} ↓
+            </a>
           </div>
         </section>
 
