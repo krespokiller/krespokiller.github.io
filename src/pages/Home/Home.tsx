@@ -1,12 +1,28 @@
+import { lazy, Suspense, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar, SelectedWork } from "@/components";
 import { Button } from "@/components/atoms";
 import { usePrefersReducedMotion } from "@/hooks";
 
+// The game is a separate chunk: it is only fetched on intent (hover / focus /
+// touch on the button) or on click, never as part of the initial page load.
+const loadPlayMode = () => import('@/game/PlayMode');
+const PlayMode = lazy(loadPlayMode);
+
 export function Home() {
   const { t } = useTranslation();
   // Reduced motion turns smooth scrolling into instant jumps.
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [playing, setPlaying] = useState(false);
+
+  const closeGame = useCallback(() => setPlaying(false), []);
+  const goContactFromGame = useCallback(() => {
+    setPlaying(false);
+    // Wait for the overlay to unmount (it makes the page inert) before scrolling.
+    window.setTimeout(() => {
+      document.getElementById('contact')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+    }, 50);
+  }, [prefersReducedMotion]);
 
   return (
     <div className="min-h-screen relative">
@@ -31,7 +47,7 @@ export function Home() {
                   {t('hero.subtitle')}
                 </p>
               </div>
-              <div className="flex justify-center pt-8">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-8">
                 <Button
                   onClick={() => {
                     const element = document.getElementById('work');
@@ -40,6 +56,13 @@ export function Home() {
                 >
                   {t('hero.viewWork')}
                 </Button>
+                {/* Prefetch the game chunk when the user shows intent. */}
+                <span onPointerEnter={loadPlayMode} onFocusCapture={loadPlayMode} onTouchStart={loadPlayMode}>
+                  <Button variant="secondary" onClick={() => setPlaying(true)}>
+                    <span aria-hidden="true">▶ </span>
+                    {t('hero.play')}
+                  </Button>
+                </span>
               </div>
             </div>
           </div>
@@ -57,6 +80,11 @@ export function Home() {
         <ContactSection />
       </main>
       <Footer />
+      {playing && (
+        <Suspense fallback={null}>
+          <PlayMode onClose={closeGame} onGoContact={goContactFromGame} />
+        </Suspense>
+      )}
     </div>
   );
 }

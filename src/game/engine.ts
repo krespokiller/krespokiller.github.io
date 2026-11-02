@@ -1,0 +1,650 @@
+/**
+ * Game engine: input, physics, quests and drawing. Framework-agnostic —
+ * React (PlayMode.tsx) only mounts it and renders the DOM HUD / dialogs.
+ */
+import { drawText, renderMini, renderWorld, signRect, textWidth } from './render';
+import {
+  BUILDINGS,
+  COLORS,
+  DISTRICTS,
+  DRONES,
+  MIGRATION_GOAL,
+  SHARDS,
+  SPAWN,
+  TERMINALS,
+  TILE,
+  WORLD_H,
+  WORLD_W,
+  buildTiles,
+  collides,
+  dronePosition,
+} from './world';
+import type { ZoneId } from './world';
+
+export type DialogId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'dock' | 'migrated' | 'hub' | 'locked';
+
+export type GameEvent =
+  | { k: 'dialog'; id: DialogId }
+  | { k: 'shard'; label: string }
+  | { k: 'district'; n: number }
+  | { k: 'loaded' }
+  | { k: 'delivered'; n: number }
+  | { k: 'hit' }
+  | { k: 'needContainer' }
+  | { k: 'carrying' }
+  | { k: 'allDone' };
+
+export interface HudState {
+  visited: number;
+  shards: number;
+  delivered: number;
+  carrying: boolean;
+  hubOpen: boolean;
+  near: ZoneId | null;
+}
+
+export interface GameCallbacks {
+  onHud(state: HudState): void;
+  onEvent(event: GameEvent): void;
+}
+
+const SPEED = 78;
+const INTERACT_RADIUS = 22;
+const SHARD_RADIUS = 11;
+const MINI_W = 120;
+const MINI_H = 72;
+
+type Dir = 'down' | 'up' | 'left' | 'right';
+
+interface Drop {
+  x: number;
+  y: number;
+  v: number;
+}
+
+const hub = BUILDINGS.find((b) => b.id === 'hub')!;
+
+export class Game {
+  private readonly ctx: CanvasRenderingContext2D;
+  private readonly miniCtx: CanvasRenderingContext2D | null;
+  private readonly tiles = buildTiles();
+  private readonly world: HTMLCanvasElement;
+  private readonly miniBase: HTMLCanvasElement;
+
+  private raf = 0;
+  private last = 0;
+  private running = false;
+  private paused = true;
+
+  private vw = 320;
+  private vh = 180;
+  private scale = 4;
+
+  private player = { x: SPAWN.x, y: SPAWN.y, dir: 'down' as Dir, step: 0, moving: false };
+  private keys = new Set<string>();
+  private joy = { x: 0, y: 0 };
+
+  /** Gameplay clock (frozen while paused) and cosmetic clock (always runs). */
+  private t = 0;
+  private vt = 0;
+
+  private visited = new Set<ZoneId>();
+  private shards = new Set<string>();
+  private delivered = 0;
+  private carrying = false;
+  private briefed = false;
+  private announcedDone = false;
+  private invuln = 0;
+  private near: ZoneId | null = null;
+
+  private rain: Drop[] = [];
+  private flicker = { building: -1, until: 0, next: 2 };
+  private miniAcc = 0;
+
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    mini: HTMLCanvasElement | null,
+    private readonly cb: GameCallbacks,
+    private readonly reducedMotion: boolean,
+  ) {
+    this.ctx = canvas.getContext('2d', { alpha: false })!;
+    this.miniCtx = mini ? mini.getContext('2d') : null;
+    if (mini) {
+      mini.width = MINI_W;
+      mini.height = MINI_H;
+    }
+    this.world = renderWorld(this.tiles);
+    this.miniBase = renderMini(this.world, MINI_W, MINI_H);
+    for (let i = 0; i < 70; i++) this.rain.push({ x: Math.random() * 600, y: Math.random() * 400, v: 160 + Math.random() * 120 });
+  }
+
+  // ---------------------------------------------------------------- lifecycle
+
+  start(): void {
+    if (this.running) return;
+    this.running = true;
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.onBlur);
+    this.emitHud();
+    this.last = performance.now();
+    this.raf = requestAnimationFrame(this.frame);
+  }
+
+  destroy(): void {
+    this.running = false;
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.onBlur);
+    this.keys.clear();
+  }
+
+  setPaused(paused: boolean): void {
+    this.paused = paused;
+    if (paused) this.keys.clear();
+  }
+
+  setJoystick(x: number, y: number): void {
+    this.joy.x = x;
+    this.joy.y = y;
+  }
+
+  resize(cssW: number, cssH: number): void {
+    this.scale = cssW < 500 ? 2 : cssW < 900 ? 3 : cssW < 1700 ? 4 : 5;
+    this.vw = Math.ceil(cssW / this.scale);
+    this.vh = Math.ceil(cssH / this.scale);
+    this.canvas.width = this.vw;
+    this.canvas.height = this.vh;
+    this.canvas.style.width = `${this.vw * this.scale}px`;
+    this.canvas.style.height = `${this.vh * this.scale}px`;
+    this.ctx.imageSmoothingEnabled = false;
+  }
+
+  /** Dev/QA helper. */
+  teleport(x: number, y: number): void {
+    this.player.x = x;
+    this.player.y = y;
+  }
+
+  // -------------------------------------------------------------------- input
+
+  private onKeyDown = (e: KeyboardEvent): void => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const code = e.code;
+    // Let focused buttons/links keep Space/Enter (their native activation).
+    const onControl = e.target instanceof Element && e.target.closest('button, a, input, textarea, select') !== null;
+    if (onControl && (code === 'Space' || code === 'Enter')) return;
+    if (MOVE_KEYS.has(code) || ACT_KEYS.has(code)) e.preventDefault();
+    if (this.paused) return;
+    if (ACT_KEYS.has(code)) {
+      if (!e.repeat) this.act();
+      return;
+    }
+    if (MOVE_KEYS.has(code)) this.keys.add(code);
+  };
+
+  private onKeyUp = (e: KeyboardEvent): void => {
+    this.keys.delete(e.code);
+  };
+
+  private onBlur = (): void => {
+    this.keys.clear();
+  };
+
+  act(): void {
+    if (this.paused || !this.near) return;
+    this.interact(this.near);
+  }
+
+  // ---------------------------------------------------------------- game rules
+
+  private get hubOpen(): boolean {
+    return this.visited.size >= DISTRICTS.length && this.shards.size >= SHARDS.length && this.delivered >= MIGRATION_GOAL;
+  }
+
+  private interact(id: ZoneId): void {
+    switch (id) {
+      case 'garage':
+      case 'tribuu':
+      case 'loopay':
+      case 'galgo':
+      case 'trebet': {
+        if (!this.visited.has(id)) {
+          this.visited.add(id);
+          this.cb.onEvent({ k: 'district', n: this.visited.size });
+          this.checkDone();
+        }
+        this.cb.onEvent({ k: 'dialog', id });
+        break;
+      }
+      case 'aws': {
+        if (!this.briefed) {
+          this.briefed = true;
+          this.cb.onEvent({ k: 'dialog', id: 'dock' });
+        } else if (this.delivered >= MIGRATION_GOAL) {
+          this.cb.onEvent({ k: 'dialog', id: 'migrated' });
+        } else if (this.carrying) {
+          this.cb.onEvent({ k: 'carrying' });
+        } else {
+          this.carrying = true;
+          this.cb.onEvent({ k: 'loaded' });
+        }
+        break;
+      }
+      case 'azure': {
+        if (this.carrying) {
+          this.carrying = false;
+          this.delivered += 1;
+          this.cb.onEvent({ k: 'delivered', n: this.delivered });
+          if (this.delivered >= MIGRATION_GOAL) {
+            this.cb.onEvent({ k: 'dialog', id: 'migrated' });
+            this.checkDone();
+          }
+        } else if (this.delivered >= MIGRATION_GOAL) {
+          this.cb.onEvent({ k: 'dialog', id: 'migrated' });
+        } else if (!this.briefed) {
+          this.cb.onEvent({ k: 'dialog', id: 'dock' });
+          this.briefed = true;
+        } else {
+          this.cb.onEvent({ k: 'needContainer' });
+        }
+        break;
+      }
+      case 'hub': {
+        this.cb.onEvent({ k: 'dialog', id: this.hubOpen ? 'hub' : 'locked' });
+        break;
+      }
+    }
+    this.emitHud();
+  }
+
+  private checkDone(): void {
+    if (this.hubOpen && !this.announcedDone) {
+      this.announcedDone = true;
+      this.cb.onEvent({ k: 'allDone' });
+    }
+  }
+
+  private emitHud(): void {
+    this.cb.onHud({
+      visited: this.visited.size,
+      shards: this.shards.size,
+      delivered: this.delivered,
+      carrying: this.carrying,
+      hubOpen: this.hubOpen,
+      near: this.paused ? null : this.near,
+    });
+  }
+
+  // ------------------------------------------------------------------- update
+
+  private frame = (now: number): void => {
+    if (!this.running) return;
+    this.raf = requestAnimationFrame(this.frame);
+    const dt = Math.min(0.05, (now - this.last) / 1000);
+    this.last = now;
+    this.vt += dt;
+    if (!this.paused) this.update(dt);
+    this.stepRain(dt);
+    this.draw();
+    this.miniAcc += dt;
+    if (this.miniAcc > 0.1) {
+      this.miniAcc = 0;
+      this.drawMini();
+    }
+  };
+
+  private update(dt: number): void {
+    this.t += dt;
+    if (this.invuln > 0) this.invuln -= dt;
+
+    let ix = 0;
+    let iy = 0;
+    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) ix -= 1;
+    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) ix += 1;
+    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) iy -= 1;
+    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) iy += 1;
+    ix += this.joy.x;
+    iy += this.joy.y;
+    const len = Math.hypot(ix, iy);
+    if (len > 1) {
+      ix /= len;
+      iy /= len;
+    }
+
+    const p = this.player;
+    p.moving = len > 0.08;
+    if (p.moving) {
+      const nx = p.x + ix * SPEED * dt;
+      if (!collides(this.tiles, nx, p.y)) p.x = nx;
+      const ny = p.y + iy * SPEED * dt;
+      if (!collides(this.tiles, p.x, ny)) p.y = ny;
+      p.x = Math.max(6, Math.min(WORLD_W - 6, p.x));
+      p.y = Math.max(8, Math.min(WORLD_H - 2, p.y));
+      p.step += dt * 9;
+      p.dir = Math.abs(ix) > Math.abs(iy) ? (ix < 0 ? 'left' : 'right') : iy < 0 ? 'up' : 'down';
+    }
+
+    const cx = p.x;
+    const cy = p.y - 4;
+
+    // Shards
+    for (const s of SHARDS) {
+      if (this.shards.has(s.id)) continue;
+      if (Math.hypot((s.tx + 0.5) * TILE - cx, (s.ty + 0.5) * TILE - cy) <= SHARD_RADIUS) {
+        this.shards.add(s.id);
+        this.cb.onEvent({ k: 'shard', label: s.label });
+        this.checkDone();
+        this.emitHud();
+      }
+    }
+
+    // Drones only matter while a container is on your back.
+    if (this.carrying && this.invuln <= 0) {
+      for (const d of DRONES) {
+        const pos = dronePosition(d, this.t);
+        if (Math.abs(pos.x - cx) < 9 && Math.abs(pos.y - cy) < 9) {
+          this.carrying = false;
+          this.invuln = 1.5;
+          p.x = 26.5 * TILE;
+          p.y = 36 * TILE;
+          this.cb.onEvent({ k: 'hit' });
+          this.emitHud();
+          break;
+        }
+      }
+    }
+
+    // Nearest terminal
+    let nearest: ZoneId | null = null;
+    let best = INTERACT_RADIUS;
+    for (const term of TERMINALS) {
+      const dist = Math.hypot(term.x - cx, term.y - cy);
+      if (dist < best) {
+        best = dist;
+        nearest = term.id;
+      }
+    }
+    if (nearest !== this.near) {
+      this.near = nearest;
+      this.emitHud();
+    }
+
+    // Neon flicker
+    if (!this.reducedMotion) {
+      if (this.vt > this.flicker.next) {
+        this.flicker.building = Math.floor(Math.random() * BUILDINGS.length);
+        this.flicker.until = this.vt + 0.12 + Math.random() * 0.15;
+        this.flicker.next = this.vt + 1.5 + Math.random() * 3;
+      }
+    }
+  }
+
+  private stepRain(dt: number): void {
+    if (this.reducedMotion) return;
+    for (const d of this.rain) {
+      d.y += d.v * dt;
+      d.x -= d.v * 0.18 * dt;
+      if (d.y > this.vh + 4 || d.x < -4) {
+        d.y = -4;
+        d.x = Math.random() * (this.vw + 40);
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------- draw
+
+  private draw(): void {
+    const { ctx, vw, vh, player } = this;
+    ctx.fillStyle = '#05030f';
+    ctx.fillRect(0, 0, vw, vh);
+
+    let camX = vw >= WORLD_W ? (WORLD_W - vw) / 2 : Math.max(0, Math.min(WORLD_W - vw, player.x - vw / 2));
+    let camY = vh >= WORLD_H ? (WORLD_H - vh) / 2 : Math.max(0, Math.min(WORLD_H - vh, player.y - vh / 2));
+    camX = Math.round(camX);
+    camY = Math.round(camY);
+
+    ctx.save();
+    ctx.translate(-camX, -camY);
+    ctx.drawImage(this.world, 0, 0);
+
+    this.drawFlicker();
+    this.drawHubDoor();
+    this.drawTerminals();
+    this.drawShards();
+    this.drawDrones();
+    this.drawPlayer();
+    ctx.restore();
+
+    this.drawRain();
+    this.camX = camX;
+    this.camY = camY;
+  }
+
+  private camX = 0;
+  private camY = 0;
+
+  private drawFlicker(): void {
+    if (this.reducedMotion || this.vt > this.flicker.until || this.flicker.building < 0) return;
+    const b = BUILDINGS[this.flicker.building];
+    this.ctx.fillStyle = 'rgba(5,3,15,0.7)';
+    const r = signRect(b);
+    this.ctx.fillRect(r.x, r.y, r.w, r.h);
+  }
+
+  private drawHubDoor(): void {
+    const ctx = this.ctx;
+    const cx = hub.x * TILE + (hub.w * TILE) / 2;
+    const dy = (hub.y + hub.h) * TILE - 19;
+    if (this.hubOpen) {
+      const pulse = 0.35 + 0.25 * Math.sin(this.vt * 4);
+      ctx.fillStyle = `rgba(182,255,59,${pulse})`;
+      ctx.fillRect(cx - 5, dy + 3, 10, 13);
+      ctx.fillStyle = 'rgba(182,255,59,0.12)';
+      ctx.fillRect(cx - 12, dy - 4, 24, 32);
+    } else {
+      ctx.fillStyle = 'rgba(255,56,96,0.55)';
+      for (let i = 0; i < 4; i++) ctx.fillRect(cx - 5, dy + 4 + i * 3, 10, 1);
+      ctx.fillStyle = COLORS.red;
+      ctx.fillRect(cx - 1, dy + 8, 2, 2);
+    }
+  }
+
+  private drawTerminals(): void {
+    const ctx = this.ctx;
+    for (const t of TERMINALS) {
+      const visited = this.visited.has(t.id);
+      const isNear = this.near === t.id && !this.paused;
+      const pulse = 0.5 + 0.5 * Math.sin(this.vt * 4 + t.x);
+      // floor ring
+      ctx.fillStyle = hexA(t.accent, isNear ? 0.35 : 0.14 + 0.1 * pulse);
+      ctx.fillRect(t.x - 9, t.y - 3, 18, 8);
+      ctx.fillStyle = hexA(t.accent, isNear ? 0.95 : 0.55);
+      ctx.fillRect(t.x - 9, t.y - 3, 18, 1);
+      ctx.fillRect(t.x - 9, t.y + 4, 18, 1);
+      ctx.fillRect(t.x - 9, t.y - 3, 1, 8);
+      ctx.fillRect(t.x + 8, t.y - 3, 1, 8);
+      // beacon
+      const bob = this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 3 + t.y) * 2);
+      const by = t.y - 20 + bob;
+      if (!visited || t.id === 'hub' || t.id === 'aws' || t.id === 'azure') {
+        ctx.fillStyle = t.accent;
+        ctx.fillRect(t.x - 3, by, 7, 1);
+        ctx.fillRect(t.x - 2, by + 1, 5, 1);
+        ctx.fillRect(t.x - 1, by + 2, 3, 1);
+        ctx.fillRect(t.x, by + 3, 1, 1);
+      } else {
+        ctx.fillStyle = COLORS.green;
+        ctx.fillRect(t.x - 2, by + 2, 1, 1);
+        ctx.fillRect(t.x - 1, by + 3, 1, 1);
+        ctx.fillRect(t.x, by + 2, 1, 1);
+        ctx.fillRect(t.x + 1, by + 1, 1, 1);
+        ctx.fillRect(t.x + 2, by, 1, 1);
+      }
+    }
+  }
+
+  private drawShards(): void {
+    const ctx = this.ctx;
+    const px = this.player.x;
+    const py = this.player.y - 4;
+    SHARDS.forEach((s, i) => {
+      if (this.shards.has(s.id)) return;
+      const x = (s.tx + 0.5) * TILE;
+      const bob = this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 3 + i) * 2);
+      const y = (s.ty + 0.5) * TILE + bob;
+      const glow = 0.12 + 0.08 * Math.sin(this.vt * 5 + i);
+      ctx.fillStyle = `rgba(0,240,255,${glow})`;
+      ctx.fillRect(x - 7, y - 7, 14, 14);
+      ctx.fillStyle = COLORS.cyan;
+      ctx.fillRect(x, y - 4, 1, 1);
+      ctx.fillRect(x - 1, y - 3, 3, 1);
+      ctx.fillRect(x - 2, y - 2, 5, 1);
+      ctx.fillRect(x - 3, y - 1, 7, 1);
+      ctx.fillRect(x - 2, y, 5, 1);
+      ctx.fillRect(x - 1, y + 1, 3, 1);
+      ctx.fillRect(x, y + 2, 1, 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - 1, y - 2, 2, 2);
+      if (Math.hypot(x - px, y - py) < 52) {
+        const label = s.label;
+        drawText(ctx, label, x - textWidth(label, 1) / 2, y - 14, 1, '#ffffff');
+      }
+    });
+  }
+
+  private drawDrones(): void {
+    const ctx = this.ctx;
+    const frame = Math.floor(this.vt * 14) % 2;
+    for (const d of DRONES) {
+      const pos = dronePosition(d, this.t);
+      const x = Math.round(pos.x);
+      const y = Math.round(pos.y);
+      // scan cone
+      ctx.fillStyle = this.carrying ? 'rgba(255,56,96,0.16)' : 'rgba(255,56,96,0.07)';
+      ctx.beginPath();
+      ctx.moveTo(x - 2, y + 3);
+      ctx.lineTo(x + 2, y + 3);
+      ctx.lineTo(x + 11, y + 22);
+      ctx.lineTo(x - 11, y + 22);
+      ctx.closePath();
+      ctx.fill();
+      // shadow + body
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x - 4, y + 9, 8, 2);
+      ctx.fillStyle = '#3a2f7a';
+      ctx.fillRect(x - 5, y - 2, 10, 5);
+      ctx.fillStyle = '#1a1235';
+      ctx.fillRect(x - 4, y - 1, 8, 3);
+      ctx.fillStyle = COLORS.red;
+      ctx.fillRect(x - 1, y, 2, 2);
+      ctx.fillStyle = '#6c5fd0';
+      ctx.fillRect(x - 7 + frame, y - 3, 4, 1);
+      ctx.fillRect(x + 3 - frame, y - 3, 4, 1);
+    }
+  }
+
+  private drawPlayer(): void {
+    const ctx = this.ctx;
+    const p = this.player;
+    if (this.invuln > 0 && Math.floor(this.vt * 12) % 2 === 0) return;
+    const x = Math.round(p.x);
+    const y = Math.round(p.y);
+    const walk = p.moving ? Math.floor(p.step) % 2 : 0;
+    const bob = p.moving && walk ? -1 : 0;
+
+    // glow + shadow
+    ctx.fillStyle = 'rgba(0,240,255,0.14)';
+    ctx.fillRect(x - 7, y - 2, 14, 5);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(x - 4, y - 1, 8, 2);
+
+    // legs
+    ctx.fillStyle = '#1a1235';
+    ctx.fillRect(x - 3, y - 4 + (walk ? 0 : 1), 2, 4 - (walk ? 0 : 1));
+    ctx.fillRect(x + 1, y - 4 + (walk ? 1 : 0), 2, 4 - (walk ? 1 : 0));
+    // jacket
+    const top = y - 11 + bob;
+    ctx.fillStyle = COLORS.magenta;
+    ctx.fillRect(x - 3, top + 3, 6, 5);
+    ctx.fillStyle = '#7a1a69';
+    ctx.fillRect(x - 3, top + 7, 6, 1);
+    ctx.fillStyle = COLORS.cyan;
+    ctx.fillRect(x - 3, top + 4, 1, 3);
+    // arms
+    ctx.fillStyle = '#e08bd0';
+    ctx.fillRect(x - 4, top + 4, 1, 3);
+    ctx.fillRect(x + 3, top + 4, 1, 3);
+    // head
+    ctx.fillStyle = '#f2c9a0';
+    ctx.fillRect(x - 2, top, 5, 4);
+    ctx.fillStyle = '#1a1235';
+    ctx.fillRect(x - 3, top - 1, 7, 2);
+    if (p.dir === 'down' || p.dir === 'left' || p.dir === 'right') {
+      ctx.fillStyle = COLORS.cyan;
+      const vx = p.dir === 'left' ? x - 3 : p.dir === 'right' ? x : x - 2;
+      ctx.fillRect(vx, top + 1, p.dir === 'down' ? 5 : 3, 2);
+    } else {
+      ctx.fillStyle = '#1a1235';
+      ctx.fillRect(x - 2, top + 1, 5, 3);
+    }
+    if (this.carrying) {
+      const bx = x - 4;
+      const by = top - 8 + (this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 8)));
+      ctx.fillStyle = hexA(COLORS.aws, 0.25);
+      ctx.fillRect(bx - 2, by - 2, 12, 10);
+      ctx.fillStyle = COLORS.aws;
+      ctx.fillRect(bx, by, 8, 6);
+      ctx.fillStyle = '#7a4a00';
+      ctx.fillRect(bx, by + 2, 8, 1);
+      ctx.fillStyle = '#ffd27a';
+      ctx.fillRect(bx + 1, by + 1, 2, 1);
+    }
+  }
+
+  private drawRain(): void {
+    if (this.reducedMotion) return;
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(150,190,255,0.32)';
+    for (const d of this.rain) ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, 3);
+  }
+
+  private drawMini(): void {
+    const m = this.miniCtx;
+    if (!m) return;
+    const sx = MINI_W / WORLD_W;
+    const sy = MINI_H / WORLD_H;
+    m.drawImage(this.miniBase, 0, 0);
+    m.fillStyle = 'rgba(5,3,15,0.35)';
+    m.fillRect(0, 0, MINI_W, MINI_H);
+    const blink = Math.floor(this.vt * 3) % 2 === 0;
+    for (const s of SHARDS) {
+      if (this.shards.has(s.id)) continue;
+      m.fillStyle = COLORS.cyan;
+      m.fillRect(Math.round((s.tx + 0.5) * TILE * sx) - 1, Math.round((s.ty + 0.5) * TILE * sy) - 1, 2, 2);
+    }
+    for (const t of TERMINALS) {
+      const done = t.id === 'hub' ? false : this.visited.has(t.id) || (t.id === 'aws' && this.carrying);
+      if (done) continue;
+      if (t.id === 'hub' && !this.hubOpen && !blink) continue;
+      m.fillStyle = t.id === 'hub' ? (this.hubOpen ? COLORS.green : COLORS.red) : t.accent;
+      m.fillRect(Math.round(t.x * sx) - 2, Math.round(t.y * sy) - 2, 4, 4);
+    }
+    // viewport
+    m.strokeStyle = 'rgba(255,255,255,0.35)';
+    m.lineWidth = 1;
+    m.strokeRect(Math.round(this.camX * sx) + 0.5, Math.round(this.camY * sy) + 0.5, Math.round(this.vw * sx), Math.round(this.vh * sy));
+    // player
+    m.fillStyle = blink ? '#ffffff' : COLORS.magenta;
+    m.fillRect(Math.round(this.player.x * sx) - 2, Math.round(this.player.y * sy) - 2, 4, 4);
+  }
+}
+
+const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+const ACT_KEYS = new Set(['KeyE', 'Space', 'Enter']);
+
+function hexA(hex: string, a: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}

@@ -55,6 +55,7 @@ export const InteractiveBackground: React.FC = () => {
   const resizeRafRef = useRef<number | null>(null);
   const reducedMotionRef = useRef(false);
   const hiddenTabRef = useRef(false);
+  const gameOpenRef = useRef(false);
   const grabActiveRef = useRef(false);
 
   /**
@@ -65,7 +66,7 @@ export const InteractiveBackground: React.FC = () => {
   const syncLoop = useCallback(() => {
     const network = networkRef.current;
     if (!network) return;
-    if (reducedMotionRef.current || hiddenTabRef.current) {
+    if (reducedMotionRef.current || hiddenTabRef.current || gameOpenRef.current) {
       network.stop();
       if (reducedMotionRef.current) network.renderStaticFrame();
     } else {
@@ -101,6 +102,13 @@ export const InteractiveBackground: React.FC = () => {
       // A hidden tab may swallow the pointerup: release rather than keep a
       // node held across the pause.
       if (document.hidden) releaseGrab();
+      syncLoop();
+    };
+
+    // The full-screen game covers this canvas: stop animating it meanwhile.
+    const handlePlayMode = (event: Event) => {
+      gameOpenRef.current = (event as CustomEvent<{ open: boolean }>).detail?.open === true;
+      releaseGrab();
       syncLoop();
     };
 
@@ -193,6 +201,7 @@ export const InteractiveBackground: React.FC = () => {
     document.addEventListener('pointerdown', handleGrabStart);
     window.addEventListener('blur', releaseGrab);
     window.addEventListener('resize', handleResize);
+    window.addEventListener('playmode', handlePlayMode);
     reducedMotionQuery.addEventListener('change', handleReducedMotionChange);
 
     return () => {
@@ -205,6 +214,7 @@ export const InteractiveBackground: React.FC = () => {
       document.removeEventListener('pointerdown', handleGrabStart);
       window.removeEventListener('blur', releaseGrab);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('playmode', handlePlayMode);
       reducedMotionQuery.removeEventListener('change', handleReducedMotionChange);
       // Detach any listeners added while a drag was in progress and restore
       // the cursor before tearing the engine down.

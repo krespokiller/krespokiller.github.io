@@ -3,7 +3,8 @@
     "name": "David Santiago Vargas",
     "title": "Tech Lead",
     "subtitle": "Distributed systems · Cloud Architecture · AI-Driven Development",
-    "viewWork": "View My Work"
+    "viewWork": "View My Work",
+    "play": "Play my résumé"
   },
   "nav": {
     "ariaLabel": "Main navigation",
