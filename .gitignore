@@ -11,8 +11,8 @@ pnpm-debug.log*
 .env
 .dev.vars
 
-# Vite build output
-# dist
+# Vite build output (CI builds and publishes it; never commit it)
+dist
 
 # TypeScript
 *.tsbuildinfo
