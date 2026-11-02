@@ -117,6 +117,9 @@ export class Game {
   private rain: Drop[] = [];
   readonly combat: Combat;
   private holdingFire = false;
+  private actKey = 'KeyE';
+  private fireKey = 'KeyJ';
+  private fireToggle = false;
   private hudSig = '';
   private mouseAimAt = -10;
   private flicker = { building: -1, until: 0, next: 2 };
@@ -133,7 +136,7 @@ export class Game {
     private readonly canvas: HTMLCanvasElement,
     mini: HTMLCanvasElement | null,
     private readonly cb: GameCallbacks,
-    private readonly reducedMotion: boolean,
+    private reducedMotion: boolean,
     mobile = false,
   ) {
     this.combat = new Combat(this.tiles, (e) => this.onCombatEvent(e), mobile, reducedMotion);
@@ -206,16 +209,45 @@ export class Game {
     this.tfSpots = [];
     let guard = 0;
     while (this.tfSpots.length < TF_SHARDS && guard++ < 400) {
-      const tx = 22 + Math.floor(Math.random() * 36);
+      const tx = 22 + Math.floor(Math.random() * 60);
       const ty = 27 + Math.floor(Math.random() * 20);
       const x = (tx + 0.5) * TILE;
       const y = (ty + 0.5) * TILE;
       if (collides(this.tiles, x, y + 3)) continue;
       if (Math.abs(tx - 24) < 3 && Math.abs(ty - 35) < 3) continue;
-      if (Math.abs(tx - 55) < 3 && Math.abs(ty - 35) < 3) continue;
+      if (Math.abs(tx - 76) < 3 && Math.abs(ty - 35) < 3) continue;
       if (this.tfSpots.some((p) => Math.hypot(p.x - x, p.y - y) < 48)) continue;
       this.tfSpots.push({ x, y, taken: false });
     }
+  }
+
+  // ------------------------------------------------------------ settings API
+
+  setReducedMotion(v: boolean): void {
+    this.reducedMotion = v;
+    this.combat.reducedMotion = v;
+  }
+
+  setKeys(actKey: string, fireKey: string): void {
+    this.actKey = actKey;
+    this.fireKey = fireKey;
+  }
+
+  setFireMode(toggle: boolean): void {
+    this.fireToggle = toggle;
+    this.holdingFire = false;
+  }
+
+  setDifficulty(speed: number, damage: number): void {
+    this.combat.diff = { speed, damage };
+  }
+
+  setNoTimeLimit(v: boolean): void {
+    this.migration.noTimeLimit = v;
+  }
+
+  get keys$(): { act: string; fire: string } {
+    return { act: this.actKey, fire: this.fireKey };
   }
 
   // ------------------------------------------------------------- combat API
@@ -318,11 +350,16 @@ export class Game {
     // Let focused buttons/links keep Space/Enter (their native activation).
     const onControl = e.target instanceof Element && e.target.closest('button, a, input, textarea, select') !== null;
     if (onControl && (code === 'Space' || code === 'Enter')) return;
-    if (MOVE_KEYS.has(code) || ACT_KEYS.has(code)) e.preventDefault();
+    const isAct = code === this.actKey || code === 'Space' || code === 'Enter';
+    const isFire = code === this.fireKey || isAct;
+    if (MOVE_KEYS.has(code) || isAct || code === this.fireKey) e.preventDefault();
     if (this.paused) return;
-    if (ACT_KEYS.has(code) || code === 'KeyJ') {
-      if (this.combat.phase === 'fight') this.combat.fire();
-      else if (!e.repeat && ACT_KEYS.has(code)) this.act();
+    if (isFire) {
+      if (this.combat.phase === 'fight') {
+        if (this.fireToggle) {
+          if (!e.repeat) this.holdingFire = !this.holdingFire;
+        } else this.combat.fire();
+      } else if (!e.repeat && isAct) this.act();
       return;
     }
     if (MOVE_KEYS.has(code)) this.keys.add(code);
@@ -869,7 +906,7 @@ export class Game {
     const m = this.migration;
     const docks: [number, number, Provider | null][] = [
       [24, 35, m.from],
-      [55, 35, m.to],
+      [76, 35, m.to],
     ];
     for (const [tx, ty, prov] of docks) {
       if (!prov) continue;
@@ -886,7 +923,7 @@ export class Game {
       const name = PROVIDER_META[prov].name.toUpperCase();
       drawText(ctx, name, tx * TILE + 8 - textWidth(name, 2) / 2, y - 14, 2, color);
       // tint the cargo stack next to the dock
-      const cx = tx === 24 ? 21 * TILE : 57 * TILE;
+      const cx = tx === 24 ? 21 * TILE : 78 * TILE;
       ctx.fillStyle = hexA(color, 0.35);
       ctx.fillRect(cx, 33 * TILE, 2 * TILE, 5 * TILE);
     }
@@ -1067,7 +1104,6 @@ export class Game {
 }
 
 const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
-const ACT_KEYS = new Set(['KeyE', 'Space', 'Enter']);
 
 function hexA(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);

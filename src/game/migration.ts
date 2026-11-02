@@ -83,6 +83,7 @@ export interface MigrationResult {
   grade: 'S' | 'A' | 'B' | 'C';
   incidents: Warning[];
   tf: number;
+  timed: boolean;
 }
 
 export interface MigrationHud {
@@ -112,6 +113,8 @@ export class Migration {
   private seconds = 0;
   private incidents: Warning[] = [];
   tf = 0;
+  /** When true the maintenance window is disabled (XAG 116) and ON TIME is granted. */
+  noTimeLimit = false;
   lastResult: MigrationResult | null = null;
 
   // ------------------------------------------------------------- lifecycle
@@ -230,12 +233,12 @@ export class Migration {
       noDataLoss: !inc.has('dnsBeforePromote') && !inc.has('splitBrain'),
       noStoredCreds: this.to !== 'do',
       iac: this.tf >= TF_SHARDS,
-      onTime: this.seconds <= PAR_SECONDS,
+      onTime: this.noTimeLimit || this.seconds <= PAR_SECONDS,
       observed: !inc.has('blindCutover'),
     };
     const n = Object.values(medals).filter(Boolean).length;
     const grade = n >= 6 ? 'S' : n >= 5 ? 'A' : n >= 3 ? 'B' : 'C';
-    this.lastResult = { from: this.from, to: this.to, seconds: Math.round(this.seconds), medals, grade, incidents: [...inc], tf: this.tf };
+    this.lastResult = { from: this.from, to: this.to, seconds: Math.round(this.seconds), medals, grade, incidents: [...inc], tf: this.tf, timed: !this.noTimeLimit };
     this.phase = 'done';
     this.completed += 1;
     this.carrying = null;

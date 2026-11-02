@@ -62,6 +62,8 @@ export class Combat {
   kills = 0;
   best = 0;
   aim = { x: 1, y: 0 };
+  /** Difficulty multipliers (speed, damage). */
+  diff = { speed: 1, damage: 1 };
 
   private zombies: Zombie[] = [];
   private bullets: Bullet[] = [];
@@ -81,7 +83,7 @@ export class Combat {
     private readonly tiles: Uint8Array,
     private readonly emit: (e: CombatEvent) => void,
     private readonly mobile: boolean,
-    private readonly reducedMotion: boolean,
+    public reducedMotion: boolean,
   ) {
     this.maxZombies = mobile ? 10 : 18;
     for (let x = 0; x < MAP_W; x++) for (const y of [0, MAP_H - 1]) this.addSpawn(x, y);
@@ -290,7 +292,7 @@ export class Combat {
       const dy = py - z.y;
       const d = Math.hypot(dx, dy) || 1;
       if (d > 7) {
-        const sp = z.speed * (z.type ? runner : 1);
+        const sp = z.speed * (z.type ? runner : 1) * this.diff.speed;
         let mx = (dx / d) * sp * dt;
         let my = (dy / d) * sp * dt;
         // light separation
@@ -310,7 +312,7 @@ export class Combat {
         else if (!collides(this.tiles, z.x + Math.sign(dx || 1) * sp * dt, z.y)) z.x += Math.sign(dx || 1) * sp * dt;
       } else if (z.bite <= 0 && this.invuln <= 0) {
         z.bite = 0.7;
-        this.hp = Math.max(0, this.hp - (z.type ? 8 : 14));
+        this.hp = Math.max(0, this.hp - Math.round((z.type ? 8 : 14) * this.diff.damage));
         this.burst(px, py - 6, 6, COLORS.red, 60, 0.3);
         this.emit({ k: 'hurt' });
         if (this.hp <= 0) {

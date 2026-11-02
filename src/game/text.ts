@@ -23,6 +23,41 @@ export interface MigrationText {
   toast: { picked: (title: string) => string; delivered: (title: string) => string; dropped: string; tf: (n: number, t: number) => string; replicaReady: string; carrying: string; goConsole: string };
 }
 
+export interface SettingsText {
+  title: string;
+  open: string;
+  close: string;
+  reset: string;
+  language: string;
+  textSize: string;
+  textNormal: string;
+  textLarge: string;
+  contrast: string;
+  motion: string;
+  motionSystem: string;
+  motionOn: string;
+  motionOff: string;
+  motionHelp: string;
+  actKey: string;
+  fireKey: string;
+  fireMode: string;
+  hold: string;
+  toggle: string;
+  touchSize: string;
+  difficulty: string;
+  easy: string;
+  normal: string;
+  hard: string;
+  noTimeLimit: string;
+  noTimeLimitHelp: string;
+  on: string;
+  off: string;
+  a11yLine: string;
+  sectionDisplay: string;
+  sectionControls: string;
+  sectionGame: string;
+}
+
 export interface GameText {
   boot: {
     kicker: string;
@@ -65,6 +100,7 @@ export interface GameText {
   hubActions: { linkedin: string; github: string; contact: string };
   names: Record<string, string>;
   migration: MigrationText;
+  settings: SettingsText;
   combat: {
     explore: string;
     enter: string;
@@ -100,7 +136,7 @@ const en: GameText = {
     title: 'David Vargas',
     lead: 'A small night city built from my career. Walk around, read the terminals and unlock the hub.',
     goals: ['Walk the 6 stops of my timeline, west to east', 'Collect the 8 stack shards', 'Complete one cloud migration at the Terraform Yard'],
-    controlsDesktop: 'WASD / ARROWS to move · E or SPACE to act · ESC to exit',
+    controlsDesktop: 'WASD / ARROWS to move · E or SPACE to act · ESC to exit · O settings',
     controlsTouch: 'Drag on the left to move · tap ACT to interact',
     start: 'EXPLORE',
     classic: 'Skip: classic resume',
@@ -110,7 +146,7 @@ const en: GameText = {
     districts: 'TIMELINE',
     shards: 'STACK SHARDS',
     migration: 'MIGRATION',
-    hubOpen: 'CONTACT HUB OPEN → go to SETTLE ONCE',
+    hubOpen: 'CONTACT HUB OPEN → go to the KRESPOKILLER OFFICE',
     hubLocked: 'Complete all three to unlock the contact hub',
     exit: 'CLASSIC RESUME',
     exitLabel: 'Exit the game and go back to the classic resume',
@@ -185,7 +221,7 @@ const en: GameText = {
       ],
     },
     hub: {
-      title: 'SETTLE ONCE HQ',
+      title: 'KRESPOKILLER OFFICE',
       tag: 'Access granted',
       pages: [
         'Settle once: the principle behind every payment system I build. Money moves one time, exactly once.',
@@ -201,7 +237,7 @@ const en: GameText = {
     ],
   }),
   hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Back to the classic resume' },
-  names: { garage: 'Chía Garage', tribuu: 'Tribuu', loopayjs: 'Loopay 2023', loopay: 'Loopay Tower', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', src: 'Source dock', dst: 'Target dock', console: 'Migration console' },
+  names: { garage: 'Chía Garage', tribuu: 'Tribuu', loopayjs: 'Loopay 2023', loopay: 'Loopay Tower', galgo: 'Galgo', trebet: 'Trebet', hub: 'krespokiller office', src: 'Source dock', dst: 'Target dock', console: 'Migration console' },
   migration: {
     console: {
       title: 'MIGRATION CONSOLE',
@@ -285,6 +321,40 @@ const en: GameText = {
       goConsole: 'Set up the migration at the console (center of the yard)',
     },
   },
+  settings: {
+    title: 'SETTINGS & ACCESSIBILITY',
+    open: 'Settings and accessibility (O)',
+    close: 'CLOSE',
+    reset: 'RESET TO DEFAULTS',
+    language: 'Language',
+    textSize: 'Text size',
+    textNormal: 'Normal',
+    textLarge: 'Large',
+    contrast: 'High contrast UI',
+    motion: 'Motion & flashing',
+    motionSystem: 'Follow system',
+    motionOn: 'Reduce',
+    motionOff: 'Full',
+    motionHelp: 'Reduce removes screen shake, neon flicker, rain and fast animations.',
+    actKey: 'Action key',
+    fireKey: 'Fire key',
+    fireMode: 'Fire mode',
+    hold: 'Hold',
+    toggle: 'Toggle',
+    touchSize: 'Touch controls',
+    difficulty: 'Combat difficulty',
+    easy: 'Easy',
+    normal: 'Normal',
+    hard: 'Hard',
+    noTimeLimit: 'No time limit in migrations',
+    noTimeLimitHelp: 'The ON TIME medal is granted automatically.',
+    on: 'On',
+    off: 'Off',
+    a11yLine: 'Accessibility: keyboard-only play, remappable keys, text size, high contrast, reduced motion, difficulty and no-timer options in ⚙ Settings.',
+    sectionDisplay: 'DISPLAY',
+    sectionControls: 'CONTROLS',
+    sectionGame: 'GAME',
+  },
   combat: {
     explore: 'EXPLORE',
     enter: 'COMBAT',
@@ -320,7 +390,7 @@ const es: GameText = {
     title: 'David Vargas',
     lead: 'Una pequeña ciudad nocturna hecha con mi carrera. Camina, lee las terminales y desbloquea el hub.',
     goals: ['Recorre las 6 paradas de mi línea de tiempo, de oeste a este', 'Recoge los 8 fragmentos de stack', 'Completa una migración de nube en el Patio Terraform'],
-    controlsDesktop: 'WASD / FLECHAS para moverte · E o ESPACIO para actuar · ESC para salir',
+    controlsDesktop: 'WASD / FLECHAS para moverte · E o ESPACIO para actuar · ESC para salir · O ajustes',
     controlsTouch: 'Arrastra a la izquierda para moverte · toca ACT para interactuar',
     start: 'EXPLORAR',
     classic: 'Saltar: ver el CV clásico',
@@ -330,7 +400,7 @@ const es: GameText = {
     districts: 'LÍNEA DE TIEMPO',
     shards: 'FRAGMENTOS',
     migration: 'MIGRACIÓN',
-    hubOpen: 'HUB DE CONTACTO ABIERTO → ve a SETTLE ONCE',
+    hubOpen: 'HUB DE CONTACTO ABIERTO → ve a la OFICINA KRESPOKILLER',
     hubLocked: 'Completa los tres para abrir el hub de contacto',
     exit: 'CV CLÁSICO',
     exitLabel: 'Salir del juego y volver al CV clásico',
@@ -405,7 +475,7 @@ const es: GameText = {
       ],
     },
     hub: {
-      title: 'SETTLE ONCE HQ',
+      title: 'OFICINA KRESPOKILLER',
       tag: 'Acceso concedido',
       pages: [
         'Settle once: el principio detrás de cada sistema de pagos que construyo. El dinero se mueve una vez, exactamente una vez.',
@@ -421,7 +491,7 @@ const es: GameText = {
     ],
   }),
   hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Volver al CV clásico' },
-  names: { garage: 'Garaje en Chía', tribuu: 'Tribuu', loopayjs: 'Loopay 2023', loopay: 'Torre Loopay', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', src: 'Muelle de origen', dst: 'Muelle destino', console: 'Consola de migración' },
+  names: { garage: 'Garaje en Chía', tribuu: 'Tribuu', loopayjs: 'Loopay 2023', loopay: 'Torre Loopay', galgo: 'Galgo', trebet: 'Trebet', hub: 'Oficina krespokiller', src: 'Muelle de origen', dst: 'Muelle destino', console: 'Consola de migración' },
   migration: {
     console: {
       title: 'CONSOLA DE MIGRACIÓN',
@@ -504,6 +574,40 @@ const es: GameText = {
       carrying: 'Entrega primero la caja que llevas',
       goConsole: 'Configura la migración en la consola (centro del patio)',
     },
+  },
+  settings: {
+    title: 'AJUSTES Y ACCESIBILIDAD',
+    open: 'Ajustes y accesibilidad (O)',
+    close: 'CERRAR',
+    reset: 'RESTABLECER',
+    language: 'Idioma',
+    textSize: 'Tamaño de texto',
+    textNormal: 'Normal',
+    textLarge: 'Grande',
+    contrast: 'Interfaz de alto contraste',
+    motion: 'Movimiento y destellos',
+    motionSystem: 'Según el sistema',
+    motionOn: 'Reducir',
+    motionOff: 'Completo',
+    motionHelp: 'Reducir quita el temblor, el parpadeo de neón, la lluvia y las animaciones rápidas.',
+    actKey: 'Tecla de acción',
+    fireKey: 'Tecla de disparo',
+    fireMode: 'Modo de disparo',
+    hold: 'Mantener',
+    toggle: 'Alternar',
+    touchSize: 'Controles táctiles',
+    difficulty: 'Dificultad del combate',
+    easy: 'Fácil',
+    normal: 'Normal',
+    hard: 'Difícil',
+    noTimeLimit: 'Sin límite de tiempo en migraciones',
+    noTimeLimitHelp: 'La medalla A TIEMPO se otorga automáticamente.',
+    on: 'Sí',
+    off: 'No',
+    a11yLine: 'Accesibilidad: se juega solo con teclado, teclas configurables, tamaño de texto, alto contraste, menos movimiento, dificultad y sin cronómetro en ⚙ Ajustes.',
+    sectionDisplay: 'PANTALLA',
+    sectionControls: 'CONTROLES',
+    sectionGame: 'JUEGO',
   },
   combat: {
     explore: 'EXPLORAR',

@@ -192,7 +192,7 @@ export function MigrationPanels({ ui, text, hud, pair, onPair, onStart, onTake, 
           <span style={{ color: from.color }}>{from.name}</span> → <span style={{ color: to.color }}>{to.name}</span>
         </h1>
         <p className="lead">
-          {t.result.tag(from.name, to.name, r.seconds)} · {t.hud.tf} {r.tf}/{TF_SHARDS}
+          {t.result.tag(from.name, to.name, r.seconds)}{r.timed ? '' : ' ∞'} · {t.hud.tf} {r.tf}/{TF_SHARDS}
         </p>
         <div className="pm-grade" style={{ color: GRADE_COLOR[r.grade] }}>
           <small>{t.result.grade}</small>

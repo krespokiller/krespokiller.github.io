@@ -11,6 +11,9 @@ import { COLORS, DISTRICTS, MIGRATION_GOAL, SHARDS } from './world';
 import { PROVIDER_META, TF_SHARDS, loadBest, saveBest } from './migration';
 import type { Delivery, MigrationResult, Provider } from './migration';
 import { MigrationPanels } from './MigrationPanels';
+import { SettingsPanel } from './SettingsPanel';
+import { DIFFICULTY, effectiveReducedMotion, loadSettings, saveSettings } from './settings';
+import type { Settings } from './settings';
 import './game.css';
 
 /** Where the page should land after the game closes. */
@@ -74,7 +77,10 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language?.startsWith('es') ? 'es' : 'en';
   const text = GAME_TEXT[lang];
-  const reducedMotion = usePrefersReducedMotion();
+  const systemReducedMotion = usePrefersReducedMotion();
+  const [settings, setSettings] = useState<Settings>(() => loadSettings());
+  const reducedMotion = effectiveReducedMotion(settings, systemReducedMotion);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [phase, setPhase] = useState<Phase>('boot');
   const [hud, setHud] = useState<HudState>(EMPTY_HUD);
@@ -218,10 +224,26 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Settings → engine (and persistence). Runs after mount and on every change.
+  useEffect(() => {
+    const game = gameRef.current;
+    if (!game) return;
+    game.setReducedMotion(reducedMotion);
+    game.setKeys(settings.actKey, settings.fireKey);
+    game.setFireMode(settings.fireMode === 'toggle');
+    const d = DIFFICULTY[settings.difficulty];
+    game.setDifficulty(d.speed, d.damage);
+    game.setNoTimeLimit(settings.noTimeLimit);
+  }, [settings, reducedMotion]);
+  const updateSettings = useCallback((next: Settings) => {
+    setSettings(next);
+    saveSettings(next);
+  }, []);
+
   // Gameplay runs only on the play screen, with no dialog, and not while leaving.
   useEffect(() => {
-    gameRef.current?.setPaused(phase !== 'play' || dialog !== null || mig !== null || leaving);
-  }, [phase, dialog, mig, leaving]);
+    gameRef.current?.setPaused(phase !== 'play' || dialog !== null || mig !== null || showSettings || leaving);
+  }, [phase, dialog, mig, showSettings, leaving]);
 
   // ---- exit (single entry point; guarded)
   const requestExit = useCallback(
@@ -231,6 +253,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       setLeaving(true);
       setDialog(null);
       setMig(null);
+      setShowSettings(false);
       setJoy(null);
       gameRef.current?.setHoldFire(false);
       gameRef.current?.setJoystick(0, 0);
@@ -350,15 +373,23 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === 'Escape') {
         e.preventDefault();
-        if (dialog) closeDialog();
+        if (showSettings) setShowSettings(false);
+        else if (dialog) closeDialog();
         else if (mig) closeMig();
         else if (combatPhase === 'dead') return; // the menu owns the choices
         else requestExit('stay');
         return;
       }
+      if (showSettings) return;
+      if (e.code === 'KeyO' && !e.repeat && !dialog && !mig && combatPhase !== 'dead') {
+        e.preventDefault();
+        setShowSettings(true);
+        return;
+      }
+      const actKey = settings.actKey;
       if (mig && !e.repeat && (mig.kind === 'briefing' || mig.kind === 'card')) {
         const onControl = e.target instanceof Element && e.target.closest('button, a') !== null;
-        if (e.code === 'KeyE' || ((e.code === 'Space' || e.code === 'Enter') && !onControl)) {
+        if (e.code === actKey || ((e.code === 'Space' || e.code === 'Enter') && !onControl)) {
           e.preventDefault();
           advanceMig();
         }
@@ -372,14 +403,14 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       }
       if (!dialog || e.repeat) return;
       const onControl = e.target instanceof Element && e.target.closest('button, a') !== null;
-      if (e.code === 'KeyE' || ((e.code === 'Space' || e.code === 'Enter') && !onControl)) {
+      if (e.code === actKey || ((e.code === 'Space' || e.code === 'Enter') && !onControl)) {
         e.preventDefault();
         advance();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, mig, advance, advanceMig, closeDialog, closeMig, requestExit, combatPhase, phase, enterCombat, leaveCombat]);
+  }, [dialog, mig, showSettings, settings.actKey, advance, advanceMig, closeDialog, closeMig, requestExit, combatPhase, phase, enterCombat, leaveCombat]);
 
   // ---- mouse aim + click to shoot (desktop)
   const onStageMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -445,7 +476,8 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const nearName = hud.near ? text.names[hud.near] : null;
   const inCombat = combatPhase !== 'off';
   const isDead = combatPhase === 'dead';
-  const showTouchControls = phase === 'play' && !dialog && !mig && touch && !isDead && !leaving;
+  const showTouchControls = phase === 'play' && !dialog && !mig && !showSettings && touch && !isDead && !leaving;
+  const canOpenSettings = !leaving && !dialog && !mig && combatPhase !== 'dead';
   const migRun = hud.migration.phase === 'run';
   const hpPct = Math.max(0, Math.min(100, hud.combat.hp));
 
@@ -456,7 +488,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       role="dialog"
       aria-modal="true"
       aria-label={text.boot.kicker}
-      className={`pm-root${reducedMotion ? ' pm-reduced' : ''}${leaving ? ' pm-exit' : ' pm-enter'}${inCombat ? ' pm-combat' : ''}`}
+      className={`pm-root${reducedMotion ? ' pm-reduced' : ''}${leaving ? ' pm-exit' : ' pm-enter'}${inCombat ? ' pm-combat' : ''}${settings.textSize === 'large' ? ' pm-text-lg' : ''}${settings.contrast ? ' pm-contrast' : ''}${settings.touchSize === 'large' ? ' pm-touch-lg' : ''}`}
     >
       <div
         ref={stageRef}
@@ -567,6 +599,9 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
                 {inCombat ? c.leave : `⚔ ${c.enter}`}
               </button>
             )}
+            <button type="button" className="pm-btn pm-exit-btn pm-gear" onClick={() => setShowSettings(true)} aria-label={text.settings.open} title={text.settings.open} disabled={!canOpenSettings}>
+              <span aria-hidden="true">⚙</span>
+            </button>
             <button type="button" className="pm-btn pm-exit-btn" onClick={() => requestExit('stay')} aria-label={t.exitLabel} disabled={leaving}>
               {t.exit} <span aria-hidden="true">✕</span>
             </button>
@@ -587,7 +622,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       {/* Interaction prompt */}
       {phase === 'play' && !dialog && !mig && !leaving && nearName && (
         <div className="pm-prompt">
-          <kbd>{touch ? t.actTouch : t.actKey}</kbd> {nearName}
+          <kbd>{touch ? t.actTouch : keyLabel(settings.actKey)}</kbd> {nearName}
         </div>
       )}
       {phase === 'play' && !dialog && !leaving && !touch && combatPhase === 'fight' && (
@@ -635,6 +670,18 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
             </button>
           )}
         </>
+      )}
+
+      {/* Settings */}
+      {showSettings && !leaving && (
+        <SettingsPanel
+          text={text.settings}
+          settings={settings}
+          lang={lang}
+          onChange={updateSettings}
+          onLang={(l) => i18n.changeLanguage(l)}
+          onClose={() => setShowSettings(false)}
+        />
       )}
 
       {/* Migration overlays */}
@@ -727,12 +774,16 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
             </ol>
             <p className="controls">{touch ? text.boot.controlsTouch : text.boot.controlsDesktop}</p>
             <p className="controls">{touch ? c.controlsTouch : c.controlsDesktop}</p>
+            <p className="controls pm-a11y">{text.settings.a11yLine}</p>
             <div className="row">
               <button type="button" className="pm-btn pm-primary" onClick={() => start(false)} autoFocus>
                 ▶ {text.boot.start}
               </button>
               <button type="button" className="pm-btn pm-danger" onClick={() => start(true)} title={c.enterHint}>
                 ⚔ {c.enter}
+              </button>
+              <button type="button" className="pm-btn" onClick={() => setShowSettings(true)} aria-label={text.settings.open}>
+                ⚙ {text.settings.title.split(' ')[0]}
               </button>
               <button type="button" className="pm-btn" onClick={() => requestExit('stay')}>
                 {text.boot.classic}
@@ -745,4 +796,11 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   );
 
   return createPortal(ui, document.body);
+}
+
+function keyLabel(code: string): string {
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code === 'ShiftLeft') return 'SHIFT';
+  if (code === 'ControlLeft') return 'CTRL';
+  return code;
 }

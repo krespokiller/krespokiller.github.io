@@ -343,3 +343,46 @@
 .pm-mig-console > *:nth-child(7) { animation-delay: 0.36s; }
 @keyframes pm-boot-line { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
 .pm-reduced .pm-toast, .pm-reduced .pm-mig-console > * { animation: none; }
+
+/* ------------------------------------------------------ settings & a11y */
+.pm-gear { font-size: 16px; padding: 6px 9px; }
+.pm-set-wrap { z-index: 5; background: rgba(5, 3, 15, 0.7); } /* above the boot/death screens */
+.pm-a11y { color: var(--pm-text) !important; opacity: 0.8; }
+.pm-set { width: min(640px, 100%); max-height: min(90vh, 760px); display: flex; flex-direction: column; --accent: #ffd27a; }
+.pm-set-body { overflow: auto; flex: 1; padding-right: 4px; }
+.pm-set-body h4 { margin: 14px 0 6px; font-size: 11px; letter-spacing: 0.2em; color: var(--pm-muted); }
+.pm-set-body h4:first-child { margin-top: 6px; }
+.pm-set-row { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr; gap: 6px 12px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.pm-set-label { font-size: 13px; }
+.pm-set-opts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.pm-set-opt { min-height: 36px; padding: 6px 10px; font-size: 11px; background: transparent; }
+.pm-set-opt.on { background: var(--pm-line); color: #0a0620; border-color: var(--pm-line); }
+.pm-set-help { grid-column: 1 / -1; font-size: 11px; color: var(--pm-muted); }
+.pm-set footer { margin-top: 12px; }
+@media (max-width: 560px) { .pm-set-row { grid-template-columns: 1fr; } .pm-set-opts { justify-content: flex-start; } }
+
+/* Text size: scales every UI text (XAG 101). */
+.pm-text-lg { font-size: 118%; }
+.pm-text-lg .pm-objectives ul, .pm-text-lg .pm-combat-hud ul, .pm-text-lg .pm-mig-strip, .pm-text-lg .pm-objectives p { font-size: 13px; }
+.pm-text-lg .pm-body { font-size: 18px; line-height: 1.6; }
+.pm-text-lg .pm-dialog header h3 { font-size: 22px; }
+.pm-text-lg .pm-btn { font-size: 15px; }
+.pm-text-lg .pm-toast { font-size: 14px; }
+.pm-text-lg .pm-prompt { font-size: 15px; }
+.pm-text-lg .pm-mig-list .txt b { font-size: 15px; }
+.pm-text-lg .pm-mig-list .txt small, .pm-text-lg .pm-mig-list .txt em, .pm-text-lg .pm-set-help, .pm-text-lg .pm-medals small { font-size: 13px; }
+.pm-text-lg .pm-set-label { font-size: 15px; }
+
+/* High contrast: solid panels, white text, thicker borders (XAG 102). */
+.pm-contrast { --pm-panel: #000; --pm-text: #fff; --pm-muted: #d9d6ff; --pm-line: #7ff7ff; }
+.pm-contrast .pm-panel { background: #000; box-shadow: 0 0 0 3px #000; }
+.pm-contrast .pm-crt { background: none; }
+.pm-contrast .pm-btn { background: #000; border-width: 3px; }
+.pm-contrast .pm-primary { color: #000; }
+.pm-contrast .pm-toast { background: #000; }
+.pm-contrast .pm-mig-list li { border-color: rgba(255, 255, 255, 0.35); }
+
+/* Larger touch controls. */
+.pm-touch-lg .pm-act { width: 112px; height: 112px; font-size: 18px; }
+.pm-touch-lg .pm-joy { width: 120px; height: 120px; margin: -60px 0 0 -60px; }
+.pm-touch-lg .pm-joy i { width: 50px; height: 50px; margin: -25px 0 0 -25px; }

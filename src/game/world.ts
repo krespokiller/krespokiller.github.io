@@ -65,6 +65,10 @@ export interface Building {
   doorY: number;
 }
 
+/** Terraform Yard columns (inclusive). */
+export const YARD_X0 = 21;
+export const YARD_X1 = 82;
+
 /** Avenue rows (inclusive). */
 export const AVENUE_Y0 = 21;
 export const AVENUE_Y1 = 24;
@@ -76,7 +80,7 @@ export const BUILDINGS: Building[] = [
   { id: 'galgo', kind: 'ops', x: 53, y: 8, w: 12, h: 11, accent: COLORS.green, sign: 'GALGO', year: '2023', doorX: 59, doorY: 19 },
   { id: 'trebet', kind: 'residential', x: 71, y: 6, w: 11, h: 13, accent: COLORS.orange, sign: 'TREBET', year: '2024', doorX: 76, doorY: 19 },
   { id: 'loopay', kind: 'tower', x: 88, y: 1, w: 13, h: 18, accent: COLORS.magenta, sign: 'LOOPAY', sub: 'SOBERANA', year: '2025', doorX: 94, doorY: 19 },
-  { id: 'hub', kind: 'hq', x: 103, y: 28, w: 13, h: 14, accent: COLORS.violet, sign: 'SETTLE', sub: 'ONCE', year: 'NOW', doorX: 109, doorY: 42 },
+  { id: 'hub', kind: 'hq', x: 103, y: 28, w: 13, h: 14, accent: COLORS.violet, sign: 'KRESPOKILLER', sub: 'OFFICE', year: 'NOW', doorX: 109, doorY: 42 },
 ];
 
 export interface Terminal {
@@ -92,8 +96,8 @@ const center = (t: number) => (t + 0.5) * TILE;
 export const TERMINALS: Terminal[] = [
   ...BUILDINGS.map((b) => ({ id: b.id, x: center(b.doorX), y: center(b.doorY), accent: b.accent })),
   { id: 'src', x: center(24), y: center(35), accent: COLORS.violet },
-  { id: 'dst', x: center(55), y: center(35), accent: COLORS.violet },
-  { id: 'console', x: center(40), y: center(31), accent: COLORS.cyan },
+  { id: 'dst', x: center(76), y: center(35), accent: COLORS.violet },
+  { id: 'console', x: center(50), y: center(31), accent: COLORS.cyan },
 ];
 
 export interface ShardDef {
@@ -111,8 +115,8 @@ export const SHARDS: ShardDef[] = [
   { id: 'react', label: 'React', tx: 49, ty: 13 },
   { id: 'pg', label: 'PostgreSQL', tx: 67, ty: 12 },
   { id: 'docker', label: 'Docker', tx: 85, ty: 10 },
-  { id: 'tf', label: 'Terraform', tx: 43, ty: 40 },
-  { id: 'azure', label: 'Azure', tx: 70, ty: 36 },
+  { id: 'tf', label: 'Terraform', tx: 47, ty: 44 },
+  { id: 'azure', label: 'Azure', tx: 66, ty: 44 },
   { id: 'gha', label: 'GitHub Actions', tx: 90, ty: 42 },
 ];
 
@@ -130,8 +134,10 @@ export const DRONE_Y_MAX = 46 * TILE;
 
 export const DRONES: DroneDef[] = [
   { laneX: 31, speed: 38, phase: 0.1 },
-  { laneX: 39, speed: 52, phase: 0.6 },
-  { laneX: 47, speed: 44, phase: 0.35 },
+  { laneX: 41, speed: 52, phase: 0.6 },
+  { laneX: 50, speed: 44, phase: 0.35 },
+  { laneX: 60, speed: 48, phase: 0.8 },
+  { laneX: 69, speed: 40, phase: 0.25 },
 ];
 
 /** Migrations completed to satisfy the hub objective. */
@@ -142,13 +148,15 @@ export const RACKS = [
   { x: 34, y: 29, w: 2, h: 2 },
   { x: 43, y: 41, w: 2, h: 2 },
   { x: 27, y: 41, w: 2, h: 2 },
-  { x: 51, y: 29, w: 2, h: 2 },
+  { x: 56, y: 29, w: 2, h: 2 },
+  { x: 64, y: 41, w: 2, h: 2 },
+  { x: 72, y: 29, w: 2, h: 2 },
 ];
 
 /** Source / target cargo stacks (solid). */
 export const CRATES = [
   { x: 21, y: 33, w: 2, h: 5, dock: 'src' as const },
-  { x: 57, y: 33, w: 2, h: 5, dock: 'dst' as const },
+  { x: 78, y: 33, w: 2, h: 5, dock: 'dst' as const },
 ];
 
 /** Cars drive along the avenue: lane y (tiles), direction, speed (px/s). */
@@ -166,7 +174,7 @@ const SIDE_STREETS: { x0: number; x1: number; south: boolean }[] = [
   { x0: 15, x1: 18, south: true },
   { x0: 33, x1: 36, south: false },
   { x0: 49, x1: 52, south: false },
-  { x0: 67, x1: 70, south: true },
+  { x0: 67, x1: 70, south: false },
   { x0: 84, x1: 87, south: false },
   { x0: 99, x1: 102, south: true },
 ];
@@ -190,7 +198,7 @@ export function buildTiles(): Uint8Array {
     }
   }
   // Plaza ("Terraform Yard") south of the avenue.
-  for (let y = AVENUE_Y1 + 1; y < MAP_H; y++) for (let x = 21; x <= 58; x++) set(x, y, T.PLAZA);
+  for (let y = AVENUE_Y1 + 1; y < MAP_H; y++) for (let x = YARD_X0; x <= YARD_X1; x++) set(x, y, T.PLAZA);
 
   // Sidewalks: any lot tile touching a road.
   const sidewalks: number[] = [];

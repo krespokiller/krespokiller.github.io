@@ -3,7 +3,7 @@
  * offscreen canvas (static layer); the engine blits a window of it per frame
  * and draws the live parts (doors, cars, lights, actors) on top.
  */
-import { AVENUE_Y0, AVENUE_Y1, BUILDINGS, COLORS, CRATES, MAP_H, MAP_W, RACKS, TILE, T, WORLD_H, WORLD_W, sideStreetAt } from './world';
+import { AVENUE_Y0, AVENUE_Y1, BUILDINGS, COLORS, CRATES, MAP_H, MAP_W, RACKS, TILE, T, WORLD_H, WORLD_W, YARD_X0, YARD_X1, sideStreetAt } from './world';
 import type { Building } from './world';
 
 // ---------------------------------------------------------------- pixel font
@@ -165,11 +165,11 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
 
   // Plaza circuit grid
   ctx.fillStyle = PAL.plazaLine;
-  for (let tx = 21; tx <= 58; tx += 4) ctx.fillRect(tx * TILE, 25 * TILE, 1, (MAP_H - 25) * TILE);
-  for (let ty = 25; ty < MAP_H; ty += 4) ctx.fillRect(21 * TILE, ty * TILE, 38 * TILE, 1);
+  for (let tx = YARD_X0; tx <= YARD_X1; tx += 4) ctx.fillRect(tx * TILE, 25 * TILE, 1, (MAP_H - 25) * TILE);
+  for (let ty = 25; ty < MAP_H; ty += 4) ctx.fillRect(YARD_X0 * TILE, ty * TILE, (YARD_X1 - YARD_X0 + 1) * TILE, 1);
   ctx.fillStyle = 'rgba(0,240,255,0.5)';
-  for (let tx = 21; tx <= 58; tx += 4) for (let ty = 25; ty < MAP_H; ty += 4) ctx.fillRect(tx * TILE - 1, ty * TILE - 1, 3, 3);
-  drawText(ctx, 'TERRAFORM YARD', 28 * TILE, 26 * TILE + 4, 3, 'rgba(0,240,255,0.16)');
+  for (let tx = YARD_X0; tx <= YARD_X1; tx += 4) for (let ty = 25; ty < MAP_H; ty += 4) ctx.fillRect(tx * TILE - 1, ty * TILE - 1, 3, 3);
+  drawText(ctx, 'TERRAFORM YARD', 38 * TILE, 26 * TILE + 4, 3, 'rgba(0,240,255,0.16)');
 
   // Avenue center line (dashed amber) and side-street dashes
   ctx.fillStyle = 'rgba(245,158,11,0.55)';
@@ -266,7 +266,7 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
   }
 
   // Dock pads (provider colors are drawn live by the engine)
-  for (const [tx, ty] of [[24, 35], [55, 35]] as const) {
+  for (const [tx, ty] of [[24, 35], [76, 35]] as const) {
     const x = tx * TILE - 8;
     const y = ty * TILE - 8;
     ctx.fillStyle = rgba(COLORS.violet, 0.08);
@@ -340,7 +340,7 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
 
   // Migration console pad (center of the yard)
   {
-    const x = 40 * TILE - 12;
+    const x = 50 * TILE - 12;
     const y = 31 * TILE - 10;
     glowRect(ctx, x, y, 24, 14, COLORS.cyan, 0.7);
     ctx.fillStyle = '#07041a';
