@@ -1,6 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar, SelectedWork } from "@/components";
+import { Brain } from '@/components/organisms/Brain/Brain';
+import type { ParticleNetwork } from '@/components/organisms/InteractiveBackground/ParticleNetwork';
 import { Button } from "@/components/atoms";
 import { usePrefersReducedMotion } from "@/hooks";
 
@@ -29,6 +31,7 @@ export function Home() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [shell, setShell] = useState<Shell>('page');
   const [loadingGame, setLoadingGame] = useState(false);
+  const [network, setNetwork] = useState<ParticleNetwork | null>(null);
   const shellRef = useRef<Shell>('page');
   const timer = useRef<number | null>(null);
   const enterMs = prefersReducedMotion ? REDUCED_MS : ENTER_MS;
@@ -91,7 +94,8 @@ export function Home() {
   return (
     <div className={`min-h-screen relative page-shell${shell === 'entering' || shell === 'game' ? ' page-dim' : ''}`}>
       <Navbar />
-      <InteractiveBackground />
+      <InteractiveBackground onNetwork={setNetwork} />
+      <Brain network={network} onPlay={openGame} suspended={shell !== 'page'} />
       {/* Content is pointer-transparent (.layer-content): the background
           canvas owns clicks for grab & pull; links/buttons re-enable
           themselves via CSS. Navbar stays fully interactive (z-40 chrome). */}

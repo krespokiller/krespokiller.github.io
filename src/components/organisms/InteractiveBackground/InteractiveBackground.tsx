@@ -49,7 +49,12 @@ function isGrabBlocked(target: EventTarget | null): boolean {
  * The canvas is decorative: pointer events pass through and it is hidden
  * from assistive technology.
  */
-export const InteractiveBackground: React.FC = () => {
+interface InteractiveBackgroundProps {
+  /** Hands the engine to a sibling layer (the brain) once created; null on teardown. */
+  onNetwork?: (network: ParticleNetwork | null) => void;
+}
+
+export const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({ onNetwork }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const networkRef = useRef<ParticleNetwork | null>(null);
   const resizeRafRef = useRef<number | null>(null);
@@ -57,6 +62,8 @@ export const InteractiveBackground: React.FC = () => {
   const hiddenTabRef = useRef(false);
   const gameOpenRef = useRef(false);
   const grabActiveRef = useRef(false);
+  const onNetworkRef = useRef(onNetwork);
+  onNetworkRef.current = onNetwork;
 
   /**
    * Single source of truth for the animation loop: it runs only when the
@@ -80,6 +87,7 @@ export const InteractiveBackground: React.FC = () => {
 
     const network = new ParticleNetwork(canvas);
     networkRef.current = network;
+    onNetworkRef.current?.(network);
 
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     reducedMotionRef.current = reducedMotionQuery.matches;
@@ -152,7 +160,8 @@ export const InteractiveBackground: React.FC = () => {
       // somehow receives the pointerdown despite the transparent layer.
       if (isGrabBlocked(event.target)) return;
       const index = network.pickAt(event.clientX, event.clientY);
-      if (index < 0) return;
+      // Synapses (brain nodes) are dragged through their own labels.
+      if (index < 0 || network.isSynapse(index)) return;
       network.beginGrab(index);
       grabActiveRef.current = true;
       document.body.style.cursor = 'grabbing';
@@ -220,6 +229,7 @@ export const InteractiveBackground: React.FC = () => {
       // the cursor before tearing the engine down.
       releaseGrab();
       if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
+      onNetworkRef.current?.(null);
       network.dispose();
       networkRef.current = null;
     };

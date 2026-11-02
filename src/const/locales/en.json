@@ -104,6 +104,70 @@
       "ariaLabel": "Visit David's LinkedIn profile (opens in a new tab)"
     }
   },
+  "brain": {
+    "hint": "Drag a node to the center — or tap it",
+    "hintShort": "Tap a node",
+    "dropHere": "Drop here",
+    "close": "Close",
+    "goTo": "See in the page",
+    "nodes": {
+      "play": {
+        "label": "▶ Play",
+        "title": "Playable resume",
+        "body": "An open-world pixel city built from my career: explore the districts, survive a zombie lockdown and run a zero-downtime cloud migration. Three minutes, no install.",
+        "cta": "Enter the game",
+        "alt": "Keep reading"
+      },
+      "soberana": {
+        "label": "SOBERANA",
+        "title": "Loopay · Tech Lead",
+        "body": "I lead a team of 5 on SOBERANA, a multi-tenant cross-border treasury and payments platform: custodial wallets, virtual accounts by country and rail, deposits and withdrawals.",
+        "target": "experience"
+      },
+      "cloud": {
+        "label": "Azure · AWS",
+        "title": "Cloud & migrations",
+        "body": "Led the AWS → Azure migration with the CTO, rebuilt as Terraform: Container Apps, PostgreSQL Flexible Server, Key Vault, managed identities. CI/CD over OIDC with an ephemeral environment per pull request.",
+        "target": "about"
+      },
+      "security": {
+        "label": "Security",
+        "title": "12 audit findings closed",
+        "body": "Idempotency of money-moving operations, SSRF protection, API key lifecycle and encryption of stored secrets, from an audit run with a partner firm using OpenAI's Daybreak.",
+        "target": "experience"
+      },
+      "backend": {
+        "label": "NestJS · Python",
+        "title": "Backend",
+        "body": "NestJS and Node.js services, PostgreSQL, GraphQL, event-driven microservices, Python with Pydantic for compliance tooling. 6,000+ automated tests back the pipeline.",
+        "target": "about"
+      },
+      "frontend": {
+        "label": "React · Next.js",
+        "title": "Frontend",
+        "body": "React and Next.js interfaces, backend-for-frontend layers, React Native for mobile. Storybook-driven components.",
+        "target": "about"
+      },
+      "galgo": {
+        "label": "Galgo",
+        "title": "Software Engineer · 2023 – 2025",
+        "body": "Checkout and Risk teams: NestJS services, a BFF layer and Next.js on event-driven microservices in AWS. Critical-path systems with PagerDuty, Terraform, Datadog and GitHub Actions.",
+        "target": "experience"
+      },
+      "trebet": {
+        "label": "Trebet",
+        "title": "Co-founder · 2024 – 2025",
+        "body": "A digital-intercom app taken from MVP to production in about a month with a remote team of 7. React Native, Laravel, WebRTC. Moved the infrastructure from AWS to DigitalOcean with no data loss.",
+        "target": "experience"
+      },
+      "contact": {
+        "label": "Contact",
+        "title": "Let's talk",
+        "body": "A role, a project or an idea: the fastest way to reach me is LinkedIn or GitHub.",
+        "target": "contact"
+      }
+    }
+  },
   "footer": {
     "copyright": "© 2026 David Santiago Vargas"
   }

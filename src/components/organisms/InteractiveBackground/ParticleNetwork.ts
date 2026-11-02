@@ -97,6 +97,20 @@ export class ParticleNetwork {
   private screenPositions: Float32Array = new Float32Array(0);
   private screenBasePositions: Float32Array = new Float32Array(0);
 
+  // Synapses ("brain" nodes with content): the first `synapseCount`
+  // particles. They have no drift and ignore the repulsion field so their
+  // DOM labels stay anchored; their lattice positions come from
+  // layoutSynapses (viewport-aware). One synapse can be focused: it springs
+  // to the front-center while the rest of the network dims.
+  private synapseCount = 0;
+  private synapseScreen: Float32Array = new Float32Array(0);
+  private onProject: ((screen: Float32Array) => void) | null = null;
+  private focusIndex = -1;
+  private focusTarget = new THREE.Vector3();
+  private dim = 0;
+  /** Normalized layout slots (x, y in -1..1 of the visible half extents). */
+  private synapseSlots: Float32Array = new Float32Array(0);
+
   private rafId: number | null = null;
   private tmpVector = new THREE.Vector3();
   private tmpVectorB = new THREE.Vector3();
@@ -128,6 +142,77 @@ export class ParticleNetwork {
     this.nodeAlpha = node.a;
     this.pointsMaterial.color.setRGB(node.r / 255, node.g / 255, node.b / 255, THREE.SRGBColorSpace);
     this.pointsMaterial.opacity = node.a;
+  }
+
+  /**
+   * Reserves the first `slots.length / 2` particles as synapses and places
+   * them at the given normalized slots (x, y in -1..1 of the visible area at
+   * z = 0). Called again on every reseed/resize by the owner.
+   */
+  setSynapses(slots: Float32Array, onProject: ((screen: Float32Array) => void) | null): void {
+    this.synapseSlots = slots;
+    this.synapseCount = Math.min(slots.length / 2, this.count);
+    this.synapseScreen = new Float32Array(this.synapseCount * 3);
+    this.onProject = onProject;
+    this.layoutSynapses();
+  }
+
+  /** Brings a synapse to the front-center and dims the rest. -1 clears. */
+  focusSynapse(index: number): void {
+    if (index >= 0 && index < this.synapseCount) {
+      this.focusIndex = index;
+      const { halfZ } = this.bounds;
+      this.focusTarget.set(0, 0, halfZ * 0.6);
+    } else {
+      this.focusIndex = -1;
+    }
+  }
+
+  isSynapse(index: number): boolean {
+    return index >= 0 && index < this.synapseCount;
+  }
+
+  get focusedSynapse(): number {
+    return this.focusIndex;
+  }
+
+  private layoutSynapses(): void {
+    // Visible half extents at z = 0 (without the volume margin).
+    const halfH = this.bounds.halfH / CONFIG.VOLUME_MARGIN;
+    const halfW = this.bounds.halfW / CONFIG.VOLUME_MARGIN;
+    for (let i = 0; i < this.synapseCount; i++) {
+      const i3 = i * 3;
+      this.basePositions[i3] = this.synapseSlots[i * 2] * halfW;
+      this.basePositions[i3 + 1] = this.synapseSlots[i * 2 + 1] * halfH;
+      this.basePositions[i3 + 2] = 0; // on the reference plane: slots map 1:1 to the viewport
+      this.drifts[i3] = 0;
+      this.drifts[i3 + 1] = 0;
+      this.drifts[i3 + 2] = 0;
+      this.offsets[i3] = 0;
+      this.offsets[i3 + 1] = 0;
+      this.offsets[i3 + 2] = 0;
+      this.renderPositions[i3] = this.basePositions[i3];
+      this.renderPositions[i3 + 1] = this.basePositions[i3 + 1];
+      this.renderPositions[i3 + 2] = this.basePositions[i3 + 2];
+    }
+  }
+
+  /** Projects the synapses to CSS pixels (x, y, depth 0..1) and reports them. */
+  private projectSynapses(): void {
+    if (this.synapseCount === 0 || !this.onProject) return;
+    const canvas = this.renderer.domElement;
+    const width = canvas.clientWidth || window.innerWidth;
+    const height = canvas.clientHeight || window.innerHeight;
+    this.camera.updateMatrixWorld();
+    for (let i = 0; i < this.synapseCount; i++) {
+      const i3 = i * 3;
+      this.tmpVector.set(this.renderPositions[i3], this.renderPositions[i3 + 1], this.renderPositions[i3 + 2]);
+      this.tmpVector.project(this.camera);
+      this.synapseScreen[i3] = (this.tmpVector.x + 1) * (width / 2);
+      this.synapseScreen[i3 + 1] = (1 - this.tmpVector.y) * (height / 2);
+      this.synapseScreen[i3 + 2] = (this.renderPositions[i3 + 2] + this.bounds.halfZ) / (this.bounds.halfZ * 2);
+    }
+    this.onProject(this.synapseScreen);
   }
 
   /** Receives a pointer/touch position in CSS pixels and projects it to the z = 0 plane. */
@@ -301,6 +386,7 @@ export class ParticleNetwork {
    * capped at BOND_MAX_COUNT (oldest bond gives way when full).
    */
   private tryFormBond(dropped: number): void {
+    if (dropped < this.synapseCount) return;
     const positions = this.renderPositions;
     const d3 = dropped * 3;
     const dropX = positions[d3];
@@ -426,6 +512,11 @@ export class ParticleNetwork {
     } else {
       this.rescale(previous);
     }
+    if (this.synapseSlots.length) {
+      this.synapseCount = Math.min(this.synapseSlots.length / 2, this.count);
+      if (this.synapseScreen.length !== this.synapseCount * 3) this.synapseScreen = new Float32Array(this.synapseCount * 3);
+      this.layoutSynapses();
+    }
   }
 
   start(): void {
@@ -503,9 +594,15 @@ export class ParticleNetwork {
     const idleTarget = this.pointerActive ? 0 : 1;
     this.idleWeight += (idleTarget - this.idleWeight) * (1 - Math.exp(-CONFIG.IDLE_BLEND_RATE * dt));
     this.smoothPointer(dt);
+    const dimTarget = this.focusIndex >= 0 ? 1 : 0;
+    this.dim += (dimTarget - this.dim) * (dt > 0 ? 1 - Math.exp(-6 * dt) : 1);
+    this.pointsMaterial.opacity = this.nodeAlpha * (1 - 0.65 * this.dim);
+    this.linksMaterial.opacity = 1 - 0.7 * this.dim;
+    this.bondMaterial.opacity = 1 - 0.7 * this.dim;
     this.updateParticles(dt);
     this.rebuildLinks();
     this.updateBonds();
+    this.projectSynapses();
     this.positionAttribute.needsUpdate = true;
     this.nodeColorAttribute.needsUpdate = true;
     this.linkPositionAttribute.needsUpdate = true;
@@ -559,7 +656,7 @@ export class ParticleNetwork {
 
       // Gentle repulsion from the smoothed pointer, clamped, springing back.
       // The held node is exempt: the grab spring owns its offset.
-      if (dt > 0 && this.pointerActive && i !== this.grabIndex) {
+      if (dt > 0 && this.pointerActive && i !== this.grabIndex && i >= this.synapseCount) {
         const dx = bx - this.pointerSmoothed.x;
         const dy = by - this.pointerSmoothed.y;
         const dz = bz - this.pointerSmoothed.z;
@@ -582,6 +679,12 @@ export class ParticleNetwork {
         this.offsets[i3] += (this.grabTarget.x - bx - this.offsets[i3]) * stiffness;
         this.offsets[i3 + 1] += (this.grabTarget.y - by - this.offsets[i3 + 1]) * stiffness;
         this.offsets[i3 + 2] += (this.grabTarget.z - bz - this.offsets[i3 + 2]) * stiffness;
+      } else if (i === this.focusIndex) {
+        // Focused synapse: same spring, toward the front-center.
+        const stiffness = dt > 0 ? 1 - Math.exp(-CONFIG.GRAB_STIFFNESS * dt) : 1;
+        this.offsets[i3] += (this.focusTarget.x - bx - this.offsets[i3]) * stiffness;
+        this.offsets[i3 + 1] += (this.focusTarget.y - by - this.offsets[i3 + 1]) * stiffness;
+        this.offsets[i3 + 2] += (this.focusTarget.z - bz - this.offsets[i3 + 2]) * stiffness;
       } else {
         this.offsets[i3] *= damp;
         this.offsets[i3 + 1] *= damp;
@@ -599,7 +702,7 @@ export class ParticleNetwork {
       const depth = (this.renderPositions[i3 + 2] + halfZ) / (halfZ * 2);
       const nodeFade = CONFIG.NODE_DEPTH_FLOOR
         + (1 - CONFIG.NODE_DEPTH_FLOOR) * Math.min(Math.max(depth, 0), 1);
-      this.nodeColors[i4 + 3] = i === this.grabIndex ? 1 : nodeFade;
+      this.nodeColors[i4 + 3] = i === this.grabIndex || i === this.focusIndex ? 1 : nodeFade;
     }
   }
 
@@ -684,6 +787,7 @@ export class ParticleNetwork {
     // Reseeding invalidates particle indices: drop any active grab and all
     // bonds (base positions regenerate).
     this.grabIndex = -1;
+    this.focusIndex = -1;
     this.bondCount = 0;
     this.scatterParticles();
     this.points.geometry.dispose();

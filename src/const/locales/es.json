@@ -104,6 +104,70 @@
       "ariaLabel": "Visitar el perfil de LinkedIn de David (se abre en una pestaña nueva)"
     }
   },
+  "brain": {
+    "hint": "Arrastra un nodo al centro — o tócalo",
+    "hintShort": "Toca un nodo",
+    "dropHere": "Suelta aquí",
+    "close": "Cerrar",
+    "goTo": "Ver en la página",
+    "nodes": {
+      "play": {
+        "label": "▶ Jugar",
+        "title": "CV jugable",
+        "body": "Una ciudad pixel de mundo abierto hecha con mi carrera: explora los distritos, sobrevive a un cierre zombi y haz una migración de nube sin caída. Tres minutos, sin instalar nada.",
+        "cta": "Entrar al juego",
+        "alt": "Seguir leyendo"
+      },
+      "soberana": {
+        "label": "SOBERANA",
+        "title": "Loopay · Tech Lead",
+        "body": "Lidero un equipo de 5 en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos: wallets custodiales, cuentas virtuales por país y riel, depósitos y retiros.",
+        "target": "experience"
+      },
+      "cloud": {
+        "label": "Azure · AWS",
+        "title": "Nube y migraciones",
+        "body": "Lideré la migración de AWS a Azure con el CTO, reconstruida en Terraform: Container Apps, PostgreSQL Flexible Server, Key Vault e identidades administradas. CI/CD con OIDC y un entorno efímero por pull request.",
+        "target": "about"
+      },
+      "security": {
+        "label": "Seguridad",
+        "title": "12 hallazgos de auditoría cerrados",
+        "body": "Idempotencia de operaciones que mueven dinero, protección contra SSRF, ciclo de vida de claves API y cifrado de secretos, en una auditoría con una empresa partner usando Daybreak de OpenAI.",
+        "target": "experience"
+      },
+      "backend": {
+        "label": "NestJS · Python",
+        "title": "Backend",
+        "body": "Servicios en NestJS y Node.js, PostgreSQL, GraphQL, microservicios event-driven, Python con Pydantic para herramientas de compliance. Más de 6.000 pruebas automatizadas respaldan el pipeline.",
+        "target": "about"
+      },
+      "frontend": {
+        "label": "React · Next.js",
+        "title": "Frontend",
+        "body": "Interfaces en React y Next.js, capas backend-for-frontend, React Native en móvil. Componentes guiados por Storybook.",
+        "target": "about"
+      },
+      "galgo": {
+        "label": "Galgo",
+        "title": "Ingeniero de Software · 2023 – 2025",
+        "body": "Equipos de Checkout y Riesgo: servicios NestJS, una capa BFF y Next.js sobre microservicios event-driven en AWS. Sistemas de camino crítico con PagerDuty, Terraform, Datadog y GitHub Actions.",
+        "target": "experience"
+      },
+      "trebet": {
+        "label": "Trebet",
+        "title": "Co-fundador · 2024 – 2025",
+        "body": "Una app de citófono digital llevada de MVP a producción en cerca de un mes con un equipo remoto de 7. React Native, Laravel, WebRTC. Migré la infraestructura de AWS a DigitalOcean sin pérdida de datos.",
+        "target": "experience"
+      },
+      "contact": {
+        "label": "Contacto",
+        "title": "Hablemos",
+        "body": "Un rol, un proyecto o una idea: lo más rápido es LinkedIn o GitHub.",
+        "target": "contact"
+      }
+    }
+  },
   "footer": {
     "copyright": "© 2026 David Santiago Vargas"
   }
