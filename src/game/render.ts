@@ -3,7 +3,7 @@
  * offscreen canvas (static layer); the engine blits a window of it per frame
  * and draws the live parts (doors, cars, lights, actors) on top.
  */
-import { AVENUE_Y0, AVENUE_Y1, BUILDINGS, COLORS, CRATES, MAP_H, MAP_W, RACKS, TILE, T, WORLD_H, WORLD_W, YARD_X0, YARD_X1, sideStreetAt } from './world';
+import { AVENUE_Y0, AVENUE_Y1, BILLBOARDS, BUILDINGS, COLORS, CRATES, KIOSKS, MAP_H, MAP_W, PARKS, RACKS, TILE, T, WORLD_H, WORLD_W, YARD_X0, YARD_X1, sideStreetAt } from './world';
 import type { Building } from './world';
 
 // ---------------------------------------------------------------- pixel font
@@ -146,6 +146,7 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
       if (t === T.ROAD) ctx.fillStyle = (tx + ty) % 2 ? PAL.road : PAL.roadAlt;
       else if (t === T.WALK) ctx.fillStyle = PAL.walk;
       else if (t === T.PLAZA) ctx.fillStyle = (tx + ty) % 2 ? PAL.plaza : '#130d2b';
+      else if (t === T.PARK || t === T.KIOSK) ctx.fillStyle = (tx + ty) % 2 ? '#0c1a1c' : '#0a1618';
       else ctx.fillStyle = (tx + ty) % 2 ? PAL.lot : PAL.lotAlt;
       ctx.fillRect(x, y, TILE, TILE);
       if (t === T.WALK) {
@@ -263,6 +264,63 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
       ctx.fillStyle = '#1f6b4f';
       ctx.fillRect(px + 2, py - 2, 6, 4);
     }
+  }
+
+  // Parks: paths, grass tufts and a title each
+  for (const pk of PARKS) {
+    const x0 = pk.x * TILE;
+    const y0 = pk.y * TILE;
+    const w = pk.w * TILE;
+    const h = pk.h * TILE;
+    ctx.fillStyle = 'rgba(45,212,191,0.35)';
+    ctx.fillRect(x0, y0, w, 1);
+    ctx.fillRect(x0, y0 + h - 1, w, 1);
+    ctx.fillRect(x0, y0, 1, h);
+    ctx.fillRect(x0 + w - 1, y0, 1, h);
+    // gravel paths through the rows
+    ctx.fillStyle = '#16262a';
+    for (const ry of [31, 39]) ctx.fillRect(x0 + 4, ry * TILE + 4, w - 8, 8);
+    ctx.fillRect(x0 + Math.round(w / 2) - 4, y0 + 4, 8, h - 8);
+    for (let i = 0; i < 90; i++) {
+      const gx = x0 + 2 + Math.floor(rand() * (w - 4));
+      const gy = y0 + 2 + Math.floor(rand() * (h - 4));
+      ctx.fillStyle = rand() > 0.5 ? '#14403a' : '#1f6b4f';
+      ctx.fillRect(gx, gy, 2, 1);
+      ctx.fillRect(gx + 1, gy - 1, 1, 1);
+    }
+  }
+  drawText(ctx, 'STACK PLAZA', 2 * TILE + 8, 28 * TILE - 2, 2, 'rgba(45,212,191,0.35)');
+  drawText(ctx, 'WORK GALLERY', 85 * TILE + 4, 28 * TILE - 2, 2, 'rgba(245,158,11,0.35)');
+
+  // Kiosks: neon pedestal with a screen
+  for (const k of KIOSKS) {
+    const x = k.tx * TILE;
+    const y = k.ty * TILE;
+    glowRect(ctx, x + 2, y + 2, 12, 14, COLORS.cyan, 0.5);
+    ctx.fillStyle = '#0a0720';
+    ctx.fillRect(x + 3, y + 2, 10, 14);
+    ctx.fillStyle = COLORS.cyan;
+    ctx.fillRect(x + 3, y + 2, 10, 1);
+    ctx.fillStyle = 'rgba(0,240,255,0.55)';
+    ctx.fillRect(x + 5, y + 5, 6, 4);
+    ctx.fillStyle = '#2a2250';
+    ctx.fillRect(x + 6, y + 12, 4, 4);
+  }
+  // Billboards: hologram frames on two posts
+  for (const b of BILLBOARDS) {
+    const x = (b.tx - 1) * TILE;
+    const y = b.ty * TILE - 10;
+    glowRect(ctx, x, y, 48, 20, COLORS.amber, 0.6);
+    ctx.fillStyle = '#07041a';
+    ctx.fillRect(x, y, 48, 20);
+    ctx.fillStyle = rgba(COLORS.amber, 0.9);
+    ctx.fillRect(x, y, 48, 1);
+    ctx.fillRect(x, y + 19, 48, 1);
+    ctx.fillStyle = rgba(COLORS.amber, 0.25);
+    for (let ly = y + 4; ly < y + 18; ly += 4) ctx.fillRect(x + 4, ly, 26 + ((ly / 4) % 3) * 4, 2);
+    ctx.fillStyle = '#2a2250';
+    ctx.fillRect(x + 6, y + 20, 2, 6);
+    ctx.fillRect(x + 40, y + 20, 2, 6);
   }
 
   // Dock pads (provider colors are drawn live by the engine)

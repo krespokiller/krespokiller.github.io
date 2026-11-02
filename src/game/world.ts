@@ -25,9 +25,11 @@ export const T = {
   PLAZA: 4,
   RACK: 5,
   CRATE: 6,
+  PARK: 7,
+  KIOSK: 8,
 } as const;
 
-export type ZoneId = 'garage' | 'tribuu' | 'loopayjs' | 'galgo' | 'trebet' | 'loopay' | 'hub' | 'src' | 'dst' | 'console';
+export type ZoneId = 'garage' | 'tribuu' | 'loopayjs' | 'galgo' | 'trebet' | 'loopay' | 'hub' | 'src' | 'dst' | 'console' | `stack:${number}` | `work:${number}`;
 
 /** The six career districts, in chronological order (= the timeline). */
 export const DISTRICTS: ZoneId[] = ['garage', 'tribuu', 'loopayjs', 'galgo', 'trebet', 'loopay'];
@@ -93,11 +95,30 @@ export interface Terminal {
 
 const center = (t: number) => (t + 0.5) * TILE;
 
+/** Stack Plaza (south-west park): one kiosk per stack group, 4 × 2 grid. */
+export const KIOSKS: { tx: number; ty: number }[] = [
+  { tx: 3, ty: 30 }, { tx: 6, ty: 30 }, { tx: 9, ty: 30 }, { tx: 12, ty: 30 },
+  { tx: 3, ty: 38 }, { tx: 6, ty: 38 }, { tx: 9, ty: 38 }, { tx: 12, ty: 38 },
+];
+/** Work Gallery (south-east park): one hologram billboard per selected work card. */
+export const BILLBOARDS: { tx: number; ty: number }[] = [
+  { tx: 92, ty: 29 },
+  { tx: 92, ty: 35 },
+  { tx: 92, ty: 41 },
+];
+/** Park lots (tile rects) that host the plaza and the gallery. */
+export const PARKS = [
+  { x: 1, y: 27, w: 14, h: 20 },
+  { x: 84, y: 27, w: 15, h: 20 },
+];
+
 export const TERMINALS: Terminal[] = [
   ...BUILDINGS.map((b) => ({ id: b.id, x: center(b.doorX), y: center(b.doorY), accent: b.accent })),
   { id: 'src', x: center(24), y: center(35), accent: COLORS.violet },
   { id: 'dst', x: center(76), y: center(35), accent: COLORS.violet },
   { id: 'console', x: center(50), y: center(31), accent: COLORS.cyan },
+  ...KIOSKS.map((k, i) => ({ id: `stack:${i}` as ZoneId, x: center(k.tx), y: center(k.ty + 1), accent: COLORS.cyan })),
+  ...BILLBOARDS.map((b, i) => ({ id: `work:${i}` as ZoneId, x: center(b.tx), y: center(b.ty + 1), accent: COLORS.amber })),
 ];
 
 export interface ShardDef {
@@ -161,9 +182,11 @@ export const CRATES = [
 
 /** Cars drive along the avenue: lane y (tiles), direction, speed (px/s). */
 export const CARS = [
-  { laneY: 21.5, dir: 1, speed: 46, color: COLORS.cyan, phase: 0.1 },
-  { laneY: 23.5, dir: -1, speed: 38, color: COLORS.magenta, phase: 0.55 },
-  { laneY: 21.5, dir: 1, speed: 52, color: COLORS.amber, phase: 0.7 },
+  { laneY: 21.5, dir: 1, speed: 72, color: COLORS.cyan, phase: 0.05 },
+  { laneY: 21.5, dir: 1, speed: 64, color: COLORS.amber, phase: 0.5 },
+  { laneY: 23.5, dir: -1, speed: 68, color: COLORS.magenta, phase: 0.3 },
+  { laneY: 23.5, dir: -1, speed: 80, color: COLORS.green, phase: 0.75 },
+  { laneY: 21.5, dir: 1, speed: 88, color: COLORS.violet, phase: 0.9 },
 ];
 
 /** The journey starts at the beginning of the timeline, in front of the garage. */
@@ -212,6 +235,13 @@ export function buildTiles(): Uint8Array {
   }
   sidewalks.forEach((i) => (tiles[i] = T.WALK));
 
+  for (const pk of PARKS) for (let y = pk.y; y < pk.y + pk.h; y++) for (let x = pk.x; x < pk.x + pk.w; x++) if (get(x, y) === T.LOT) set(x, y, T.PARK);
+  for (const k of KIOSKS) set(k.tx, k.ty, T.KIOSK);
+  for (const b of BILLBOARDS) {
+    set(b.tx - 1, b.ty, T.KIOSK);
+    set(b.tx, b.ty, T.KIOSK);
+    set(b.tx + 1, b.ty, T.KIOSK);
+  }
   for (const b of BUILDINGS) for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) set(x, y, T.WALL);
   for (const r of RACKS) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) set(x, y, T.RACK);
   for (const c of CRATES) for (let y = c.y; y < c.y + c.h; y++) for (let x = c.x; x < c.x + c.w; x++) set(x, y, T.CRATE);
@@ -219,7 +249,7 @@ export function buildTiles(): Uint8Array {
   return tiles;
 }
 
-export const isSolidTile = (t: number) => t === T.WALL || t === T.RACK || t === T.CRATE;
+export const isSolidTile = (t: number) => t === T.WALL || t === T.RACK || t === T.CRATE || t === T.KIOSK;
 
 export function tileAt(tiles: Uint8Array, tx: number, ty: number): number {
   if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return T.WALL;

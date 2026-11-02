@@ -1,3 +1,4 @@
+import { STACK_GROUPS } from '@/const/stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading } from '@/components/atoms';
@@ -7,40 +8,6 @@ import { ICON_MAP } from '@/const/iconMap';
 // Full stack from the CV, grouped by category. Group labels are i18n'd via
 // about.stack.* keys; every icon'd item must exist in ICON_MAP. Concept tags
 // (Multi-tenant, CI/CD, IaC, OCR, ...) are intentionally text-only.
-const STACK_GROUPS: { labelKey: string; items: string[] }[] = [
-  {
-    labelKey: 'about.stack.languages',
-    items: ['TypeScript', 'Python', 'JavaScript', 'PHP'],
-  },
-  {
-    labelKey: 'about.stack.backend',
-    items: ['NestJS', 'Django', 'FastAPI', 'Node.js', 'Laravel', 'GraphQL', 'RedwoodJS', 'WebSockets', 'WebRTC'],
-  },
-  {
-    labelKey: 'about.stack.frontend',
-    items: ['React', 'Angular', 'React Native'],
-  },
-  {
-    labelKey: 'about.stack.databases',
-    items: ['PostgreSQL', 'Aurora', 'MongoDB', 'Redis', 'Prisma', 'SQLAlchemy'],
-  },
-  {
-    labelKey: 'about.stack.cloudDevops',
-    items: ['Azure', 'AWS', 'Terraform', 'DigitalOcean', 'Docker', 'GitHub Actions', 'Datadog'],
-  },
-  {
-    labelKey: 'about.stack.architecture',
-    items: ['Multi-tenant', 'Event-driven', 'Clean Architecture', 'CI/CD', 'IaC'],
-  },
-  {
-    labelKey: 'about.stack.testing',
-    items: ['Jest', 'pytest', 'Pydantic', 'Automated Testing', 'Code Reviews'],
-  },
-  {
-    labelKey: 'about.stack.aiOcr',
-    items: ['Google Gemini', 'OCR'],
-  },
-];
 
 export const AboutSection: React.FC = () => {
   const { t } = useTranslation();

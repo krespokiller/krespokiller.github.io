@@ -4,6 +4,8 @@
  */
 import { doorRect, drawText, renderMini, renderWorld, signRect, textWidth } from './render';
 import {
+  AVENUE_Y0,
+  AVENUE_Y1,
   BUILDINGS,
   CARS,
   COLORS,
@@ -36,6 +38,8 @@ export type GameEvent =
   | { k: 'hit' }
   | { k: 'carrying' }
   | { k: 'migration'; e: MigrationEvent }
+  | { k: 'info'; id: string }
+  | { k: 'car' }
   | { k: 'allDone' }
   | { k: 'combat'; e: CombatEvent };
 
@@ -434,6 +438,9 @@ export class Game {
         this.cb.onEvent({ k: 'dialog', id: this.hubOpen ? 'hub' : 'locked' });
         break;
       }
+      default: {
+        if (id.startsWith('stack:') || id.startsWith('work:')) this.cb.onEvent({ k: 'info', id });
+      }
     }
     this.emitHud();
   }
@@ -581,6 +588,23 @@ export class Game {
           p.x = 26.5 * TILE;
           p.y = 36 * TILE;
           this.cb.onEvent({ k: 'hit' });
+          this.emitHud();
+          break;
+        }
+      }
+    }
+
+    // Cars: a hit throws you onto the nearest sidewalk (and costs the crate / some HP).
+    if (this.invuln <= 0) {
+      for (const c of CARS) {
+        const pos = carPosition(c, this.vt);
+        if (Math.abs(pos.x - cx) < 11 && Math.abs(pos.y - cy) < 7) {
+          this.invuln = 1.2;
+          p.y = cy < pos.y ? AVENUE_Y0 * TILE - 2 : (AVENUE_Y1 + 1) * TILE + 6;
+          this.burst(cx, cy, 10, COLORS.amber, 80, 0.4);
+          if (this.migration.carrying !== null) this.migration.drop();
+          if (this.combat.phase === 'fight') this.combat.hp = Math.max(1, this.combat.hp - 10);
+          this.cb.onEvent({ k: 'car' });
           this.emitHud();
           break;
         }
@@ -854,7 +878,12 @@ export class Game {
       // beacon
       const bob = this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 3 + t.y) * 2);
       const by = t.y - 20 + bob;
-      if (!visited || t.id === 'hub' || t.id === 'src' || t.id === 'dst' || t.id === 'console') {
+      const info = t.id.startsWith('stack:') || t.id.startsWith('work:');
+      if (info) {
+        ctx.fillStyle = t.accent;
+        ctx.fillRect(t.x - 1, by + 1, 2, 2);
+        ctx.fillRect(t.x - 1, by - 2, 2, 1);
+      } else if (!visited || t.id === 'hub' || t.id === 'src' || t.id === 'dst' || t.id === 'console') {
         ctx.fillStyle = t.accent;
         ctx.fillRect(t.x - 3, by, 7, 1);
         ctx.fillRect(t.x - 2, by + 1, 5, 1);
@@ -1080,6 +1109,11 @@ export class Game {
       m.fillRect(Math.round((s.tx + 0.5) * TILE * sx) - 1, Math.round((s.ty + 0.5) * TILE * sy) - 1, 2, 2);
     }
     for (const t of TERMINALS) {
+      if (t.id.startsWith('stack:') || t.id.startsWith('work:')) {
+        m.fillStyle = t.accent;
+        m.fillRect(Math.round(t.x * sx), Math.round(t.y * sy), 1, 1);
+        continue;
+      }
       const order = DISTRICTS.indexOf(t.id);
       const done = t.id === 'hub' ? false : this.visited.has(t.id);
       if (t.id === 'hub' && !this.hubOpen && !blink) continue;

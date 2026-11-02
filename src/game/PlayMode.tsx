@@ -14,6 +14,8 @@ import { MigrationPanels } from './MigrationPanels';
 import { SettingsPanel } from './SettingsPanel';
 import { DIFFICULTY, effectiveReducedMotion, loadSettings, saveSettings } from './settings';
 import type { Settings } from './settings';
+import { STACK_GROUPS } from '@/const/stack';
+import type { WorkCardData } from '@/components/organisms/SelectedWork/types';
 import './game.css';
 
 /** Where the page should land after the game closes. */
@@ -84,7 +86,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
 
   const [phase, setPhase] = useState<Phase>('boot');
   const [hud, setHud] = useState<HudState>(EMPTY_HUD);
-  const [dialog, setDialog] = useState<{ id: DialogId; page: number } | null>(null);
+  const [dialog, setDialog] = useState<{ id: DialogId | 'info'; page: number; info?: DialogText & { links?: { label: string; href: string }[]; accent: string } } | null>(null);
   const [mig, setMig] = useState<MigUi | null>(null);
   const [pair, setPair] = useState<{ from: Provider; to: Provider }>({ from: 'aws', to: 'azure' });
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -98,11 +100,32 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const miniRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
   const textRef = useRef(text);
+  const tRef = useRef(i18n.t.bind(i18n));
+  tRef.current = i18n.t.bind(i18n);
   const leavingRef = useRef(false);
   const toastId = useRef(0);
   const pendingResult = useRef<MigrationResult | null>(null);
   const timers = useRef<number[]>([]);
   textRef.current = text;
+
+  /** Kiosk / billboard content, built from the page's own locale data. */
+  const buildInfo = useCallback((id: string): (DialogText & { links?: { label: string; href: string }[]; accent: string }) | null => {
+    const tt = tRef.current;
+    if (id.startsWith('stack:')) {
+      const g = STACK_GROUPS[Number(id.slice(6))];
+      if (!g) return null;
+      return { title: String(tt(g.labelKey)).toUpperCase(), tag: String(tt('about.stackLabel')), pages: [g.items.join(' · ')], accent: COLORS.cyan };
+    }
+    if (id.startsWith('work:')) {
+      const cards = tt('work.cards', { returnObjects: true }) as WorkCardData[];
+      const c = cards[Number(id.slice(5))];
+      if (!c) return null;
+      const pages = [c.summary, ...c.bullets];
+      if (c.metric) pages.push(`${c.metric.value} ${c.metric.label}`);
+      return { title: c.title.toUpperCase(), tag: c.eyebrow, pages, links: c.links.map((l) => ({ label: l.label, href: l.href })), accent: COLORS.amber };
+    }
+    return null;
+  }, []);
 
   const later = useCallback((fn: () => void, ms: number) => {
     const id = window.setTimeout(fn, ms);
@@ -134,6 +157,14 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
         case 'district':
           pushToast(tx.district(e.n, DISTRICTS.length), 'good');
           break;
+        case 'car':
+          pushToast(tx.car, 'bad');
+          break;
+        case 'info': {
+          const info = buildInfo(e.id);
+          if (info) setDialog({ id: 'info', page: 0, info });
+          break;
+        }
         case 'hit':
           pushToast(textRef.current.migration.toast.dropped, 'bad');
           break;
@@ -268,6 +299,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
 
   const dialogContent: DialogText | null = useMemo(() => {
     if (!dialog) return null;
+    if (dialog.id === 'info') return dialog.info ?? null;
     if (dialog.id === 'locked') {
       return text.locked({
         districts: DISTRICTS.length - hud.visited,
@@ -278,7 +310,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
     return text.zones[dialog.id];
     // hud counts only matter for the locked dialog, which is re-created on open
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dialog?.id, text]);
+  }, [dialog?.id, dialog?.info, text]);
 
   const advance = useCallback(() => {
     setDialog((d) => {
@@ -471,9 +503,15 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const districtsDone = hud.visited >= DISTRICTS.length;
   const shardsDone = hud.shards >= SHARDS.length;
   const migrationDone = hud.delivered >= MIGRATION_GOAL;
-  const accent = dialog ? ACCENT[dialog.id] : COLORS.cyan;
+  const accent = dialog ? (dialog.id === 'info' ? dialog.info?.accent ?? COLORS.cyan : ACCENT[dialog.id]) : COLORS.cyan;
   const isLast = dialog && dialogContent ? dialog.page + 1 >= dialogContent.pages.length : false;
-  const nearName = hud.near ? text.names[hud.near] : null;
+  const nearName = hud.near
+    ? hud.near.startsWith('stack:')
+      ? String(i18n.t(STACK_GROUPS[Number(hud.near.slice(6))]?.labelKey ?? ''))
+      : hud.near.startsWith('work:')
+        ? ((i18n.t('work.cards', { returnObjects: true }) as WorkCardData[])[Number(hud.near.slice(5))]?.title ?? '')
+        : text.names[hud.near]
+    : null;
   const inCombat = combatPhase !== 'off';
   const isDead = combatPhase === 'dead';
   const showTouchControls = phase === 'play' && !dialog && !mig && !showSettings && touch && !isDead && !leaving;
@@ -714,6 +752,15 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
               <span className="pm-page">
                 {dialog.page + 1}/{dialogContent.pages.length}
               </span>
+              {dialog.id === 'info' && dialog.info?.links?.length ? (
+                <span className="pm-links">
+                  {dialog.info.links.map((l) => (
+                    <a key={l.href} className="pm-btn" href={l.href} target="_blank" rel="noopener noreferrer">
+                      {l.label} ↗
+                    </a>
+                  ))}
+                </span>
+              ) : null}
               {dialog.id === 'hub' && isLast && (
                 <span className="pm-links">
                   <a className="pm-btn" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">

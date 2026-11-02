@@ -94,6 +94,7 @@ export interface GameText {
     needContainer: string;
     carrying: string;
     allDone: string;
+    car: string;
   };
   zones: Record<'garage' | 'tribuu' | 'loopayjs' | 'galgo' | 'trebet' | 'loopay' | 'hub', DialogText>;
   locked: (missing: { districts: number; shards: number; migration: number }) => DialogText;
@@ -166,6 +167,7 @@ const en: GameText = {
     needContainer: 'Grab a container at the AWS dock first',
     carrying: 'Already carrying a container',
     allDone: 'ALL OBJECTIVES COMPLETE — contact hub unlocked',
+    car: 'HIT BY A CAR — mind the traffic',
   },
   zones: {
     garage: {
@@ -420,6 +422,7 @@ const es: GameText = {
     needContainer: 'Primero toma un contenedor en el muelle AWS',
     carrying: 'Ya llevas un contenedor',
     allDone: 'OBJETIVOS COMPLETOS — hub de contacto desbloqueado',
+    car: 'TE ATROPELLÓ UN AUTO — cuidado con el tráfico',
   },
   zones: {
     garage: {
