@@ -22,7 +22,7 @@ export const T = {
   CRATE: 6,
 } as const;
 
-export type ZoneId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'hub' | 'aws' | 'azure';
+export type ZoneId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'hub' | 'src' | 'dst' | 'console';
 
 /** The five career districts, in chronological order. */
 export const DISTRICTS: ZoneId[] = ['garage', 'tribuu', 'loopay', 'galgo', 'trebet'];
@@ -75,8 +75,9 @@ const center = (t: number) => (t + 0.5) * TILE;
 
 export const TERMINALS: Terminal[] = [
   ...BUILDINGS.map((b) => ({ id: b.id, x: center(b.doorX), y: center(b.doorY), accent: b.accent })),
-  { id: 'aws', x: center(24), y: center(35), accent: COLORS.aws },
-  { id: 'azure', x: center(55), y: center(35), accent: COLORS.azure },
+  { id: 'src', x: center(24), y: center(35), accent: COLORS.violet },
+  { id: 'dst', x: center(55), y: center(35), accent: COLORS.violet },
+  { id: 'console', x: center(40), y: center(31), accent: COLORS.cyan },
 ];
 
 export interface ShardDef {
@@ -117,7 +118,8 @@ export const DRONES: DroneDef[] = [
   { laneX: 47, speed: 44, phase: 0.35 },
 ];
 
-export const MIGRATION_GOAL = 3;
+/** Migrations completed to satisfy the hub objective. */
+export const MIGRATION_GOAL = 1;
 
 /** Rack decor (solid), tile rects {x,y,w,h} inside the Terraform yard. */
 export const RACKS = [
@@ -129,8 +131,8 @@ export const RACKS = [
 
 /** AWS / Azure cargo stacks (solid). */
 export const CRATES = [
-  { x: 21, y: 33, w: 2, h: 5, dock: 'aws' as const },
-  { x: 57, y: 33, w: 2, h: 5, dock: 'azure' as const },
+  { x: 21, y: 33, w: 2, h: 5, dock: 'src' as const },
+  { x: 57, y: 33, w: 2, h: 5, dock: 'dst' as const },
 ];
 
 export const SPAWN = { x: 40 * TILE, y: 23 * TILE };

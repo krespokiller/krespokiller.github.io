@@ -21,21 +21,31 @@ import {
 } from './world';
 import type { ZoneId } from './world';
 import { Combat } from './combat';
+import { Migration, PROVIDER_META, TF_SHARDS, pieceOf } from './migration';
+import type { Delivery, MigrationHud, MigrationResult, Provider, StepId } from './migration';
 import type { CombatEvent, CombatHud } from './combat';
 
-export type DialogId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'dock' | 'migrated' | 'hub' | 'locked';
+export type DialogId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'hub' | 'locked';
 
 export type GameEvent =
   | { k: 'dialog'; id: DialogId }
   | { k: 'shard'; label: string }
   | { k: 'district'; n: number }
-  | { k: 'loaded' }
-  | { k: 'delivered'; n: number }
   | { k: 'hit' }
-  | { k: 'needContainer' }
   | { k: 'carrying' }
+  | { k: 'migration'; e: MigrationEvent }
   | { k: 'allDone' }
   | { k: 'combat'; e: CombatEvent };
+
+export type MigrationEvent =
+  | { k: 'console' }
+  | { k: 'pick' }
+  | { k: 'picked'; step: StepId }
+  | { k: 'delivered'; d: Delivery }
+  | { k: 'done'; r: MigrationResult }
+  | { k: 'tf'; n: number }
+  | { k: 'replicaReady' }
+  | { k: 'goConsole' };
 
 export interface HudState {
   visited: number;
@@ -45,6 +55,7 @@ export interface HudState {
   hubOpen: boolean;
   near: ZoneId | null;
   combat: CombatHud;
+  migration: MigrationHud;
 }
 
 export interface GameCallbacks {
@@ -94,9 +105,9 @@ export class Game {
 
   private visited = new Set<ZoneId>();
   private shards = new Set<string>();
-  private delivered = 0;
-  private carrying = false;
-  private briefed = false;
+  readonly migration = new Migration();
+  private tfSpots: { x: number; y: number; taken: boolean }[] = [];
+  private lagWasPositive = false;
   private announcedDone = false;
   private invuln = 0;
   private near: ZoneId | null = null;
@@ -160,6 +171,44 @@ export class Game {
     this.joy.y = y;
   }
 
+  // ---------------------------------------------------------- migration API
+
+  startMigration(from: Provider, to: Provider): boolean {
+    const ok = this.migration.start(from, to);
+    if (ok) {
+      this.lagWasPositive = false;
+      this.seedTf();
+      this.emitHud();
+    }
+    return ok;
+  }
+
+  pickStep(step: StepId): boolean {
+    const ok = this.migration.pick(step);
+    if (ok) {
+      this.cb.onEvent({ k: 'migration', e: { k: 'picked', step } });
+      this.emitHud();
+    }
+    return ok;
+  }
+
+  /** Scatter .tf shards across the yard (walkable plaza tiles only). */
+  private seedTf(): void {
+    this.tfSpots = [];
+    let guard = 0;
+    while (this.tfSpots.length < TF_SHARDS && guard++ < 400) {
+      const tx = 22 + Math.floor(Math.random() * 36);
+      const ty = 27 + Math.floor(Math.random() * 20);
+      const x = (tx + 0.5) * TILE;
+      const y = (ty + 0.5) * TILE;
+      if (collides(this.tiles, x, y + 3)) continue;
+      if (Math.abs(tx - 24) < 3 && Math.abs(ty - 35) < 3) continue;
+      if (Math.abs(tx - 55) < 3 && Math.abs(ty - 35) < 3) continue;
+      if (this.tfSpots.some((p) => Math.hypot(p.x - x, p.y - y) < 48)) continue;
+      this.tfSpots.push({ x, y, taken: false });
+    }
+  }
+
   // ------------------------------------------------------------- combat API
 
   startCombat(): boolean {
@@ -185,9 +234,9 @@ export class Game {
   restart(): void {
     this.visited.clear();
     this.shards.clear();
-    this.delivered = 0;
-    this.carrying = false;
-    this.briefed = false;
+    this.migration.abort();
+    this.migration.completed = 0;
+    this.tfSpots = [];
     this.announcedDone = false;
     this.invuln = 0;
     this.near = null;
@@ -279,7 +328,7 @@ export class Game {
   // ---------------------------------------------------------------- game rules
 
   private get hubOpen(): boolean {
-    return this.visited.size >= DISTRICTS.length && this.shards.size >= SHARDS.length && this.delivered >= MIGRATION_GOAL;
+    return this.visited.size >= DISTRICTS.length && this.shards.size >= SHARDS.length && this.migration.completed >= MIGRATION_GOAL;
   }
 
   private interact(id: ZoneId): void {
@@ -297,36 +346,30 @@ export class Game {
         this.cb.onEvent({ k: 'dialog', id });
         break;
       }
-      case 'aws': {
-        if (!this.briefed) {
-          this.briefed = true;
-          this.cb.onEvent({ k: 'dialog', id: 'dock' });
-        } else if (this.delivered >= MIGRATION_GOAL) {
-          this.cb.onEvent({ k: 'dialog', id: 'migrated' });
-        } else if (this.carrying) {
-          this.cb.onEvent({ k: 'carrying' });
-        } else {
-          this.carrying = true;
-          this.cb.onEvent({ k: 'loaded' });
-        }
+      case 'console': {
+        this.cb.onEvent({ k: 'migration', e: { k: 'console' } });
         break;
       }
-      case 'azure': {
-        if (this.carrying) {
-          this.carrying = false;
-          this.delivered += 1;
-          this.cb.onEvent({ k: 'delivered', n: this.delivered });
-          if (this.delivered >= MIGRATION_GOAL) {
-            this.cb.onEvent({ k: 'dialog', id: 'migrated' });
-            this.checkDone();
-          }
-        } else if (this.delivered >= MIGRATION_GOAL) {
-          this.cb.onEvent({ k: 'dialog', id: 'migrated' });
-        } else if (!this.briefed) {
-          this.cb.onEvent({ k: 'dialog', id: 'dock' });
-          this.briefed = true;
-        } else {
-          this.cb.onEvent({ k: 'needContainer' });
+      case 'src': {
+        if (this.migration.phase !== 'run') this.cb.onEvent({ k: 'migration', e: { k: 'goConsole' } });
+        else if (this.migration.carrying) this.cb.onEvent({ k: 'carrying' });
+        else this.cb.onEvent({ k: 'migration', e: { k: 'pick' } });
+        break;
+      }
+      case 'dst': {
+        if (this.migration.phase !== 'run') {
+          this.cb.onEvent({ k: 'migration', e: { k: 'goConsole' } });
+          break;
+        }
+        const d = this.migration.deliver();
+        if (!d) {
+          this.cb.onEvent({ k: 'migration', e: { k: 'pick' } });
+          break;
+        }
+        this.cb.onEvent({ k: 'migration', e: { k: 'delivered', d } });
+        if (d.completed && this.migration.lastResult) {
+          this.cb.onEvent({ k: 'migration', e: { k: 'done', r: this.migration.lastResult } });
+          this.checkDone();
         }
         break;
       }
@@ -336,6 +379,16 @@ export class Game {
       }
     }
     this.emitHud();
+  }
+
+  private migSig = '';
+  private emitHudIfChanged(): void {
+    const h = this.migration.hud();
+    const sig = `${h.phase}|${h.seconds}|${h.lag === null ? 'n' : h.lag.toFixed(2)}|${h.doneCount}|${h.tf}|${h.carrying}`;
+    if (sig !== this.migSig) {
+      this.migSig = sig;
+      this.emitHud();
+    }
   }
 
   private checkDone(): void {
@@ -349,11 +402,12 @@ export class Game {
     this.cb.onHud({
       visited: this.visited.size,
       shards: this.shards.size,
-      delivered: this.delivered,
-      carrying: this.carrying,
+      delivered: this.migration.completed,
+      carrying: this.migration.carrying !== null,
       hubOpen: this.hubOpen,
       near: this.paused || this.combat.blocksTerminals ? null : this.near,
       combat: this.combat.hud(),
+      migration: this.migration.hud(),
     });
   }
 
@@ -437,12 +491,33 @@ export class Game {
       }
     }
 
-    // Drones only matter while a container is on your back.
-    if (this.carrying && this.invuln <= 0) {
+    // Migration clock, replica lag and .tf shards
+    if (this.migration.phase === 'run') {
+      const lagBefore = this.migration.hud().lag;
+      this.migration.update(dt);
+      const lagAfter = this.migration.hud().lag;
+      if (lagBefore !== null && lagBefore > 0) this.lagWasPositive = true;
+      if (this.lagWasPositive && lagAfter === 0) {
+        this.lagWasPositive = false;
+        this.cb.onEvent({ k: 'migration', e: { k: 'replicaReady' } });
+      }
+      for (const spot of this.tfSpots) {
+        if (spot.taken) continue;
+        if (Math.hypot(spot.x - cx, spot.y - cy) <= SHARD_RADIUS) {
+          spot.taken = true;
+          this.migration.collectTf();
+          this.cb.onEvent({ k: 'migration', e: { k: 'tf', n: this.migration.tf } });
+        }
+      }
+      this.emitHudIfChanged();
+    }
+
+    // Drones only matter while a crate is on your back.
+    if (this.migration.carrying !== null && this.invuln <= 0) {
       for (const d of DRONES) {
         const pos = dronePosition(d, this.t);
         if (Math.abs(pos.x - cx) < 9 && Math.abs(pos.y - cy) < 9) {
-          this.carrying = false;
+          this.migration.drop();
           this.invuln = 1.5;
           p.x = 26.5 * TILE;
           p.y = 36 * TILE;
@@ -510,6 +585,7 @@ export class Game {
     this.drawHubDoor();
     this.drawTerminals();
     this.drawShards();
+    this.drawYard();
     this.combat.drawWorld(ctx, this.vt);
     this.drawPlayer();
     this.drawDrones();
@@ -567,7 +643,7 @@ export class Game {
       // beacon
       const bob = this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 3 + t.y) * 2);
       const by = t.y - 20 + bob;
-      if (!visited || t.id === 'hub' || t.id === 'aws' || t.id === 'azure') {
+      if (!visited || t.id === 'hub' || t.id === 'src' || t.id === 'dst' || t.id === 'console') {
         ctx.fillStyle = t.accent;
         ctx.fillRect(t.x - 3, by, 7, 1);
         ctx.fillRect(t.x - 2, by + 1, 5, 1);
@@ -613,6 +689,52 @@ export class Game {
     });
   }
 
+  /** Live yard layer: provider tints on the docks, .tf shards. */
+  private drawYard(): void {
+    const ctx = this.ctx;
+    const m = this.migration;
+    const docks: [number, number, Provider | null][] = [
+      [24, 35, m.from],
+      [55, 35, m.to],
+    ];
+    for (const [tx, ty, prov] of docks) {
+      if (!prov) continue;
+      const color = PROVIDER_META[prov].color;
+      const x = tx * TILE - 12;
+      const y = ty * TILE - 12;
+      ctx.fillStyle = hexA(color, 0.12 + (this.reducedMotion ? 0 : 0.05 * Math.sin(this.vt * 3)));
+      ctx.fillRect(x, y, 40, 40);
+      ctx.fillStyle = hexA(color, 0.9);
+      ctx.fillRect(x, y, 40, 1);
+      ctx.fillRect(x, y + 39, 40, 1);
+      ctx.fillRect(x, y, 1, 40);
+      ctx.fillRect(x + 39, y, 1, 40);
+      const name = PROVIDER_META[prov].name.toUpperCase();
+      drawText(ctx, name, tx * TILE + 8 - textWidth(name, 2) / 2, y - 14, 2, color);
+      // tint the cargo stack next to the dock
+      const cx = tx === 24 ? 21 * TILE : 57 * TILE;
+      ctx.fillStyle = hexA(color, 0.35);
+      ctx.fillRect(cx, 33 * TILE, 2 * TILE, 5 * TILE);
+    }
+    if (m.phase === 'run') {
+      this.tfSpots.forEach((spot, i) => {
+        if (spot.taken) return;
+        const bob = this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 3 + i) * 2);
+        const y = spot.y + bob;
+        ctx.fillStyle = 'rgba(167,139,250,0.18)';
+        ctx.fillRect(spot.x - 7, y - 7, 14, 12);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(spot.x - 4, y - 5, 8, 9);
+        ctx.fillStyle = COLORS.violet;
+        ctx.fillRect(spot.x - 3, y - 4, 6, 7);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(spot.x - 2, y - 2, 4, 1);
+        ctx.fillRect(spot.x - 2, y, 3, 1);
+        drawText(ctx, '.TF', spot.x - textWidth('.TF', 1) / 2, y - 13, 1, COLORS.violet);
+      });
+    }
+  }
+
   private drawDrones(): void {
     const ctx = this.ctx;
     const frame = Math.floor(this.vt * 14) % 2;
@@ -621,7 +743,7 @@ export class Game {
       const x = Math.round(pos.x);
       const y = Math.round(pos.y);
       // searchlight: lights up whatever is beneath (player, zombies, ground)
-      const hot = this.carrying || this.combat.active;
+      const hot = this.migration.carrying !== null || this.combat.active;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       const g = ctx.createLinearGradient(x, y + 3, x, y + 26);
@@ -705,17 +827,20 @@ export class Game {
       ctx.fillStyle = '#1a1235';
       ctx.fillRect(x - 2, top + 1, 5, 3);
     }
-    if (this.carrying) {
+    if (this.migration.carrying !== null && this.migration.to) {
+      const color = PROVIDER_META[this.migration.to].color;
       const bx = x - 4;
       const by = top - 8 + (this.reducedMotion ? 0 : Math.round(Math.sin(this.vt * 8)));
-      ctx.fillStyle = hexA(COLORS.aws, 0.25);
+      ctx.fillStyle = hexA(color, 0.25);
       ctx.fillRect(bx - 2, by - 2, 12, 10);
-      ctx.fillStyle = COLORS.aws;
+      ctx.fillStyle = color;
       ctx.fillRect(bx, by, 8, 6);
-      ctx.fillStyle = '#7a4a00';
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.fillRect(bx, by + 2, 8, 1);
-      ctx.fillStyle = '#ffd27a';
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(bx + 1, by + 1, 2, 1);
+      const label = pieceOf(this.migration.carrying).slice(0, 3);
+      drawText(ctx, label, x - textWidth(label, 1) / 2, by - 8, 1, '#ffffff');
     }
   }
 
@@ -741,7 +866,7 @@ export class Game {
       m.fillRect(Math.round((s.tx + 0.5) * TILE * sx) - 1, Math.round((s.ty + 0.5) * TILE * sy) - 1, 2, 2);
     }
     for (const t of TERMINALS) {
-      const done = t.id === 'hub' ? false : this.visited.has(t.id) || (t.id === 'aws' && this.carrying);
+      const done = t.id === 'hub' ? false : this.visited.has(t.id);
       if (done) continue;
       if (t.id === 'hub' && !this.hubOpen && !blink) continue;
       m.fillStyle = t.id === 'hub' ? (this.hubOpen ? COLORS.green : COLORS.red) : t.accent;

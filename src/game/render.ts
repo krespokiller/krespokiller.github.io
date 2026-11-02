@@ -207,8 +207,8 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
     }
   }
 
-  // Dock pads
-  for (const [tx, ty, color] of [[24, 35, COLORS.aws], [55, 35, COLORS.azure]] as const) {
+  // Dock pads (provider colors are drawn live by the engine)
+  for (const [tx, ty, color] of [[24, 35, COLORS.violet], [55, 35, COLORS.violet]] as const) {
     const x = tx * TILE - 8;
     const y = ty * TILE - 8;
     ctx.fillStyle = rgba(color, 0.08);
@@ -260,9 +260,9 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
     glowRect(ctx, x, y, w, h, COLORS.cyan, 0.4);
   }
 
-  // Cargo stacks
+  // Cargo stacks (neutral; the engine tints and labels them per migration)
   for (const c of CRATES) {
-    const color = c.dock === 'aws' ? COLORS.aws : COLORS.azure;
+    const color = '#8f87c9';
     const x = c.x * TILE;
     const y = c.y * TILE;
     const w = c.w * TILE;
@@ -279,8 +279,22 @@ export function renderWorld(tiles: Uint8Array): HTMLCanvasElement {
       ctx.fillRect(x + 4, by + 5, w - 8, 1);
       ctx.fillRect(x + 4, by + 9, w - 8, 1);
     }
-    const label = c.dock === 'aws' ? 'AWS' : 'AZURE';
-    drawText(ctx, label, x + (w - textWidth(label, 2)) / 2, y - 12, 2, color);
+  }
+
+  // Migration console pad (center of the yard)
+  {
+    const x = 40 * TILE - 12;
+    const y = 31 * TILE - 10;
+    glowRect(ctx, x, y, 24, 14, COLORS.cyan, 0.7);
+    ctx.fillStyle = '#07041a';
+    ctx.fillRect(x, y, 24, 14);
+    ctx.fillStyle = COLORS.cyan;
+    ctx.fillRect(x, y, 24, 1);
+    ctx.fillStyle = 'rgba(0,240,255,0.5)';
+    for (let i = 0; i < 4; i++) ctx.fillRect(x + 3, y + 3 + i * 3, 10 + (i % 2) * 6, 1);
+    ctx.fillStyle = COLORS.magenta;
+    ctx.fillRect(x + 20, y + 3, 2, 2);
+    drawText(ctx, 'CONSOLE', x + 12 - textWidth('CONSOLE', 1) / 2, y - 8, 1, COLORS.cyan);
   }
 
   // Buildings last (they overlap clutter)

@@ -8,6 +8,9 @@ import type { DialogId, GameEvent, HudState } from './engine';
 import { GAME_TEXT } from './text';
 import type { DialogText, Lang } from './text';
 import { COLORS, DISTRICTS, MIGRATION_GOAL, SHARDS } from './world';
+import { PROVIDER_META, TF_SHARDS, loadBest, saveBest } from './migration';
+import type { Delivery, MigrationResult, Provider } from './migration';
+import { MigrationPanels } from './MigrationPanels';
 import './game.css';
 
 /** Where the page should land after the game closes. */
@@ -31,8 +34,6 @@ const ACCENT: Record<DialogId, string> = {
   loopay: COLORS.magenta,
   galgo: COLORS.green,
   trebet: COLORS.orange,
-  dock: COLORS.aws,
-  migrated: COLORS.azure,
   hub: COLORS.violet,
   locked: COLORS.red,
 };
@@ -51,7 +52,16 @@ const EMPTY_HUD: HudState = {
   hubOpen: false,
   near: null,
   combat: { phase: 'off', hp: 100, clip: 12, reserve: 24, wave: 0, kills: 0, best: 0 },
+  migration: { phase: 'idle', from: null, to: null, carrying: null, steps: [], doneCount: 0, requiredCount: 10, lag: null, ttlLowered: false, seconds: 0, tf: 0, completed: 0 },
 };
+
+/** Migration UI overlays (one at a time). */
+export type MigUi =
+  | { kind: 'console' }
+  | { kind: 'briefing'; page: number }
+  | { kind: 'pick' }
+  | { kind: 'card'; d: Delivery }
+  | { kind: 'result'; r: MigrationResult };
 
 /**
  * Screen phases. `leaving` is orthogonal and wins over everything: once the
@@ -68,6 +78,8 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const [phase, setPhase] = useState<Phase>('boot');
   const [hud, setHud] = useState<HudState>(EMPTY_HUD);
   const [dialog, setDialog] = useState<{ id: DialogId; page: number } | null>(null);
+  const [mig, setMig] = useState<MigUi | null>(null);
+  const [pair, setPair] = useState<{ from: Provider; to: Provider }>({ from: 'aws', to: 'azure' });
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [touch, setTouch] = useState(false);
   const [joy, setJoy] = useState<{ bx: number; by: number; kx: number; ky: number } | null>(null);
@@ -81,6 +93,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const textRef = useRef(text);
   const leavingRef = useRef(false);
   const toastId = useRef(0);
+  const pendingResult = useRef<MigrationResult | null>(null);
   const timers = useRef<number[]>([]);
   textRef.current = text;
 
@@ -114,18 +127,24 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
         case 'district':
           pushToast(tx.district(e.n, DISTRICTS.length), 'good');
           break;
-        case 'loaded':
-          pushToast(tx.loaded, 'info');
-          break;
-        case 'delivered':
-          pushToast(tx.delivered(e.n, MIGRATION_GOAL), 'good');
-          break;
         case 'hit':
-          pushToast(tx.hit, 'bad');
+          pushToast(textRef.current.migration.toast.dropped, 'bad');
           break;
-        case 'needContainer':
-          pushToast(tx.needContainer, 'info');
+        case 'migration': {
+          const m = e.e;
+          const mt = textRef.current.migration;
+          if (m.k === 'console') setMig({ kind: 'console' });
+          else if (m.k === 'pick') setMig({ kind: 'pick' });
+          else if (m.k === 'goConsole') pushToast(mt.toast.goConsole, 'info');
+          else if (m.k === 'picked') pushToast(mt.toast.picked(mt.steps[m.step].title), 'info');
+          else if (m.k === 'delivered') setMig({ kind: 'card', d: m.d });
+          else if (m.k === 'done') {
+            saveBest(m.r);
+            pendingResult.current = m.r;
+          } else if (m.k === 'tf') pushToast(mt.toast.tf(m.n, TF_SHARDS), 'good');
+          else if (m.k === 'replicaReady') pushToast(mt.toast.replicaReady, 'good');
           break;
+        }
         case 'carrying':
           pushToast(tx.carrying, 'info');
           break;
@@ -200,8 +219,8 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
 
   // Gameplay runs only on the play screen, with no dialog, and not while leaving.
   useEffect(() => {
-    gameRef.current?.setPaused(phase !== 'play' || dialog !== null || leaving);
-  }, [phase, dialog, leaving]);
+    gameRef.current?.setPaused(phase !== 'play' || dialog !== null || mig !== null || leaving);
+  }, [phase, dialog, mig, leaving]);
 
   // ---- exit (single entry point; guarded)
   const requestExit = useCallback(
@@ -210,6 +229,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       leavingRef.current = true;
       setLeaving(true);
       setDialog(null);
+      setMig(null);
       setJoy(null);
       gameRef.current?.setHoldFire(false);
       gameRef.current?.setJoystick(0, 0);
@@ -247,7 +267,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
 
   // ---- combat (guarded transitions)
   const combatPhase = hud.combat.phase;
-  const canEnterCombat = phase === 'play' && !dialog && !leaving && combatPhase === 'off';
+  const canEnterCombat = phase === 'play' && !dialog && !mig && !leaving && combatPhase === 'off';
   const canLeaveCombat = phase === 'play' && !leaving && (combatPhase === 'fight' || combatPhase === 'closing');
 
   const enterCombat = useCallback(() => {
@@ -283,7 +303,43 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
     game.setPaused(true);
     game.restart();
     setDialog(null);
+    setMig(null);
     setPhase('boot');
+  }, []);
+
+  // ---- migration UI handlers (all guarded by the engine's own rules)
+  const closeMig = useCallback(() => {
+    setMig((m) => {
+      if (m?.kind === 'card' && pendingResult.current) {
+        const r = pendingResult.current;
+        pendingResult.current = null;
+        return { kind: 'result', r };
+      }
+      return null;
+    });
+  }, []);
+  const startMigration = useCallback(() => {
+    const game = gameRef.current;
+    if (!game || leavingRef.current || pair.from === pair.to) return;
+    if (game.startMigration(pair.from, pair.to)) setMig({ kind: 'briefing', page: 0 });
+  }, [pair]);
+  const takeStep = useCallback((id: Parameters<Game['pickStep']>[0]) => {
+    if (gameRef.current?.pickStep(id)) setMig(null);
+  }, []);
+  const advanceMig = useCallback(() => {
+    setMig((m) => {
+      if (!m) return m;
+      if (m.kind === 'briefing') return m.page + 1 < textRef.current.migration.briefing.steps.length ? { ...m, page: m.page + 1 } : null;
+      if (m.kind === 'card') {
+        const r = pendingResult.current;
+        if (r) {
+          pendingResult.current = null;
+          return { kind: 'result', r };
+        }
+        return null;
+      }
+      return m;
+    });
   }, []);
 
   // Keyboard: ESC (back out), E/Space/Enter (advance dialog), C (toggle combat).
@@ -294,11 +350,20 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       if (e.code === 'Escape') {
         e.preventDefault();
         if (dialog) closeDialog();
+        else if (mig) closeMig();
         else if (combatPhase === 'dead') return; // the menu owns the choices
         else requestExit('stay');
         return;
       }
-      if (e.code === 'KeyC' && !e.repeat && phase === 'play' && !dialog) {
+      if (mig && !e.repeat && (mig.kind === 'briefing' || mig.kind === 'card')) {
+        const onControl = e.target instanceof Element && e.target.closest('button, a') !== null;
+        if (e.code === 'KeyE' || ((e.code === 'Space' || e.code === 'Enter') && !onControl)) {
+          e.preventDefault();
+          advanceMig();
+        }
+        return;
+      }
+      if (e.code === 'KeyC' && !e.repeat && phase === 'play' && !dialog && !mig) {
         e.preventDefault();
         if (combatPhase === 'off') enterCombat();
         else if (combatPhase === 'fight' || combatPhase === 'closing') leaveCombat();
@@ -313,7 +378,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, advance, closeDialog, requestExit, combatPhase, phase, enterCombat, leaveCombat]);
+  }, [dialog, mig, advance, advanceMig, closeDialog, closeMig, requestExit, combatPhase, phase, enterCombat, leaveCombat]);
 
   // ---- mouse aim + click to shoot (desktop)
   const onStageMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -321,7 +386,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
     gameRef.current?.aimAt(e.clientX, e.clientY);
   };
   const onStageDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'mouse' || e.button !== 0 || leaving || phase !== 'play' || dialog) return;
+    if (e.pointerType !== 'mouse' || e.button !== 0 || leaving || phase !== 'play' || dialog || mig) return;
     const game = gameRef.current;
     if (!game) return;
     game.aimAt(e.clientX, e.clientY);
@@ -379,7 +444,8 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
   const nearName = hud.near ? text.names[hud.near] : null;
   const inCombat = combatPhase !== 'off';
   const isDead = combatPhase === 'dead';
-  const showTouchControls = phase === 'play' && !dialog && touch && !isDead && !leaving;
+  const showTouchControls = phase === 'play' && !dialog && !mig && touch && !isDead && !leaving;
+  const migRun = hud.migration.phase === 'run';
   const hpPct = Math.max(0, Math.min(100, hud.combat.hp));
 
   const ui = (
@@ -444,11 +510,45 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
               <li className={migrationDone ? 'done' : ''}>
                 <span>{migrationDone ? '✓' : '▢'}</span> {t.migration}{' '}
                 <b>
-                  {hud.delivered}/{MIGRATION_GOAL}
+                  {Math.min(hud.delivered, MIGRATION_GOAL)}/{MIGRATION_GOAL}
                 </b>
               </li>
             </ul>
-            <p className={hud.hubOpen ? 'open' : ''}>{hud.hubOpen ? t.hubOpen : t.hubLocked}</p>
+            {migRun && hud.migration.from && hud.migration.to ? (
+              <div className="pm-mig-strip">
+                <div className="pair">
+                  <b style={{ color: PROVIDER_META[hud.migration.from].color }}>{PROVIDER_META[hud.migration.from].name}</b>
+                  <span>→</span>
+                  <b style={{ color: PROVIDER_META[hud.migration.to].color }}>{PROVIDER_META[hud.migration.to].name}</b>
+                  <em>{hud.migration.seconds}s</em>
+                </div>
+                <ul>
+                  <li>
+                    {text.migration.hud.pieces} <b>{hud.migration.doneCount}/{hud.migration.requiredCount}</b>
+                  </li>
+                  <li>
+                    {text.migration.hud.ttl} <b className={hud.migration.ttlLowered ? 'ok' : 'warn'}>{hud.migration.ttlLowered ? text.migration.hud.ttlOk : text.migration.hud.ttlNo}</b>
+                  </li>
+                  <li>
+                    {text.migration.hud.tf} <b>{hud.migration.tf}/{TF_SHARDS}</b>
+                  </li>
+                </ul>
+                {hud.migration.lag !== null && (
+                  <div className="lag">
+                    <span>{text.migration.hud.lag}</span>
+                    <i>
+                      <b style={{ width: `${Math.round(hud.migration.lag * 100)}%` }} />
+                    </i>
+                  </div>
+                )}
+                <p>
+                  {text.migration.hud.carrying}:{' '}
+                  <b>{hud.migration.carrying ? text.migration.steps[hud.migration.carrying].title : text.migration.hud.none}</b>
+                </p>
+              </div>
+            ) : (
+              <p className={hud.hubOpen ? 'open' : ''}>{hud.hubOpen ? t.hubOpen : t.hubLocked}</p>
+            )}
           </section>
         )}
 
@@ -484,7 +584,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
       </div>
 
       {/* Interaction prompt */}
-      {phase === 'play' && !dialog && !leaving && nearName && (
+      {phase === 'play' && !dialog && !mig && !leaving && nearName && (
         <div className="pm-prompt">
           <kbd>{touch ? t.actTouch : t.actKey}</kbd> {nearName}
         </div>
@@ -534,6 +634,23 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
             </button>
           )}
         </>
+      )}
+
+      {/* Migration overlays */}
+      {mig && !leaving && (
+        <MigrationPanels
+          ui={mig}
+          text={text.migration}
+          hud={hud.migration}
+          pair={pair}
+          onPair={setPair}
+          onStart={startMigration}
+          onTake={takeStep}
+          onAdvance={advanceMig}
+          onClose={closeMig}
+          onAgain={() => setMig({ kind: 'console' })}
+          best={loadBest()}
+        />
       )}
 
       {/* Dialog */}
