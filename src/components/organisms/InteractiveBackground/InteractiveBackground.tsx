@@ -156,6 +156,8 @@ export const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({ on
       // Reduced motion keeps the scene static: no grab, loop running or not.
       if (reducedMotionRef.current) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
+      // Touch keeps scrolling the page: grab & pull is a mouse interaction.
+      if (event.pointerType === 'touch') return;
       // Defense-in-depth: never hijack interactive elements, even if one
       // somehow receives the pointerdown despite the transparent layer.
       if (isGrabBlocked(event.target)) return;

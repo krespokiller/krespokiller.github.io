@@ -24,41 +24,84 @@ const EXPERIENCE_INDEX: Record<Exclude<BrainNodeId, 'contact'>, number> = { gara
 
 const HINT_KEY = 'brain-hint-seen';
 const DRAG_THRESHOLD = 8;
+const LONG_PRESS_MS = 220;
 const LINKEDIN_URL = 'https://www.linkedin.com/in/david-vargas-krespokiller';
 const GITHUB_URL = 'https://github.com/krespokiller';
 
-/** Normalized slots (x, y in -1..1 of the viewport, y up), chronological reading order. */
-function layoutSlots(width: number, height: number): Float32Array {
+interface Layout {
+  slots: Float32Array;
+  /** Core top edge in px (narrow screens) or null to keep the CSS center. */
+  coreTop: number | null;
+  /** Narrow + short: hide the preview canvas so everything fits without overlap. */
+  compact: boolean;
+}
+
+/**
+ * Normalized slots (x, y in -1..1 of the viewport, y up), chronological
+ * reading order. Wide screens use a fixed constellation; narrow screens are
+ * laid out from a vertical pixel budget: signature → two rows → core → two
+ * rows → contact, so nothing overlaps on short phones either.
+ */
+function layoutSlots(width: number, height: number, sigBottom: number): Layout {
   const wide = width >= 760 && width > height * 0.9;
-  const slots: [number, number][] = wide
-    ? [
-        // top-left quadrant is the signature; |x|<0.3 ∧ |y|<0.4 is the core
-        [-0.7, 0.05],
-        [-0.62, -0.5],
-        [0.0, 0.62],
-        [0.05, -0.64],
-        [0.52, 0.52],
-        [0.72, -0.1],
-        [0.8, 0.28],
-      ]
-    : [
-        // signature on top (≈96–190px), core pushed to 58% of the height
-        [-0.5, 0.44],
-        [0.5, 0.44],
-        [-0.5, 0.29],
-        [0.5, 0.29],
-        [-0.5, -0.56],
-        [0.5, -0.56],
-        [0, -0.73],
-      ];
-  // Keep clear of the navbar (56px) and the signature block on wide screens.
-  const topMax = (height / 2 - 100) / (height / 2);
-  const out = new Float32Array(slots.length * 2);
-  slots.forEach(([x, y], i) => {
+  const toNorm = (y: number) => (height / 2 - y) / (height / 2);
+  if (wide) {
+    const slots: [number, number][] = [
+      // top-left quadrant is the signature; |x|<0.3 ∧ |y|<0.4 is the core
+      [-0.7, 0.05],
+      [-0.62, -0.5],
+      [0.0, 0.62],
+      [0.05, -0.64],
+      [0.52, 0.52],
+      [0.72, -0.1],
+      [0.8, 0.28],
+    ];
+    const topMax = toNorm(100);
+    const out = new Float32Array(slots.length * 2);
+    slots.forEach(([x, y], i) => {
+      out[i * 2] = x;
+      out[i * 2 + 1] = Math.min(y, topMax);
+    });
+    return { slots: out, coreTop: null, compact: false };
+  }
+  const row = 48; // node height + gap
+  const compact = height < 780;
+  const coreH = compact ? 116 : 232;
+  const bottomPad = height < 700 ? 16 : 40; // hint space
+  // Shrink the gaps until the stack fits the viewport.
+  let gap = 22;
+  let yA = 0;
+  let yE = 0;
+  let coreTop = 0;
+  for (;;) {
+    yA = sigBottom + gap + 24;
+    const yB = yA + row;
+    coreTop = yB + 24 + gap;
+    const yC = coreTop + coreH + gap + 24;
+    const yD = yC + row;
+    yE = yD + row;
+    if (yE + 24 + bottomPad <= height || gap <= 6) break;
+    gap -= 4;
+  }
+  const yB = yA + row;
+  const yC = coreTop + coreH + gap + 24;
+  const yD = yC + row;
+  const col = 0.5;
+  const pts: [number, number][] = [
+    [-col, yA],
+    [col, yA],
+    [-col, yB],
+    [col, yB],
+    [-col, yC],
+    [col, yC],
+    [0, yE],
+  ];
+  const out = new Float32Array(pts.length * 2);
+  pts.forEach(([x, y], i) => {
     out[i * 2] = x;
-    out[i * 2 + 1] = Math.min(y, topMax);
+    out[i * 2 + 1] = toNorm(y);
   });
-  return out;
+  return { slots: out, coreTop, compact };
 }
 
 interface BrainProps {
@@ -83,8 +126,10 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
   const rootRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const coreCanvas = useRef<HTMLCanvasElement>(null);
+  const coreRef = useRef<HTMLButtonElement>(null);
+  const [compact, setCompact] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
-  const drag = useRef<{ id: BrainNodeId; index: number; pointerId: number; x0: number; y0: number; moved: boolean; x: number; y: number } | null>(null);
+  const drag = useRef<{ id: BrainNodeId; index: number; pointerId: number; x0: number; y0: number; moved: boolean; x: number; y: number; armed: boolean; timer: number } | null>(null);
   const activeRef = useRef<BrainNodeId | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   activeRef.current = active;
@@ -112,12 +157,21 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
   useEffect(() => {
     if (!network) return;
     const apply = () => {
-      network.setSynapses(layoutSlots(window.innerWidth, window.innerHeight), (screen) => {
+      const sig = document.querySelector('.hero-signature > div')?.getBoundingClientRect();
+      const sigBottom = sig ? sig.bottom + window.scrollY : 190;
+      const layout = layoutSlots(window.innerWidth, window.innerHeight, sigBottom);
+      setCompact(layout.compact);
+      const core = coreRef.current;
+      if (core) {
+        core.style.top = layout.coreTop === null ? '' : `${layout.coreTop}px`;
+        core.style.transform = layout.coreTop === null ? '' : 'translate(-50%, 0)';
+      }
+      network.setSynapses(layout.slots, (screen) => {
         const w = window.innerWidth;
         for (let i = 0; i < BRAIN_NODE_IDS.length; i++) {
           const el = nodeRefs.current[i];
           if (!el) continue;
-          const m = w < 760 ? 92 : 100;
+          const m = w < 340 ? 82 : w < 760 ? 92 : 100;
           const x = Math.min(w - m, Math.max(m, screen[i * 3]));
           const y = screen[i * 3 + 1];
           const depth = screen[i * 3 + 2];
@@ -228,15 +282,38 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
   const onPointerDown = (id: BrainNodeId, index: number) => (e: React.PointerEvent<HTMLButtonElement>) => {
     if (suspended || activeRef.current || reducedMotion) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    drag.current = { id, index, pointerId: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, x: e.clientX, y: e.clientY };
-    e.currentTarget.setPointerCapture(e.pointerId);
+    const touchDrag = e.pointerType !== 'mouse';
+    drag.current = { id, index, pointerId: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, x: e.clientX, y: e.clientY, armed: !touchDrag, timer: 0 };
+    const el = e.currentTarget;
+    el.setPointerCapture(e.pointerId);
+    if (touchDrag) {
+      // Long-press arms the drag; a quick swipe stays a page scroll.
+      const d = drag.current;
+      d.timer = window.setTimeout(() => {
+        if (drag.current === d && !d.moved) {
+          d.armed = true;
+          el.classList.add('syn-armed');
+        }
+      }, LONG_PRESS_MS);
+    }
   };
   const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
     if (!d || e.pointerId !== d.pointerId) return;
     d.x = e.clientX;
     d.y = e.clientY;
-    if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > DRAG_THRESHOLD) {
+    if (!d.moved && !d.armed && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > DRAG_THRESHOLD) {
+      // Swiped before the long-press: hand the gesture to the browser (scroll).
+      window.clearTimeout(d.timer);
+      drag.current = null;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // already released
+      }
+      return;
+    }
+    if (!d.moved && d.armed && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > DRAG_THRESHOLD) {
       d.moved = true;
       network?.beginGrab(d.index);
       setDragging({ id: d.id, inZone: false });
@@ -252,6 +329,8 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
     const d = drag.current;
     if (!d || e.pointerId !== d.pointerId) return;
     drag.current = null;
+    window.clearTimeout(d.timer);
+    e.currentTarget.classList.remove('syn-armed');
     if (!d.moved) return; // a plain click: onClick handles it
     network?.endGrab();
     setDragging(null);
@@ -271,7 +350,7 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
     const root = rootRef.current;
     if (!root) return;
     const onTouchMove = (e: TouchEvent) => {
-      if (drag.current?.moved) e.preventDefault();
+      if (drag.current?.armed) e.preventDefault();
     };
     root.addEventListener('touchmove', onTouchMove, { passive: false });
     return () => root.removeEventListener('touchmove', onTouchMove);
@@ -319,8 +398,9 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
 
       {/* Core: the portal to the game, and the drop target for the nodes */}
       <button
+        ref={coreRef}
         type="button"
-        className={`brain-core${dragging ? ' zone' : ''}${dragging?.inZone ? ' hot' : ''}${activeIndex >= 0 ? ' dim' : ''}`}
+        className={`brain-core${compact ? ' compact' : ''}${dragging ? ' zone' : ''}${dragging?.inZone ? ' hot' : ''}${activeIndex >= 0 ? ' dim' : ''}`}
         onClick={onPlay}
         onPointerEnter={onPlayIntent}
         onFocus={onPlayIntent}
@@ -338,7 +418,7 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
       </button>
 
       {/* First-visit hint */}
-      {!hintSeen && !active && (
+      {!hintSeen && !active && !compact && (
         <p className="brain-hint" role="note">
           <span aria-hidden="true">{touch ? '◎' : '✥'}</span> {touch || reducedMotion ? t('brain.hintShort') : t('brain.hint')}
         </p>
