@@ -10,11 +10,16 @@ import type { DialogText, Lang } from './text';
 import { COLORS, DISTRICTS, MIGRATION_GOAL, SHARDS } from './world';
 import './game.css';
 
+/** Where the page should land after the game closes. */
+export type ExitTarget = 'stay' | 'top' | 'work' | 'contact';
+
 interface PlayModeProps {
-  /** Close the game and return to the page. */
-  onClose: () => void;
-  /** Close the game and scroll to the contact section. */
-  onGoContact: () => void;
+  /** Fired the moment the exit animation starts (page becomes visible underneath). */
+  onExitStart: (target: ExitTarget) => void;
+  /** Fired once the exit animation finished: safe to unmount. */
+  onExitEnd: (target: ExitTarget) => void;
+  /** Durations, chosen by the host (shorter under reduced motion). */
+  exitMs: number;
 }
 
 const LINKEDIN_URL = 'https://www.linkedin.com/in/david-vargas-krespokiller';
@@ -35,47 +40,72 @@ const ACCENT: Record<DialogId, string> = {
 interface Toast {
   id: number;
   text: string;
-  tone: 'good' | 'bad' | 'info';
+  tone: 'good' | 'bad' | 'info' | 'alert';
 }
 
-const EMPTY_HUD: HudState = { visited: 0, shards: 0, delivered: 0, carrying: false, hubOpen: false, near: null };
+const EMPTY_HUD: HudState = {
+  visited: 0,
+  shards: 0,
+  delivered: 0,
+  carrying: false,
+  hubOpen: false,
+  near: null,
+  combat: { phase: 'off', hp: 100, clip: 12, reserve: 24, wave: 0, kills: 0, best: 0 },
+};
 
-export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
+/**
+ * Screen phases. `leaving` is orthogonal and wins over everything: once the
+ * exit animation starts no input is accepted.
+ */
+type Phase = 'boot' | 'play';
+
+export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModeProps) {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language?.startsWith('es') ? 'es' : 'en';
   const text = GAME_TEXT[lang];
   const reducedMotion = usePrefersReducedMotion();
 
-  const [phase, setPhase] = useState<'boot' | 'play'>('boot');
+  const [phase, setPhase] = useState<Phase>('boot');
   const [hud, setHud] = useState<HudState>(EMPTY_HUD);
   const [dialog, setDialog] = useState<{ id: DialogId; page: number } | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [touch, setTouch] = useState(false);
   const [joy, setJoy] = useState<{ bx: number; by: number; kx: number; ky: number } | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const miniRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
   const textRef = useRef(text);
+  const leavingRef = useRef(false);
   const toastId = useRef(0);
   const timers = useRef<number[]>([]);
   textRef.current = text;
 
-  const pushToast = useCallback((msg: string, tone: Toast['tone'] = 'info') => {
-    const id = ++toastId.current;
-    setToasts((prev) => [...prev.slice(-2), { id, text: msg, tone }]);
-    timers.current.push(
-      window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2800),
-    );
+  const later = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(fn, ms);
+    timers.current.push(id);
+    return id;
   }, []);
+
+  const pushToast = useCallback(
+    (msg: string, tone: Toast['tone'] = 'info') => {
+      const id = ++toastId.current;
+      setToasts((prev) => [...prev.slice(-2), { id, text: msg, tone }]);
+      later(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2600);
+    },
+    [later],
+  );
 
   const handleEvent = useCallback(
     (e: GameEvent) => {
+      if (leavingRef.current) return;
       const tx = textRef.current.toast;
+      const cx = textRef.current.combat;
       switch (e.k) {
         case 'dialog':
-          gameRef.current?.setPaused(true);
           setDialog({ id: e.id, page: 0 });
           break;
         case 'shard':
@@ -102,6 +132,27 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
         case 'allDone':
           pushToast(tx.allDone, 'good');
           break;
+        case 'combat': {
+          const c = e.e;
+          if (c.k === 'combatPhase') {
+            if (c.phase === 'closing') pushToast(cx.lockdown, 'alert');
+            if (c.phase === 'opening') pushToast(cx.doorsOpen, 'good');
+            if (c.phase !== 'fight') gameRef.current?.setHoldFire(false);
+          } else if (c.k === 'wave') pushToast(cx.waveToast(c.n), 'alert');
+          else if (c.k === 'ammoEmpty') pushToast(cx.ammoEmpty, 'bad');
+          else if (c.k === 'ammoPickup') pushToast(cx.ammoPickup(c.n), 'good');
+          else if (c.k === 'hurt') {
+            // Restart the CSS shake without touching the canvas element
+            // (re-keying the stage would detach the engine's canvas).
+            const st = stageRef.current;
+            if (st) {
+              st.classList.remove('pm-shake');
+              void st.offsetWidth;
+              st.classList.add('pm-shake');
+            }
+          }
+          break;
+        }
       }
     },
     [pushToast],
@@ -111,7 +162,8 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const game = new Game(canvas, miniRef.current, { onHud: setHud, onEvent: handleEvent }, reducedMotion);
+    const isTouch = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 700;
+    const game = new Game(canvas, miniRef.current, { onHud: setHud, onEvent: handleEvent }, reducedMotion, isTouch);
     gameRef.current = game;
     const resize = () => game.resize(window.innerWidth, window.innerHeight);
     resize();
@@ -126,7 +178,7 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
     document.body.style.overflow = 'hidden';
     appRoot?.setAttribute('inert', '');
     window.dispatchEvent(new CustomEvent('playmode', { detail: { open: true } }));
-    setTouch(window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 700);
+    setTouch(isTouch);
     rootRef.current?.focus();
 
     const pendingTimers = timers.current;
@@ -135,6 +187,7 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
       game.destroy();
       gameRef.current = null;
       pendingTimers.forEach((id) => window.clearTimeout(id));
+      pendingTimers.length = 0;
       document.body.style.overflow = prevOverflow;
       appRoot?.removeAttribute('inert');
       window.dispatchEvent(new CustomEvent('playmode', { detail: { open: false } }));
@@ -145,10 +198,29 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Gameplay is paused on the boot screen and while a dialog is open.
+  // Gameplay runs only on the play screen, with no dialog, and not while leaving.
   useEffect(() => {
-    gameRef.current?.setPaused(phase !== 'play' || dialog !== null);
-  }, [phase, dialog]);
+    gameRef.current?.setPaused(phase !== 'play' || dialog !== null || leaving);
+  }, [phase, dialog, leaving]);
+
+  // ---- exit (single entry point; guarded)
+  const requestExit = useCallback(
+    (target: ExitTarget) => {
+      if (leavingRef.current) return;
+      leavingRef.current = true;
+      setLeaving(true);
+      setDialog(null);
+      setJoy(null);
+      gameRef.current?.setHoldFire(false);
+      gameRef.current?.setJoystick(0, 0);
+      // Page becomes visible underneath right away so the host can scroll it
+      // into place behind the closing veil.
+      document.getElementById('root')?.removeAttribute('inert');
+      onExitStart(target);
+      later(() => onExitEnd(target), exitMs);
+    },
+    [exitMs, later, onExitEnd, onExitStart],
+  );
 
   const dialogContent: DialogText | null = useMemo(() => {
     if (!dialog) return null;
@@ -173,13 +245,63 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
 
   const closeDialog = useCallback(() => setDialog(null), []);
 
-  // Keyboard: ESC (back out), E/Space/Enter (advance dialog).
+  // ---- combat (guarded transitions)
+  const combatPhase = hud.combat.phase;
+  const canEnterCombat = phase === 'play' && !dialog && !leaving && combatPhase === 'off';
+  const canLeaveCombat = phase === 'play' && !leaving && (combatPhase === 'fight' || combatPhase === 'closing');
+
+  const enterCombat = useCallback(() => {
+    if (!gameRef.current || leavingRef.current) return;
+    gameRef.current.startCombat();
+  }, []);
+  const leaveCombat = useCallback(() => {
+    if (!gameRef.current || leavingRef.current) return;
+    gameRef.current.stopCombat();
+  }, []);
+
+  const start = useCallback(
+    (combat: boolean) => {
+      if (leavingRef.current || phase !== 'boot') return;
+      setPhase('play');
+      const game = gameRef.current;
+      if (game) {
+        // Unpause synchronously so the combat transition can begin this frame;
+        // the effect above keeps the flag consistent afterwards.
+        game.setPaused(false);
+        if (combat) game.startCombat();
+      }
+      pushToast(combat ? text.combat.lockdown : text.hud.hint, combat ? 'alert' : 'info');
+      rootRef.current?.focus();
+    },
+    [phase, pushToast, text],
+  );
+
+  const restartToBoot = useCallback(() => {
+    if (leavingRef.current) return;
+    const game = gameRef.current;
+    if (!game) return;
+    game.setPaused(true);
+    game.restart();
+    setDialog(null);
+    setPhase('boot');
+  }, []);
+
+  // Keyboard: ESC (back out), E/Space/Enter (advance dialog), C (toggle combat).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (leavingRef.current) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === 'Escape') {
         e.preventDefault();
         if (dialog) closeDialog();
-        else onClose();
+        else if (combatPhase === 'dead') return; // the menu owns the choices
+        else requestExit('stay');
+        return;
+      }
+      if (e.code === 'KeyC' && !e.repeat && phase === 'play' && !dialog) {
+        e.preventDefault();
+        if (combatPhase === 'off') enterCombat();
+        else if (combatPhase === 'fight' || combatPhase === 'closing') leaveCombat();
         return;
       }
       if (!dialog || e.repeat) return;
@@ -191,18 +313,34 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, advance, closeDialog, onClose]);
+  }, [dialog, advance, closeDialog, requestExit, combatPhase, phase, enterCombat, leaveCombat]);
 
-  const start = () => {
-    setPhase('play');
-    pushToast(text.hud.hint, 'info');
-    rootRef.current?.focus();
+  // ---- mouse aim + click to shoot (desktop)
+  const onStageMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || leaving) return;
+    gameRef.current?.aimAt(e.clientX, e.clientY);
+  };
+  const onStageDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0 || leaving || phase !== 'play' || dialog) return;
+    const game = gameRef.current;
+    if (!game) return;
+    game.aimAt(e.clientX, e.clientY);
+    if (combatPhase === 'fight') {
+      game.setHoldFire(true);
+      const up = () => {
+        game.setHoldFire(false);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+      };
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }
   };
 
-  // ---- touch joystick (floating, left half of the screen)
+  // ---- touch joystick (floating, left part of the screen)
   const joyId = useRef<number | null>(null);
   const onJoyDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (joyId.current !== null) return;
+    if (joyId.current !== null || leaving) return;
     joyId.current = e.pointerId;
     e.currentTarget.setPointerCapture(e.pointerId);
     setJoy({ bx: e.clientX, by: e.clientY, kx: e.clientX, ky: e.clientY });
@@ -232,12 +370,17 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
   };
 
   const t = text.hud;
+  const c = text.combat;
   const districtsDone = hud.visited >= DISTRICTS.length;
   const shardsDone = hud.shards >= SHARDS.length;
   const migrationDone = hud.delivered >= MIGRATION_GOAL;
   const accent = dialog ? ACCENT[dialog.id] : COLORS.cyan;
   const isLast = dialog && dialogContent ? dialog.page + 1 >= dialogContent.pages.length : false;
   const nearName = hud.near ? text.names[hud.near] : null;
+  const inCombat = combatPhase !== 'off';
+  const isDead = combatPhase === 'dead';
+  const showTouchControls = phase === 'play' && !dialog && touch && !isDead && !leaving;
+  const hpPct = Math.max(0, Math.min(100, hud.combat.hp));
 
   const ui = (
     <div
@@ -246,35 +389,87 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
       role="dialog"
       aria-modal="true"
       aria-label={text.boot.kicker}
-      className={`pm-root${reducedMotion ? ' pm-reduced' : ''}`}
+      className={`pm-root${reducedMotion ? ' pm-reduced' : ''}${leaving ? ' pm-exit' : ' pm-enter'}${inCombat ? ' pm-combat' : ''}`}
     >
-      <div className="pm-stage" aria-hidden="true">
+      <div
+        ref={stageRef}
+        className="pm-stage"
+        aria-hidden="true"
+        onPointerMove={onStageMove}
+        onPointerDown={onStageDown}
+      >
         <canvas ref={canvasRef} className="pm-canvas" />
       </div>
       <div className="pm-crt" aria-hidden="true" />
 
       {/* Top bar */}
       <div className="pm-top">
-        <section className="pm-panel pm-objectives" aria-label={t.objectives}>
-          <h2>{t.objectives}</h2>
-          <ul>
-            <li className={districtsDone ? 'done' : ''}>
-              <span>{districtsDone ? '✓' : '▢'}</span> {t.districts} <b>{hud.visited}/{DISTRICTS.length}</b>
-            </li>
-            <li className={shardsDone ? 'done' : ''}>
-              <span>{shardsDone ? '✓' : '▢'}</span> {t.shards} <b>{hud.shards}/{SHARDS.length}</b>
-            </li>
-            <li className={migrationDone ? 'done' : ''}>
-              <span>{migrationDone ? '✓' : '▢'}</span> {t.migration} <b>{hud.delivered}/{MIGRATION_GOAL}</b>
-            </li>
-          </ul>
-          <p className={hud.hubOpen ? 'open' : ''}>{hud.hubOpen ? t.hubOpen : t.hubLocked}</p>
-        </section>
+        {inCombat ? (
+          <section className="pm-panel pm-combat-hud" aria-label={c.enter}>
+            <div className="pm-hp">
+              <span>{c.hp}</span>
+              <i>
+                <b style={{ width: `${hpPct}%` }} />
+              </i>
+            </div>
+            <ul>
+              <li>
+                {c.ammo} <b>{hud.combat.clip}</b>
+                <small>/{hud.combat.reserve}</small>
+              </li>
+              <li>
+                {c.wave} <b>{hud.combat.wave}</b>
+              </li>
+              <li>
+                {c.kills} <b>{hud.combat.kills}</b>
+              </li>
+            </ul>
+          </section>
+        ) : (
+          <section className="pm-panel pm-objectives" aria-label={t.objectives}>
+            <h2>{t.objectives}</h2>
+            <ul>
+              <li className={districtsDone ? 'done' : ''}>
+                <span>{districtsDone ? '✓' : '▢'}</span> {t.districts}{' '}
+                <b>
+                  {hud.visited}/{DISTRICTS.length}
+                </b>
+              </li>
+              <li className={shardsDone ? 'done' : ''}>
+                <span>{shardsDone ? '✓' : '▢'}</span> {t.shards}{' '}
+                <b>
+                  {hud.shards}/{SHARDS.length}
+                </b>
+              </li>
+              <li className={migrationDone ? 'done' : ''}>
+                <span>{migrationDone ? '✓' : '▢'}</span> {t.migration}{' '}
+                <b>
+                  {hud.delivered}/{MIGRATION_GOAL}
+                </b>
+              </li>
+            </ul>
+            <p className={hud.hubOpen ? 'open' : ''}>{hud.hubOpen ? t.hubOpen : t.hubLocked}</p>
+          </section>
+        )}
 
         <div className="pm-right">
-          <button type="button" className="pm-btn pm-exit" onClick={onClose} aria-label={t.exitLabel}>
-            {t.exit} <span aria-hidden="true">✕</span>
-          </button>
+          <div className="pm-right-row">
+            {phase === 'play' && !isDead && (
+              <button
+                type="button"
+                className={`pm-btn pm-mode${inCombat ? ' danger' : ''}`}
+                onClick={inCombat ? leaveCombat : enterCombat}
+                disabled={inCombat ? !canLeaveCombat : !canEnterCombat}
+                aria-label={inCombat ? c.leaveLabel : c.enterHint}
+                title={inCombat ? c.leaveLabel : c.enterHint}
+              >
+                {inCombat ? c.leave : `⚔ ${c.enter}`}
+              </button>
+            )}
+            <button type="button" className="pm-btn pm-exit-btn" onClick={() => requestExit('stay')} aria-label={t.exitLabel} disabled={leaving}>
+              {t.exit} <span aria-hidden="true">✕</span>
+            </button>
+          </div>
           <canvas ref={miniRef} className="pm-mini" aria-hidden="true" />
         </div>
       </div>
@@ -289,43 +484,60 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
       </div>
 
       {/* Interaction prompt */}
-      {phase === 'play' && !dialog && nearName && (
+      {phase === 'play' && !dialog && !leaving && nearName && (
         <div className="pm-prompt">
           <kbd>{touch ? t.actTouch : t.actKey}</kbd> {nearName}
         </div>
       )}
+      {phase === 'play' && !dialog && !leaving && !touch && combatPhase === 'fight' && (
+        <div className="pm-prompt alert">
+          <kbd>{c.fireKey}</kbd> {c.fireTouch}
+        </div>
+      )}
 
       {/* Touch controls */}
-      {phase === 'play' && !dialog && touch && (
+      {showTouchControls && (
         <>
-          <div
-            className="pm-joy-zone"
-            onPointerDown={onJoyDown}
-            onPointerMove={onJoyMove}
-            onPointerUp={onJoyUp}
-            onPointerCancel={onJoyUp}
-          />
+          <div className="pm-joy-zone" onPointerDown={onJoyDown} onPointerMove={onJoyMove} onPointerUp={onJoyUp} onPointerCancel={onJoyUp} />
           {joy && (
             <div className="pm-joy" style={{ left: joy.bx, top: joy.by }} aria-hidden="true">
               <i style={{ transform: `translate(${joy.kx - joy.bx}px, ${joy.ky - joy.by}px)` }} />
             </div>
           )}
-          <button
-            type="button"
-            className={`pm-act${hud.near ? ' ready' : ''}`}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              gameRef.current?.act();
-            }}
-            aria-label={t.actTouch}
-          >
-            {t.actTouch}
-          </button>
+          {combatPhase === 'fight' ? (
+            <button
+              type="button"
+              className="pm-act fire"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.currentTarget.setPointerCapture(e.pointerId);
+                gameRef.current?.setHoldFire(true);
+              }}
+              onPointerUp={() => gameRef.current?.setHoldFire(false)}
+              onPointerCancel={() => gameRef.current?.setHoldFire(false)}
+              onLostPointerCapture={() => gameRef.current?.setHoldFire(false)}
+              aria-label={c.fireTouch}
+            >
+              {c.fireTouch}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`pm-act${hud.near ? ' ready' : ''}`}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                gameRef.current?.act();
+              }}
+              aria-label={t.actTouch}
+            >
+              {t.actTouch}
+            </button>
+          )}
         </>
       )}
 
       {/* Dialog */}
-      {dialog && dialogContent && (
+      {dialog && dialogContent && !leaving && (
         <div className="pm-dialog-wrap">
           <section className="pm-panel pm-dialog" style={{ ['--accent' as string]: accent }} aria-live="polite">
             <header>
@@ -345,7 +557,7 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
                   <a className="pm-btn" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
                     {text.hubActions.github} ↗
                   </a>
-                  <button type="button" className="pm-btn" onClick={onGoContact}>
+                  <button type="button" className="pm-btn" onClick={() => requestExit('contact')}>
                     {text.hubActions.contact}
                   </button>
                 </span>
@@ -358,8 +570,33 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
         </div>
       )}
 
+      {/* Death menu */}
+      {isDead && !leaving && (
+        <div className="pm-boot pm-dead">
+          <section className="pm-panel pm-boot-card pm-dead-card">
+            <p className="kicker">{c.enter}</p>
+            <h1>{c.deadTitle}</h1>
+            <p className="lead">{c.deadTag(hud.combat.wave, hud.combat.kills)}</p>
+            <div className="pm-dead-grid">
+              <button type="button" className="pm-btn pm-primary" onClick={() => gameRef.current?.revive()} autoFocus>
+                ♥ {c.revive}
+              </button>
+              <button type="button" className="pm-btn" onClick={leaveCombat}>
+                {c.toExplore}
+              </button>
+              <button type="button" className="pm-btn" onClick={restartToBoot}>
+                {c.toBoot}
+              </button>
+              <button type="button" className="pm-btn" onClick={() => requestExit('top')}>
+                {c.toProfile}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Boot screen */}
-      {phase === 'boot' && (
+      {phase === 'boot' && !leaving && (
         <div className="pm-boot">
           <section className="pm-panel pm-boot-card">
             <p className="kicker">{text.boot.kicker}</p>
@@ -371,11 +608,15 @@ export default function PlayMode({ onClose, onGoContact }: PlayModeProps) {
               ))}
             </ol>
             <p className="controls">{touch ? text.boot.controlsTouch : text.boot.controlsDesktop}</p>
+            <p className="controls">{touch ? c.controlsTouch : c.controlsDesktop}</p>
             <div className="row">
-              <button type="button" className="pm-btn pm-primary" onClick={start} autoFocus>
+              <button type="button" className="pm-btn pm-primary" onClick={() => start(false)} autoFocus>
                 ▶ {text.boot.start}
               </button>
-              <button type="button" className="pm-btn" onClick={onClose}>
+              <button type="button" className="pm-btn pm-danger" onClick={() => start(true)} title={c.enterHint}>
+                ⚔ {c.enter}
+              </button>
+              <button type="button" className="pm-btn" onClick={() => requestExit('stay')}>
                 {text.boot.classic}
               </button>
             </div>

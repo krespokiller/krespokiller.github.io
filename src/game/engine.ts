@@ -20,6 +20,8 @@ import {
   dronePosition,
 } from './world';
 import type { ZoneId } from './world';
+import { Combat } from './combat';
+import type { CombatEvent, CombatHud } from './combat';
 
 export type DialogId = 'garage' | 'tribuu' | 'loopay' | 'galgo' | 'trebet' | 'dock' | 'migrated' | 'hub' | 'locked';
 
@@ -32,7 +34,8 @@ export type GameEvent =
   | { k: 'hit' }
   | { k: 'needContainer' }
   | { k: 'carrying' }
-  | { k: 'allDone' };
+  | { k: 'allDone' }
+  | { k: 'combat'; e: CombatEvent };
 
 export interface HudState {
   visited: number;
@@ -41,6 +44,7 @@ export interface HudState {
   carrying: boolean;
   hubOpen: boolean;
   near: ZoneId | null;
+  combat: CombatHud;
 }
 
 export interface GameCallbacks {
@@ -98,6 +102,9 @@ export class Game {
   private near: ZoneId | null = null;
 
   private rain: Drop[] = [];
+  readonly combat: Combat;
+  private holdingFire = false;
+  private mouseAimAt = -10;
   private flicker = { building: -1, until: 0, next: 2 };
   private miniAcc = 0;
 
@@ -106,7 +113,9 @@ export class Game {
     mini: HTMLCanvasElement | null,
     private readonly cb: GameCallbacks,
     private readonly reducedMotion: boolean,
+    mobile = false,
   ) {
+    this.combat = new Combat(this.tiles, (e) => this.onCombatEvent(e), mobile, reducedMotion);
     this.ctx = canvas.getContext('2d', { alpha: false })!;
     this.miniCtx = mini ? mini.getContext('2d') : null;
     if (mini) {
@@ -150,6 +159,71 @@ export class Game {
     this.joy.y = y;
   }
 
+  // ------------------------------------------------------------- combat API
+
+  startCombat(): boolean {
+    if (this.paused) return false;
+    const ok = this.combat.start();
+    if (ok) this.emitHud();
+    return ok;
+  }
+
+  stopCombat(): boolean {
+    const ok = this.combat.stop();
+    if (ok) this.emitHud();
+    return ok;
+  }
+
+  revive(): boolean {
+    const ok = this.combat.revive();
+    if (ok) this.emitHud();
+    return ok;
+  }
+
+  /** Full restart: explore progress, position and combat. */
+  restart(): void {
+    this.visited.clear();
+    this.shards.clear();
+    this.delivered = 0;
+    this.carrying = false;
+    this.briefed = false;
+    this.announcedDone = false;
+    this.invuln = 0;
+    this.near = null;
+    this.player.x = SPAWN.x;
+    this.player.y = SPAWN.y;
+    this.holdingFire = false;
+    this.combat.reset();
+    this.emitHud();
+  }
+
+  fire(): void {
+    if (this.paused) return;
+    this.combat.fire();
+    this.emitHud();
+  }
+
+  setHoldFire(on: boolean): void {
+    this.holdingFire = on;
+  }
+
+  /** Aim at a screen (CSS px) position. */
+  aimAt(clientX: number, clientY: number): void {
+    const wx = clientX / this.scale + this.camX;
+    const wy = clientY / this.scale + this.camY;
+    this.combat.setAim(wx - this.player.x, wy - (this.player.y - 6));
+    this.mouseAimAt = this.vt;
+  }
+
+  private onCombatEvent(e: CombatEvent): void {
+    this.cb.onEvent({ k: 'combat', e });
+    if (e.k === 'combatPhase' || e.k === 'dead' || e.k === 'ammoPickup' || e.k === 'wave' || e.k === 'hurt') this.emitHud();
+    if (e.k === 'combatPhase' && e.phase !== 'off' && this.near) {
+      this.near = null;
+      this.emitHud();
+    }
+  }
+
   resize(cssW: number, cssH: number): void {
     this.scale = cssW < 500 ? 2 : cssW < 900 ? 3 : cssW < 1700 ? 4 : 5;
     this.vw = Math.ceil(cssW / this.scale);
@@ -177,8 +251,9 @@ export class Game {
     if (onControl && (code === 'Space' || code === 'Enter')) return;
     if (MOVE_KEYS.has(code) || ACT_KEYS.has(code)) e.preventDefault();
     if (this.paused) return;
-    if (ACT_KEYS.has(code)) {
-      if (!e.repeat) this.act();
+    if (ACT_KEYS.has(code) || code === 'KeyJ') {
+      if (this.combat.phase === 'fight') this.combat.fire();
+      else if (!e.repeat && ACT_KEYS.has(code)) this.act();
       return;
     }
     if (MOVE_KEYS.has(code)) this.keys.add(code);
@@ -190,10 +265,13 @@ export class Game {
 
   private onBlur = (): void => {
     this.keys.clear();
+    this.holdingFire = false;
+    this.joy.x = 0;
+    this.joy.y = 0;
   };
 
   act(): void {
-    if (this.paused || !this.near) return;
+    if (this.paused || !this.near || this.combat.blocksTerminals) return;
     this.interact(this.near);
   }
 
@@ -273,7 +351,8 @@ export class Game {
       delivered: this.delivered,
       carrying: this.carrying,
       hubOpen: this.hubOpen,
-      near: this.paused ? null : this.near,
+      near: this.paused || this.combat.blocksTerminals ? null : this.near,
+      combat: this.combat.hud(),
     });
   }
 
@@ -298,6 +377,13 @@ export class Game {
   private update(dt: number): void {
     this.t += dt;
     if (this.invuln > 0) this.invuln -= dt;
+
+    this.combat.update(dt, this.player.x, this.player.y);
+    if (this.combat.phase === 'dead') {
+      this.player.moving = false;
+      return;
+    }
+    if (this.holdingFire && this.combat.phase === 'fight') this.combat.fire();
 
     let ix = 0;
     let iy = 0;
@@ -324,6 +410,8 @@ export class Game {
       p.y = Math.max(8, Math.min(WORLD_H - 2, p.y));
       p.step += dt * 9;
       p.dir = Math.abs(ix) > Math.abs(iy) ? (ix < 0 ? 'left' : 'right') : iy < 0 ? 'up' : 'down';
+      // Keyboard/joystick aim unless the mouse aimed recently.
+      if (this.vt - this.mouseAimAt > 1.5) this.combat.setAim(ix, iy);
     }
 
     const cx = p.x;
@@ -356,9 +444,9 @@ export class Game {
       }
     }
 
-    // Nearest terminal
+    // Nearest terminal (none while the city is locked down)
     let nearest: ZoneId | null = null;
-    let best = INTERACT_RADIUS;
+    let best = this.combat.blocksTerminals ? -1 : INTERACT_RADIUS;
     for (const term of TERMINALS) {
       const dist = Math.hypot(term.x - cx, term.y - cy);
       if (dist < best) {
@@ -414,9 +502,11 @@ export class Game {
     this.drawTerminals();
     this.drawShards();
     this.drawDrones();
+    this.combat.drawWorld(ctx, this.vt);
     this.drawPlayer();
     ctx.restore();
 
+    this.combat.drawOverlay(ctx, vw, vh, this.vt);
     this.drawRain();
     this.camX = camX;
     this.camY = camY;
@@ -548,7 +638,17 @@ export class Game {
   private drawPlayer(): void {
     const ctx = this.ctx;
     const p = this.player;
-    if (this.invuln > 0 && Math.floor(this.vt * 12) % 2 === 0) return;
+    if ((this.invuln > 0 || this.combat.isInvulnerable) && Math.floor(this.vt * 12) % 2 === 0) return;
+    if (this.combat.phase === 'dead') {
+      // Collapsed: a flat body with a fading signal.
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(Math.round(p.x) - 6, Math.round(p.y) - 2, 12, 3);
+      ctx.fillStyle = COLORS.magenta;
+      ctx.fillRect(Math.round(p.x) - 5, Math.round(p.y) - 5, 10, 3);
+      ctx.fillStyle = '#f2c9a0';
+      ctx.fillRect(Math.round(p.x) + 5, Math.round(p.y) - 6, 4, 4);
+      return;
+    }
     const x = Math.round(p.x);
     const y = Math.round(p.y);
     const walk = p.moving ? Math.floor(p.step) % 2 : 0;

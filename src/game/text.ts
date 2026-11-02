@@ -51,6 +51,33 @@ export interface GameText {
   locked: (missing: { districts: number; shards: number; migration: number }) => DialogText;
   hubActions: { linkedin: string; github: string; contact: string };
   names: Record<string, string>;
+  combat: {
+    explore: string;
+    enter: string;
+    enterHint: string;
+    leave: string;
+    leaveLabel: string;
+    hp: string;
+    ammo: string;
+    wave: string;
+    kills: string;
+    best: string;
+    lockdown: string;
+    doorsOpen: string;
+    waveToast: (n: number) => string;
+    ammoEmpty: string;
+    ammoPickup: (n: number) => string;
+    fireKey: string;
+    fireTouch: string;
+    controlsDesktop: string;
+    controlsTouch: string;
+    deadTitle: string;
+    deadTag: (wave: number, kills: number) => string;
+    revive: string;
+    toExplore: string;
+    toBoot: string;
+    toProfile: string;
+  };
 }
 
 const en: GameText = {
@@ -61,7 +88,7 @@ const en: GameText = {
     goals: ['Visit the 5 districts of my career', 'Collect the 8 stack shards', 'Finish the AWS → Azure migration'],
     controlsDesktop: 'WASD / ARROWS to move · E or SPACE to act · ESC to exit',
     controlsTouch: 'Drag on the left to move · tap ACT to interact',
-    start: 'START',
+    start: 'EXPLORE',
     classic: 'Skip: classic résumé',
   },
   hud: {
@@ -167,6 +194,33 @@ const en: GameText = {
   }),
   hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Back to the classic résumé' },
   names: { garage: 'Chía Garage', tribuu: 'Tribuu', loopay: 'Loopay Tower', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', aws: 'AWS dock', azure: 'Azure dock' },
+  combat: {
+    explore: 'EXPLORE',
+    enter: 'COMBAT',
+    enterHint: 'Lock the city down and survive the waves',
+    leave: 'BACK TO EXPLORE',
+    leaveLabel: 'Leave combat and reopen the city',
+    hp: 'HP',
+    ammo: 'AMMO',
+    wave: 'WAVE',
+    kills: 'KILLS',
+    best: 'BEST',
+    lockdown: 'LOCKDOWN — doors sealed. They are coming.',
+    doorsOpen: 'Doors reopened. City is calm again.',
+    waveToast: (n) => `WAVE ${n}`,
+    ammoEmpty: 'OUT OF AMMO — pick up drops from fallen zombies',
+    ammoPickup: (n) => `+${n} AMMO`,
+    fireKey: 'CLICK / SPACE',
+    fireTouch: 'FIRE',
+    controlsDesktop: 'Move · aim with the mouse · click, SPACE or J to shoot · C to toggle combat',
+    controlsTouch: 'Drag to move · hold FIRE to shoot in the direction you walk',
+    deadTitle: 'SIGNAL LOST',
+    deadTag: (w, k) => `You fell on wave ${w} with ${k} kills.`,
+    revive: 'REVIVE HERE',
+    toExplore: 'BACK TO EXPLORE',
+    toBoot: 'RESTART GAME',
+    toProfile: 'BACK TO MY PROFILE',
+  },
 };
 
 const es: GameText = {
@@ -177,7 +231,7 @@ const es: GameText = {
     goals: ['Visita los 5 distritos de mi carrera', 'Recoge los 8 fragmentos de stack', 'Completa la migración AWS → Azure'],
     controlsDesktop: 'WASD / FLECHAS para moverte · E o ESPACIO para actuar · ESC para salir',
     controlsTouch: 'Arrastra a la izquierda para moverte · toca ACT para interactuar',
-    start: 'EMPEZAR',
+    start: 'EXPLORAR',
     classic: 'Saltar: ver el CV clásico',
   },
   hud: {
@@ -283,6 +337,33 @@ const es: GameText = {
   }),
   hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Volver al CV clásico' },
   names: { garage: 'Garaje en Chía', tribuu: 'Tribuu', loopay: 'Torre Loopay', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', aws: 'Muelle AWS', azure: 'Muelle Azure' },
+  combat: {
+    explore: 'EXPLORAR',
+    enter: 'COMBATE',
+    enterHint: 'Cierra la ciudad y sobrevive a las oleadas',
+    leave: 'VOLVER A EXPLORAR',
+    leaveLabel: 'Salir del combate y reabrir la ciudad',
+    hp: 'VIDA',
+    ammo: 'MUNICIÓN',
+    wave: 'OLEADA',
+    kills: 'BAJAS',
+    best: 'MEJOR',
+    lockdown: 'CIERRE TOTAL — puertas selladas. Ya vienen.',
+    doorsOpen: 'Puertas abiertas. La ciudad vuelve a la calma.',
+    waveToast: (n) => `OLEADA ${n}`,
+    ammoEmpty: 'SIN MUNICIÓN — recoge la que sueltan los zombis',
+    ammoPickup: (n) => `+${n} MUNICIÓN`,
+    fireKey: 'CLIC / ESPACIO',
+    fireTouch: 'FUEGO',
+    controlsDesktop: 'Muévete · apunta con el mouse · clic, ESPACIO o J para disparar · C para alternar combate',
+    controlsTouch: 'Arrastra para moverte · mantén FUEGO para disparar hacia donde caminas',
+    deadTitle: 'SEÑAL PERDIDA',
+    deadTag: (w, k) => `Caíste en la oleada ${w} con ${k} bajas.`,
+    revive: 'REVIVIR AQUÍ',
+    toExplore: 'VOLVER A EXPLORAR',
+    toBoot: 'REINICIAR JUEGO',
+    toProfile: 'VOLVER A MI PERFIL',
+  },
 };
 
 export const GAME_TEXT: Record<Lang, GameText> = { en, es };

@@ -112,7 +112,8 @@
   position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding: 16px;
   background: linear-gradient(to top, rgba(5, 3, 15, 0.75), transparent 60%);
 }
-.pm-dialog { width: min(720px, 100%); padding: 16px 20px 14px; animation: pm-pop 0.2s ease-out; }
+.pm-dialog-wrap { pointer-events: none; } /* top-bar buttons stay clickable behind the gradient */
+.pm-dialog { width: min(720px, 100%); padding: 16px 20px 14px; animation: pm-pop 0.2s ease-out; pointer-events: auto; }
 .pm-dialog header h3 { font-size: 18px; letter-spacing: 0.14em; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
 .pm-dialog header p { font-size: 12px; color: var(--pm-muted); letter-spacing: 0.06em; margin-top: 2px; }
 .pm-body { font-size: 15px; line-height: 1.6; margin: 12px 0 14px !important; min-height: 3.2em; user-select: text; -webkit-user-select: text; }
@@ -171,8 +172,104 @@
   .pm-objectives ul { font-size: 11px; }
   .pm-objectives p { display: none; }
   .pm-mini { width: 96px; height: 58px; }
-  .pm-exit { font-size: 11px; padding: 4px 8px; }
+  .pm-exit-btn, .pm-mode { font-size: 10px; padding: 4px 7px; min-height: 34px; }
+  .pm-right-row { flex-direction: column; align-items: flex-end; gap: 6px; }
+  .pm-combat-hud { min-width: 0; max-width: 56vw; padding: 6px 9px 8px; }
+  .pm-combat-hud ul { gap: 8px; font-size: 10px; }
+  .pm-combat-hud li b { font-size: 12px; }
+  .pm-dead-card, .pm-boot-card { padding: 16px 16px 14px; }
   .pm-body { font-size: 14px; }
   .pm-toasts { top: 24%; }
   .pm-prompt { bottom: 116px; }
 }
+
+/* =========================================================================
+   Page ⇄ game handoff. The veil lives in the page (below the game, z 90) and
+   closes like a CRT turning off: two panels meet at a bright center line, the
+   game then opens from that same line. Timings must match ENTER_MS / EXIT_MS
+   in Home.tsx and PlayMode.tsx. No transforms on the page itself, so fixed
+   elements and scroll position stay untouched.
+   ========================================================================= */
+.page-shell { transition: filter 0.35s ease; }
+.page-shell.page-dim { filter: brightness(0.35) saturate(0.6); }
+
+.crt-veil { position: fixed; inset: 0; z-index: 90; pointer-events: auto; overflow: hidden; }
+.crt-veil::before, .crt-veil::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 50%; background: #05030f;
+}
+.crt-veil::before { top: 0; transform-origin: top; }
+.crt-veil::after { bottom: 0; transform-origin: bottom; }
+.crt-veil.closed::before, .crt-veil.closed::after { transform: scaleY(1); }
+.crt-veil.closing::before, .crt-veil.closing::after { animation: veil-close 0.38s cubic-bezier(0.7, 0, 0.3, 1) forwards; }
+.crt-veil.opening::before, .crt-veil.opening::after { animation: veil-open 0.4s cubic-bezier(0.2, 0, 0.2, 1) 0.3s both; }
+/* The bright line */
+.crt-veil.closing, .crt-veil.opening { background: transparent; }
+.crt-veil.closing::before { box-shadow: 0 2px 0 #fff, 0 6px 24px 6px rgba(0, 240, 255, 0.9); }
+.crt-veil.opening::before { box-shadow: 0 2px 0 #fff, 0 6px 24px 6px rgba(255, 43, 214, 0.9); }
+@keyframes veil-close { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes veil-open { from { transform: scaleY(1); } to { transform: scaleY(0); } }
+
+.pm-root.pm-enter { animation: pm-open 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) 0.33s both; }
+.pm-root.pm-exit { animation: pm-close 0.34s cubic-bezier(0.7, 0, 0.3, 1) forwards; pointer-events: none; }
+@keyframes pm-open {
+  0% { clip-path: inset(49.8% 0 49.8% 0); filter: brightness(3) saturate(0.2); }
+  35% { clip-path: inset(49% 0 49% 0); filter: brightness(2.2); }
+  100% { clip-path: inset(0 0 0 0); filter: none; }
+}
+@keyframes pm-close {
+  0% { clip-path: inset(0 0 0 0); filter: none; }
+  60% { clip-path: inset(49% 0 49% 0); filter: brightness(2.4); }
+  100% { clip-path: inset(50% 0 50% 0); filter: brightness(4); opacity: 0; }
+}
+
+/* Reduced motion: short cross-fades, same durations as REDUCED_MS. */
+.crt-veil.reduced::before, .crt-veil.reduced::after { animation: none; transform: scaleY(1); }
+.crt-veil.reduced.closing { animation: veil-fade-in 0.2s both; }
+.crt-veil.reduced.opening { animation: veil-fade-out 0.22s both; }
+.crt-veil.reduced::before { box-shadow: none; }
+@keyframes veil-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes veil-fade-out { from { opacity: 1; } to { opacity: 0; } }
+.pm-root.pm-reduced.pm-enter { animation: veil-fade-in 0.2s 0.05s both; }
+.pm-root.pm-reduced.pm-exit { animation: veil-fade-out 0.2s forwards; }
+@media (prefers-reduced-motion: reduce) { .page-shell { transition: none; } }
+
+/* ------------------------------------------------------------- combat UI */
+.pm-combat .pm-crt {
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(60, 0, 20, 0.7) 100%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+}
+.pm-stage.pm-shake { animation: pm-shake 0.22s ease-out; }
+@keyframes pm-shake {
+  0% { transform: translate(0, 0); } 25% { transform: translate(-3px, 2px); } 50% { transform: translate(3px, -2px); } 75% { transform: translate(-2px, -1px); } 100% { transform: none; }
+}
+.pm-reduced .pm-stage.pm-shake { animation: none; }
+
+.pm-right-row { display: flex; gap: 8px; }
+.pm-mode { padding: 6px 10px; font-size: 12px; min-height: 40px; animation: pm-pop 0.2s ease-out; }
+.pm-mode:disabled { opacity: 0.45; cursor: default; }
+.pm-danger, .pm-mode.danger { border-color: #ff3860; background: rgba(255, 56, 96, 0.16); }
+.pm-danger:hover, .pm-mode.danger:hover { background: rgba(255, 56, 96, 0.34); }
+.pm-exit-btn { padding: 6px 10px; font-size: 12px; min-height: 40px; }
+
+.pm-combat-hud { --accent: #ff3860; padding: 8px 12px 10px; min-width: 210px; max-width: 280px; animation: pm-pop 0.25s ease-out; }
+.pm-hp { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 0.16em; color: var(--pm-muted); }
+.pm-hp i { flex: 1; height: 8px; background: #2a0812; border: 1px solid #ff3860; display: block; }
+.pm-hp b { display: block; height: 100%; background: linear-gradient(90deg, #ff3860, #ff8da4); transition: width 0.18s ease-out; }
+.pm-combat-hud ul { list-style: none; padding: 0; margin-top: 6px !important; display: flex; gap: 12px; font-size: 11px; letter-spacing: 0.08em; color: var(--pm-muted); }
+.pm-combat-hud li b { color: #fff; font-size: 14px; margin-left: 4px; }
+.pm-combat-hud li small { color: var(--pm-muted); font-size: 11px; }
+
+.pm-toast.alert { border-color: #ff3860; color: #ff9fb4; text-shadow: 0 0 8px rgba(255, 56, 96, 0.8); }
+.pm-prompt.alert { border-color: #ff3860; box-shadow: 0 0 0 2px #000, 0 0 16px rgba(255, 56, 96, 0.45); }
+.pm-prompt.alert kbd { background: #ff3860; color: #fff; }
+
+.pm-act.fire { border-color: #ff3860; background: rgba(255, 56, 96, 0.35); color: #fff; box-shadow: 0 0 0 2px #000, 0 0 22px rgba(255, 56, 96, 0.7); }
+.pm-act.fire:active { background: #ff3860; }
+
+.pm-dead { background: rgba(40, 0, 12, 0.72); animation: veil-fade-in 0.3s both; }
+.pm-dead-card { --accent: #ff3860; }
+.pm-dead-card h1 { text-shadow: 3px 0 #ff3860, -3px 0 var(--pm-line); }
+.pm-dead-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.pm-dead-grid .pm-btn { width: 100%; }
+@media (max-width: 480px) { .pm-dead-grid { grid-template-columns: 1fr; } }
