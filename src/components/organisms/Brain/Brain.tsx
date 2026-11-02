@@ -126,6 +126,7 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
 
   const rootRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const lastPos = useRef<string[]>([]);
   const coreCanvas = useRef<HTMLCanvasElement>(null);
   const coreRef = useRef<HTMLButtonElement>(null);
   const [compact, setCompact] = useState(false);
@@ -174,11 +175,16 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
           const el = nodeRefs.current[i];
           if (!el) continue;
           const m = w < 340 ? 82 : w < 760 ? 92 : 100;
-          const x = Math.min(w - m, Math.max(m, screen[i * 3]));
-          const y = screen[i * 3 + 1];
+          // Whole pixels, and a DOM write only when the label actually moved:
+          // sub-pixel transforms every frame re-rasterize text (shimmer/jank).
+          const x = Math.round(Math.min(w - m, Math.max(m, screen[i * 3])));
+          const y = Math.round(screen[i * 3 + 1]);
           const depth = screen[i * 3 + 2];
-          const scale = w < 760 ? 1 : 0.9 + depth * 0.25;
-          el.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+          const scale = w < 760 ? 1 : Math.round((0.9 + depth * 0.25) * 50) / 50;
+          const key = `${x},${y},${scale}`;
+          if (lastPos.current[i] === key) continue;
+          lastPos.current[i] = key;
+          el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
         }
       });
     };

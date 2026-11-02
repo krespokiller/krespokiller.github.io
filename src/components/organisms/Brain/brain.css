@@ -127,6 +127,12 @@
 }
 @keyframes sheet-in { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+/* Touch devices: no backdrop blur (very expensive on phone GPUs) and no pulse. */
+@media (pointer: coarse) {
+  .syn, .brain-core, .brain-hint { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(12, 10, 9, 0.92); }
+  .brain-core { transition: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .syn i, .brain-hint span { animation: none; }
   .brain-panel, .brain-panel-wrap, .brain-hint { animation: none; }

@@ -77,6 +77,13 @@ export class ParticleNetwork {
   // active. With dt = 0 (reduced-motion static frame) nothing advances.
   private elapsed = 0;
   private idleWeight = 0;
+  /**
+   * Touch devices: the camera stays still (no idle drift, no parallax) and
+   * the renderer caps DPR at 1.5. A moving camera means every DOM label on
+   * top has to re-rasterize per frame, which is what reads as "shaking" on
+   * phones; a still camera lets the labels be positioned once.
+   */
+  private readonly stillCamera = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
   // Pointer state, smoothed with exponential damping
   private pointerTarget = new THREE.Vector3();
@@ -220,7 +227,7 @@ export class ParticleNetwork {
     const ndcX = (clientX / window.innerWidth) * 2 - 1;
     const ndcY = -(clientY / window.innerHeight) * 2 + 1;
     this.pointerNdc.set(ndcX, ndcY);
-    this.parallaxTarget.set(ndcX * CONFIG.PARALLAX_STRENGTH, ndcY * CONFIG.PARALLAX_STRENGTH);
+    if (!this.stillCamera) this.parallaxTarget.set(ndcX * CONFIG.PARALLAX_STRENGTH, ndcY * CONFIG.PARALLAX_STRENGTH);
 
     // Unproject the NDC point onto the z = 0 plane.
     this.tmpVector.set(ndcX, ndcY, 0.5).unproject(this.camera);
@@ -488,7 +495,7 @@ export class ParticleNetwork {
 
   /** Recomputes projection and volume on viewport changes; reseeds when the target count changes. */
   resize(width: number, height: number): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.MAX_DPR);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.stillCamera ? 1.5 : CONFIG.MAX_DPR);
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(width, height, false);
 
@@ -591,7 +598,8 @@ export class ParticleNetwork {
 
   private update(dt: number): void {
     this.elapsed += dt;
-    const idleTarget = this.pointerActive ? 0 : 1;
+    // No autonomous motion during the first 1.5 s: let the page settle first.
+    const idleTarget = this.pointerActive || this.elapsed < 1.5 ? 0 : 1;
     this.idleWeight += (idleTarget - this.idleWeight) * (1 - Math.exp(-CONFIG.IDLE_BLEND_RATE * dt));
     this.smoothPointer(dt);
     const dimTarget = this.focusIndex >= 0 ? 1 : 0;
@@ -622,7 +630,7 @@ export class ParticleNetwork {
     // Autonomous Lissajous drift so depth reads without pointer input.
     // Offsets derive from the integrated clock (deterministic per frame), so
     // a zero delta keeps the camera frozen for the reduced-motion frame.
-    const w = this.idleWeight;
+    const w = this.stillCamera ? 0 : this.idleWeight;
     const omega = (Math.PI * 2) / CONFIG.IDLE_DRIFT_PERIOD;
     const t = this.elapsed;
     const amplitude = CONFIG.IDLE_DRIFT_AMPLITUDE;
