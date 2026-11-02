@@ -1,24 +1,24 @@
 # David Santiago Vargas (krespokiller)
 
-> Tech Lead specialized in fintech payment platforms and multi-tenant systems for Latin American markets. Leads teams of 5-6 engineers building event-driven architecture and cloud infrastructure with TypeScript, Python, NestJS, React, PostgreSQL, and AWS.
+> Tech Lead specialized in fintech payment platforms and multi-tenant systems for Latin American markets. Leads a team of 5 engineers building event-driven architecture and cloud infrastructure with TypeScript, Python, NestJS, React, PostgreSQL, Azure, and AWS.
 
 This site is a single-page 3D portfolio (React, TypeScript, three.js). Content sections:
 
 ## Selected Work (#work)
 Three case studies:
-- **Loopay Suite** — multi-tenant, cloud-native fintech payments platform for Latin American markets; led a team of 5 engineers; 60% faster deploys (15 to 6 minutes) via the SOBERANA deploy monorepo (Terraform, AWS, GitHub Actions).
-  - https://soberana.loopay.com/
-- **Galgo** — motorcycle e-commerce with embedded financing in Colombia; event-driven microservices processing 1,000+ leads per day.
+- **Loopay Suite** — multi-tenant, cloud-native fintech payments platform for Latin American markets; leads a team of 5 engineers on SOBERANA, the cross-border payments platform; led the AWS-to-Azure migration with the CTO (Terraform, GitHub Actions over OIDC); 60% faster deploys (15 to 6 minutes) on the AWS pipeline.
+  - https://soberana.app/
+- **Galgo** — motorcycle e-commerce with embedded financing in Colombia; Checkout and Risk teams building NestJS services, a backend-for-frontend layer and Next.js interfaces on event-driven microservices.
   - https://www.galgo.com/co
-- **Trebet** — mobile super-app for residential communities (payments, digital intercom, bookings, assembly voting); co-founded and led a team of 6 engineers; MVP to production in 1 month.
+- **Trebet** — mobile super-app for residential communities (payments, digital intercom, bookings, assembly voting); co-founded with a remote team of 7; MVP to production in about a month.
   - https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO
   - https://apps.apple.com/us/app/trebet/id6748287035
 
 ## About (#about)
-Bio and core stack: TypeScript, Python, NestJS, React, PostgreSQL, AWS, Terraform, Docker, event-driven and clean architecture, CI/CD automation.
+Bio and core stack: TypeScript, Python, NestJS, React, PostgreSQL, Azure, AWS, Terraform, Docker, event-driven and clean architecture, CI/CD automation.
 
 ## Experience (#experience)
-Five roles: Loopay (Tech Lead, Oct 2025-present; Full Stack Developer, 2023-2024), Galgo (Software Engineer, 2023-2025), Trebet (Co-founder & Lead Engineer, 2024-2025), Tribuu Technologies (Full Stack Developer, 2021-2022).
+Six roles: Loopay (Tech Lead, Oct 2025-present; JavaScript Developer, Feb-Dec 2023), Galgo (Software Engineer, Dec 2023-Sep 2025), Trebet (Co-founder & Software Engineer, Sep 2024-Nov 2025), Tribuu (JavaScript Developer, Nov 2021-Jan 2023), Independent Web Developer (2019-2021).
 
 ## Contact (#contact)
 - GitHub: https://github.com/krespokiller
@@ -26,6 +26,6 @@ Five roles: Loopay (Tech Lead, Oct 2025-present; Full Stack Developer, 2023-2024
 
 ## Key facts
 - Role: Tech Lead · Fintech & Cloud
-- Domains: multi-tenant payments, event-driven microservices, deploy automation (SOBERANA, Terraform, GitHub Actions, Docker)
-- Market focus: Latin America; teams of 5-6 engineers
+- Domains: multi-tenant payments, event-driven microservices, cloud infrastructure as code (Terraform on Azure and AWS), CI/CD (GitHub Actions)
+- Market focus: Latin America; leads a team of 5 engineers
 - Site languages: English and Spanish

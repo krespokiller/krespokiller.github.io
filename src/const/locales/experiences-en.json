@@ -6,12 +6,14 @@
       "dates": "Oct 2025 – Present",
       "location": "Remote",
       "description": [
-        "Led a team of 5 engineers building cloud-native fintech platforms, owning architecture decisions, code reviews, and production support with NestJS, React, PostgreSQL, AWS ECS, and Terraform.",
-        "Built SOBERANA, the deploy monorepo that orchestrates Loopay Suite's production infrastructure: Terraform IaC for AWS (S3, Lambda, Secrets Manager, ECR), CI/CD pipelines with GitHub Actions, and local development with Docker.",
-        "Built LoopayOCR, a compliance document management system using Google Gemini OCR for cross-border financial transactions, with dynamic Pydantic schema validation, S3 storage, and webhook notifications.",
-        "Reduced deployment time by 60% (from 15 to 6 minutes) through infrastructure automation with Terraform and repository cleanup, improving CI/CD reliability and team velocity."
+        "Lead a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies: custodial wallets, virtual accounts by country and payment rail, deposits and withdrawals. I set the team's engineering standards: mandatory pull-request review, an INVEST-based backlog, and Playwright end-to-end tests.",
+        "Closed 12 findings from a security audit carried out with a partner firm using OpenAI's Daybreak: idempotency of money-moving operations, SSRF protection, API key lifecycle, and encryption of stored secrets.",
+        "Led the AWS-to-Azure migration with the CTO, rebuilding the infrastructure in Terraform: Container Apps, Static Web Apps, PostgreSQL Flexible Server, Key Vault, and managed identities.",
+        "Built CI/CD on GitHub Actions with OIDC (no stored cloud credentials), ephemeral environments per pull request, and releases by version tag, backed by 6,000+ automated tests. Cut deployment time by 60% (from 15 to 6 minutes) on the AWS pipeline through Terraform automation.",
+        "Integrated external providers for custody, virtual accounts, payouts, and KYC behind Strategy and Adapter patterns, so adding a provider does not change the core.",
+        "Built LoopayOCR, a compliance document management system using Google Gemini OCR for cross-border financial transactions, with dynamic Pydantic schema validation, S3 storage, and webhook notifications."
       ],
-      "tags": ["NestJS", "React", "PostgreSQL", "AWS ECS", "Terraform", "SOBERANA", "Google Gemini", "Pydantic", "GitHub Actions", "Docker"]
+      "tags": ["NestJS", "React", "PostgreSQL", "GraphQL", "Azure", "Terraform", "GitHub Actions", "Docker", "Google Gemini", "Pydantic"]
     },
     {
       "company": "Galgo",
@@ -19,29 +21,29 @@
       "dates": "Dec 2023 – Sep 2025",
       "location": "Remote",
       "description": [
-        "Developed backend services for checkout, lending, and risk evaluation processing 1,000+ daily leads using NestJS, AWS, and event-driven microservices.",
-        "Reduced risk evaluation latency from minutes to seconds by optimizing the event-driven microservices architecture and query performance.",
-        "Built 2 new microservices and maintained 4–5 existing services across the checkout, lending, and risk pipelines.",
+        "Worked on the Checkout and Risk teams building NestJS backend services, a backend-for-frontend (BFF) layer, and Next.js interfaces on event-driven microservices in AWS.",
+        "Maintained systems on the critical path of checkout and risk evaluation, with incidents handled through PagerDuty.",
         "Managed cloud infrastructure, observability, and deployment pipelines using Terraform, Datadog, GitHub Actions, and AWS."
       ],
-      "tags": ["NestJS", "AWS", "Event-driven", "Terraform", "Datadog"]
+      "tags": ["NestJS", "Next.js", "AWS", "Event-driven", "Terraform", "Datadog"]
     },
     {
       "company": "Trebet",
-      "role": "Co-founder & Lead Engineer",
-      "dates": "Sep 2024 – Sep 2025",
+      "role": "Co-founder & Software Engineer",
+      "dates": "Sep 2024 – Nov 2025",
       "location": "Bogotá, Colombia",
       "note": "Parallel project, concurrent with Galgo",
       "description": [
-        "Co-founded a startup and led a team of 6 engineers, owning every technical decision from architecture to production.",
-        "Launched a real-time communication platform from MVP to production in 1 month, building the mobile app, backend services, and CI/CD with React Native, Laravel, WebRTC, WebSockets, and DigitalOcean."
+        "Co-founded a startup and took a digital-intercom mobile app from MVP to production in about a month, working in a remote team of 7 across Colombia, Mexico, and Venezuela.",
+        "Built the mobile app and backend with React Native, Laravel, WebRTC with a TURN server, and WebSockets, and kept releasing until a pilot with a test community.",
+        "Operated the infrastructure and, when funding ran out, moved it from AWS to DigitalOcean, migrating the database ahead of the DNS cutover with no data loss."
       ],
       "tags": ["React Native", "Laravel", "WebRTC", "WebSockets", "DigitalOcean"]
     },
     {
       "company": "Loopay",
-      "role": "Full Stack Developer",
-      "dates": "Jan 2023 – 2024",
+      "role": "JavaScript Developer",
+      "dates": "Feb 2023 – Dec 2023",
       "location": "Remote",
       "description": [
         "Full-stack development of the main platform on RedwoodJS: interactive React UI and server-side Node.js logic.",
@@ -51,9 +53,9 @@
       "tags": ["RedwoodJS", "React", "GraphQL", "Prisma", "Node.js", "GitHub Actions"]
     },
     {
-      "company": "Tribuu Technologies",
-      "role": "Full Stack Developer",
-      "dates": "2021 – 2022",
+      "company": "Tribuu",
+      "role": "JavaScript Developer",
+      "dates": "Nov 2021 – Jan 2023",
       "location": "Remote",
       "description": [
         "Microservices architecture: Angular SPA frontend with highly modular backend services using Express / Node.js and MongoDB.",
@@ -61,6 +63,16 @@
         "CI/CD automation with GitHub Actions."
       ],
       "tags": ["Angular", "Express", "MongoDB", "Algolia", "Zoom API", "GitHub Actions"]
+    },
+    {
+      "company": "Independent",
+      "role": "Web Developer",
+      "dates": "2019 – 2021",
+      "location": "Bogotá, Colombia",
+      "description": [
+        "Self-taught. Built and launched e-commerce stores with WooCommerce and PrestaShop, and a static site in HTML, CSS, and JavaScript."
+      ],
+      "tags": ["JavaScript", "WooCommerce", "PrestaShop"]
     }
   ]
 }

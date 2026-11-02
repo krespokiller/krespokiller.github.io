@@ -1,7 +1,7 @@
 {
   "hero": {
     "name": "David Santiago Vargas",
-    "title": "Ingeniero de Software",
+    "title": "Tech Lead",
     "subtitle": "Sistemas distribuidos · Arquitectura Cloud · Desarrollo con IA",
     "viewWork": "Ver Mi Trabajo"
   },
@@ -18,7 +18,7 @@
     "bio": [
       "Soy Tech Lead especializado en plataformas de pago fintech y sistemas multi-tenant.",
       "He construido y escalado infraestructura de pagos en mercados de Latinoamérica.",
-      "He liderado equipos de 5+ ingenieros con enfoque en arquitectura event-driven, clean architecture y automatización CI/CD usando TypeScript, Python, PostgreSQL y AWS.",
+      "He liderado equipos de 5+ ingenieros con enfoque en arquitectura event-driven, clean architecture y automatización CI/CD usando TypeScript, Python, PostgreSQL, Azure y AWS.",
       "Me importa entregar software confiable, y también las herramientas, los pipelines y la cultura de code review que hacen los equipos más rápidos."
     ],
     "stackLabel": "Stack principal",
@@ -42,15 +42,16 @@
         "title": "Loopay Suite",
         "summary": "Plataforma fintech de pagos multi-tenant y cloud-native para mercados de Latinoamérica.",
         "bullets": [
-          "Lidero un equipo de 5 ingenieros — decisiones de arquitectura, code reviews y soporte a producción (NestJS, React, PostgreSQL, AWS ECS, Terraform).",
-          "Construí SOBERANA, el monorepo de despliegue que orquesta la infraestructura de producción de Loopay Suite: IaC con Terraform para AWS (S3, Lambda, Secrets Manager, ECR), CI/CD con GitHub Actions y Docker local.",
+          "Lidero un equipo de 5 ingenieros — decisiones de arquitectura, code reviews y soporte a producción (NestJS, React, PostgreSQL, Azure, Terraform).",
+          "Lidero SOBERANA, la plataforma de pagos transfronterizos: wallets custodiales, cuentas virtuales y pagos a través de proveedores externos detrás de patrones Strategy y Adapter, de modo que sumar un proveedor no modifica el núcleo.",
+          "Lideré la migración de AWS a Azure junto con el CTO, reconstruyendo la infraestructura en Terraform con CI/CD en GitHub Actions sobre OIDC (sin credenciales de nube almacenadas) y un entorno efímero por pull request.",
           "Construí LoopayOCR, gestión de documentos de cumplimiento con OCR de Google Gemini, validación dinámica de esquemas con Pydantic, almacenamiento en S3 y notificaciones por webhooks."
         ],
-        "metric": { "value": "60%", "label": "despliegues más rápidos · de 15 a 6 minutos" },
+        "metric": { "value": "60%", "label": "despliegues más rápidos en AWS · de 15 a 6 minutos" },
         "links": [
-          { "label": "SOBERANA", "href": "https://soberana.loopay.com/", "ariaLabel": "Abrir SOBERANA (se abre en una pestaña nueva)" }
+          { "label": "SOBERANA", "href": "https://soberana.app/", "ariaLabel": "Abrir SOBERANA (se abre en una pestaña nueva)" }
         ],
-        "tags": ["NestJS", "React", "PostgreSQL", "Terraform", "Docker"]
+        "tags": ["NestJS", "React", "PostgreSQL", "Azure", "Terraform", "Docker"]
       },
       {
         "eyebrow": "Galgo · Software Engineer · Dic 2023–Sep 2025",
@@ -58,23 +59,23 @@
         "title": "Galgo",
         "summary": "E-commerce de motos con financiamiento integrado en Colombia.",
         "bullets": [
-          "Servicios de backend para checkout, crédito y evaluación de riesgo sobre microservicios event-driven (NestJS, AWS).",
-          "Reduje la latencia de evaluación de riesgo de minutos a segundos con arquitectura event-driven y optimización de consultas.",
-          "Construí 2 microservicios nuevos y mantuve 4–5 en los pipelines de checkout, crédito y riesgo — infraestructura cloud y observabilidad con Terraform, Datadog y GitHub Actions."
+          "Trabajé en los equipos de Checkout y Riesgo construyendo servicios backend en NestJS, una capa backend-for-frontend (BFF) e interfaces en Next.js sobre microservicios event-driven (AWS).",
+          "Mantuve sistemas del camino crítico de checkout y evaluación de riesgo, con infraestructura cloud y observabilidad mediante Terraform, Datadog y GitHub Actions."
         ],
         "links": [
           { "label": "galgo.com", "href": "https://www.galgo.com/co", "ariaLabel": "Visitar galgo.com (se abre en una pestaña nueva)" }
         ],
-        "tags": ["NestJS", "AWS", "Datadog", "Event-driven"]
+        "tags": ["NestJS", "Next.js", "AWS", "Datadog", "Event-driven"]
       },
       {
-        "eyebrow": "Trebet · Co-founder & Lead Engineer · Sep 2024–Sep 2025",
+        "eyebrow": "Trebet · Co-founder & Software Engineer · Sep 2024–Nov 2025",
         "note": "Proyecto en paralelo",
         "title": "Trebet",
         "summary": "Superapp móvil para comunidades residenciales — pagos, portero digital, reserva de amenidades y votación en asambleas, con tiempo real sobre WebRTC y WebSockets.",
         "bullets": [
-          "Co-fundé y lidere un equipo de 6 ingenieros, siendo responsable de cada decisión técnica desde la arquitectura hasta producción.",
-          "Llevamos el MVP a producción en 1 mes — app móvil, servicios de backend y CI/CD (React Native, Laravel, DigitalOcean)."
+          "Co-fundé la startup y la construimos con un equipo remoto de 7 personas en Colombia, México y Venezuela.",
+          "Llevé el MVP a producción en aproximadamente un mes — app móvil, servicios de backend e infraestructura (React Native, Laravel, DigitalOcean).",
+          "Migré la infraestructura de AWS a DigitalOcean al agotarse la financiación, con la base de datos desplegada antes del cambio de DNS y sin pérdida de datos."
         ],
         "links": [
           { "label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO", "ariaLabel": "Abrir Trebet en Google Play (se abre en una pestaña nueva)" },

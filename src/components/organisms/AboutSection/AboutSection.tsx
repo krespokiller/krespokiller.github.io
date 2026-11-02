@@ -26,7 +26,7 @@ const STACK_GROUPS: { labelKey: string; items: string[] }[] = [
   },
   {
     labelKey: 'about.stack.cloudDevops',
-    items: ['AWS', 'Terraform', 'DigitalOcean', 'Docker', 'GitHub Actions', 'Datadog'],
+    items: ['Azure', 'AWS', 'Terraform', 'DigitalOcean', 'Docker', 'GitHub Actions', 'Datadog'],
   },
   {
     labelKey: 'about.stack.architecture',

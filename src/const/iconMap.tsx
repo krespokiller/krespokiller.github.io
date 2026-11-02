@@ -130,6 +130,13 @@ const SddIcon = customIcon(
   </>
 );
 
+const AzureIcon = customIcon(
+  <>
+    <path d="M10 4 3 20h5l2-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+    <path d="M12.5 7 21 20H10l4-3.5-2-5Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+  </>
+);
+
 export const ICON_MAP: Record<string, IconType> = {
   'TypeScript': SiTypescript,
   'JavaScript': SiJavascript,
@@ -158,6 +165,7 @@ export const ICON_MAP: Record<string, IconType> = {
   'Mongoose': SiMongodb,
   'AWS': AwsIcon,
   'AWS ECS': EcsIcon,
+  'Azure': AzureIcon,
   'GCP': SiGooglecloud,
   'Terraform': SiTerraform,
   'Docker': SiDocker,
