@@ -1,5 +1,5 @@
 /**
- * World data for the open-world résumé ("Settle Once").
+ * World data for the open-world resume ("Settle Once").
  *
  * Pure data + pure functions (no DOM) so the layout can be validated in Node:
  * spawn, shards and terminals must be walkable and reachable.

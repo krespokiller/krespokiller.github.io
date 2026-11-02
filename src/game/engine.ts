@@ -104,6 +104,7 @@ export class Game {
   private rain: Drop[] = [];
   readonly combat: Combat;
   private holdingFire = false;
+  private hudSig = '';
   private mouseAimAt = -10;
   private flicker = { building: -1, until: 0, next: 2 };
   private miniAcc = 0;
@@ -379,6 +380,14 @@ export class Game {
     if (this.invuln > 0) this.invuln -= dt;
 
     this.combat.update(dt, this.player.x, this.player.y);
+    if (this.combat.active) {
+      const c = this.combat;
+      const sig = `${c.phase}|${c.hp}|${c.clip}|${c.reserve}|${c.wave}|${c.kills}`;
+      if (sig !== this.hudSig) {
+        this.hudSig = sig;
+        this.emitHud();
+      }
+    }
     if (this.combat.phase === 'dead') {
       this.player.moving = false;
       return;
@@ -501,9 +510,9 @@ export class Game {
     this.drawHubDoor();
     this.drawTerminals();
     this.drawShards();
-    this.drawDrones();
     this.combat.drawWorld(ctx, this.vt);
     this.drawPlayer();
+    this.drawDrones();
     ctx.restore();
 
     this.combat.drawOverlay(ctx, vw, vh, this.vt);
@@ -611,15 +620,22 @@ export class Game {
       const pos = dronePosition(d, this.t);
       const x = Math.round(pos.x);
       const y = Math.round(pos.y);
-      // scan cone
-      ctx.fillStyle = this.carrying ? 'rgba(255,56,96,0.16)' : 'rgba(255,56,96,0.07)';
+      // searchlight: lights up whatever is beneath (player, zombies, ground)
+      const hot = this.carrying || this.combat.active;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(x, y + 3, x, y + 26);
+      g.addColorStop(0, hot ? 'rgba(255,90,120,0.55)' : 'rgba(255,200,120,0.4)');
+      g.addColorStop(1, hot ? 'rgba(255,40,80,0)' : 'rgba(255,170,80,0)');
+      ctx.fillStyle = g;
       ctx.beginPath();
       ctx.moveTo(x - 2, y + 3);
       ctx.lineTo(x + 2, y + 3);
-      ctx.lineTo(x + 11, y + 22);
-      ctx.lineTo(x - 11, y + 22);
+      ctx.lineTo(x + 13, y + 26);
+      ctx.lineTo(x - 13, y + 26);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
       // shadow + body
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.fillRect(x - 4, y + 9, 8, 2);

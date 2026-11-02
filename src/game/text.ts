@@ -82,14 +82,14 @@ export interface GameText {
 
 const en: GameText = {
   boot: {
-    kicker: 'SETTLE ONCE // OPEN-WORLD RÉSUMÉ',
+    kicker: 'SETTLE ONCE // OPEN-WORLD RESUME',
     title: 'David Vargas',
     lead: 'A small night city built from my career. Walk around, read the terminals and unlock the hub.',
     goals: ['Visit the 5 districts of my career', 'Collect the 8 stack shards', 'Finish the AWS → Azure migration'],
     controlsDesktop: 'WASD / ARROWS to move · E or SPACE to act · ESC to exit',
     controlsTouch: 'Drag on the left to move · tap ACT to interact',
     start: 'EXPLORE',
-    classic: 'Skip: classic résumé',
+    classic: 'Skip: classic resume',
   },
   hud: {
     objectives: 'OBJECTIVES',
@@ -98,8 +98,8 @@ const en: GameText = {
     migration: 'MIGRATION',
     hubOpen: 'CONTACT HUB OPEN → go to SETTLE ONCE',
     hubLocked: 'Complete all three to unlock the contact hub',
-    exit: 'CLASSIC RÉSUMÉ',
-    exitLabel: 'Exit the game and go back to the classic résumé',
+    exit: 'CLASSIC RESUME',
+    exitLabel: 'Exit the game and go back to the classic resume',
     loading: 'LOADING CITY…',
     actKey: 'E',
     actTouch: 'ACT',
@@ -192,7 +192,7 @@ const en: GameText = {
       `Still missing — districts: ${districts} · stack shards: ${shards} · containers: ${migration}. Come back when all three objectives are done.`,
     ],
   }),
-  hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Back to the classic résumé' },
+  hubActions: { linkedin: 'LinkedIn', github: 'GitHub', contact: 'Back to the classic resume' },
   names: { garage: 'Chía Garage', tribuu: 'Tribuu', loopay: 'Loopay Tower', galgo: 'Galgo', trebet: 'Trebet', hub: 'Settle Once HQ', aws: 'AWS dock', azure: 'Azure dock' },
   combat: {
     explore: 'EXPLORE',
