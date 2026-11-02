@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrefersReducedMotion } from '@/hooks';
+import { onStableResize } from '@/hooks/useStableResize';
 import type { Experience } from '@/models';
 import type { ParticleNetwork } from '@/components/organisms/InteractiveBackground/ParticleNetwork';
 import { startCorePreview } from './corePreview';
@@ -157,6 +158,7 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
   useEffect(() => {
     if (!network) return;
     const apply = () => {
+      if (import.meta.env.DEV) (window as unknown as { __brainLayouts?: number }).__brainLayouts = ((window as unknown as { __brainLayouts?: number }).__brainLayouts ?? 0) + 1;
       const sig = document.querySelector('.hero-signature > div')?.getBoundingClientRect();
       const sigBottom = sig ? sig.bottom + window.scrollY : 190;
       const layout = layoutSlots(window.innerWidth, window.innerHeight, sigBottom);
@@ -175,15 +177,21 @@ export const Brain: React.FC<BrainProps> = ({ network, onPlay, onPlayIntent, sus
           const x = Math.min(w - m, Math.max(m, screen[i * 3]));
           const y = screen[i * 3 + 1];
           const depth = screen[i * 3 + 2];
-          const scale = 0.9 + depth * 0.25;
+          const scale = w < 760 ? 1 : 0.9 + depth * 0.25;
           el.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${scale.toFixed(3)})`;
         }
       });
     };
     apply();
-    window.addEventListener('resize', apply);
+    // Fonts change the signature height → re-measure once they are in, and once more
+    // after the first paint settles (mobile browsers finish their chrome animations).
+    const fontsReady = document.fonts?.ready?.then(() => apply());
+    const settle = window.setTimeout(apply, 700);
+    const stopResize = onStableResize(() => apply());
     return () => {
-      window.removeEventListener('resize', apply);
+      void fontsReady;
+      window.clearTimeout(settle);
+      stopResize();
       network.setSynapses(new Float32Array(0), null);
     };
   }, [network]);

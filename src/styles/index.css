@@ -212,3 +212,9 @@
     transform: scale(1);
   }
 }
+
+/* Language toggle: hover effects only where hover exists (touch left it "stuck"). */
+@media (hover: hover) {
+  .lang-toggle:hover { background: rgba(245, 158, 11, 0.2) !important; }
+}
+.navbar { touch-action: manipulation; }

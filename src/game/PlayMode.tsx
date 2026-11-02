@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { usePrefersReducedMotion } from '@/hooks';
+import { onStableResize } from '@/hooks/useStableResize';
 import { Game } from './engine';
 import type { DialogId, GameEvent, HudState } from './engine';
 import { GAME_TEXT } from './text';
@@ -222,9 +223,8 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
     const isTouch = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 700;
     const game = new Game(canvas, miniRef.current, { onHud: setHud, onEvent: handleEvent }, reducedMotion, isTouch);
     gameRef.current = game;
-    const resize = () => game.resize(window.innerWidth, window.innerHeight);
-    resize();
-    window.addEventListener('resize', resize);
+    game.resize(window.innerWidth, window.innerHeight);
+    const stopResize = onStableResize((w, h) => game.resize(w, h));
     game.start();
 
     if (import.meta.env.DEV) (window as unknown as { __game?: Game }).__game = game;
@@ -240,7 +240,7 @@ export default function PlayMode({ onExitStart, onExitEnd, exitMs }: PlayModePro
 
     const pendingTimers = timers.current;
     return () => {
-      window.removeEventListener('resize', resize);
+      stopResize();
       game.destroy();
       gameRef.current = null;
       pendingTimers.forEach((id) => window.clearTimeout(id));

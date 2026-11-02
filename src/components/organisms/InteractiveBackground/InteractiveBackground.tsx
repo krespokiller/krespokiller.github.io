@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { ParticleNetwork } from './ParticleNetwork';
+import { onStableResize } from '@/hooks/useStableResize';
 import type { ThemeColorInput } from './ParticleNetwork';
 
 /**
@@ -195,13 +196,15 @@ export const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({ on
       if (grabActiveRef.current) event.preventDefault();
     };
 
-    const handleResize = () => {
+    // Only meaningful viewport changes re-layout the volume (mobile address
+    // bar bursts are ignored: they made the whole network jitter on load).
+    const stopResize = onStableResize((w, h) => {
       if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
       resizeRafRef.current = requestAnimationFrame(() => {
-        network.resize(window.innerWidth, window.innerHeight);
+        network.resize(w, h);
         if (reducedMotionRef.current) network.renderStaticFrame();
       });
-    };
+    });
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseleave', handlePointerLeave);
@@ -211,7 +214,6 @@ export const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({ on
     document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('pointerdown', handleGrabStart);
     window.addEventListener('blur', releaseGrab);
-    window.addEventListener('resize', handleResize);
     window.addEventListener('playmode', handlePlayMode);
     reducedMotionQuery.addEventListener('change', handleReducedMotionChange);
 
@@ -224,7 +226,7 @@ export const InteractiveBackground: React.FC<InteractiveBackgroundProps> = ({ on
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('pointerdown', handleGrabStart);
       window.removeEventListener('blur', releaseGrab);
-      window.removeEventListener('resize', handleResize);
+      stopResize();
       window.removeEventListener('playmode', handlePlayMode);
       reducedMotionQuery.removeEventListener('change', handleReducedMotionChange);
       // Detach any listeners added while a drag was in progress and restore

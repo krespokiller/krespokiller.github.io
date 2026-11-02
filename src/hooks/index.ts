@@ -3,3 +3,4 @@ export * from './useActiveSection';
 export * from './useLanguage';
 export * from './useInView';
 export * from './usePrefersReducedMotion';
+export * from './useStableResize';
