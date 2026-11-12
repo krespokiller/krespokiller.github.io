@@ -1,26 +1,33 @@
 {
   "hero": {
     "name": "David Santiago Vargas",
-    "title": "Tech Lead",
-    "subtitle": "Distributed systems · Cloud Architecture · AI-Driven Development",
-    "viewWork": "View My Work",
-    "play": "Playable resume"
+    "headline": "I build systems that stay correct when things fail.",
+    "facts": "Bogotá, Colombia · Remote · Spanish (native) · English (B2)",
+    "stackLabel": "Main tools",
+    "skills": [
+      { "title": "Money that moves exactly once", "detail": "Idempotency keys, balance holds, and settlement from the provider's final state." },
+      { "title": "Webhooks you can trust", "detail": "Signatures verified on the raw body, deduplicated in the same transaction that credits the balance." },
+      { "title": "Providers that plug in", "detail": "Custody, virtual accounts, payouts, and KYC behind Strategy and Adapter patterns." },
+      { "title": "Infrastructure as code", "detail": "Terraform on Azure and AWS, CI/CD over OIDC, an ephemeral environment per pull request." }
+    ],
+    "viewWork": "See my experience",
+    "play": "Play my resume",
+    "playNote": "Open-world pixel city · 3 min · no install"
   },
   "nav": {
     "ariaLabel": "Main navigation",
     "home": "Back to top",
-    "work": "Work",
     "about": "About",
     "experience": "Experience",
-    "contact": "Contact"
+    "contact": "Contact",
+    "play": "Play"
   },
   "about": {
     "title": "About Me",
     "bio": [
-      "I'm a Tech Lead specialized in fintech payment platforms and multi-tenant systems.",
-      "I've built and scaled payment infrastructure across Latin American markets.",
-      "I've led teams of 5+ engineers with a focus on event-driven architecture, clean architecture, and CI/CD automation using TypeScript, Python, PostgreSQL, Azure, and AWS.",
-      "I care about shipping reliable software — and about the tooling, pipelines, and code review culture that make teams faster."
+      "I'm a software engineer based in Bogotá, Colombia. Since 2023 I've worked on fintech products: payments, checkout, and risk.",
+      "Most recently I led a team of five engineers on a cross-border payments platform and its migration from AWS to Azure. I work mostly in TypeScript and Python, with PostgreSQL and Terraform.",
+      "I care about shipping reliable software, and about the tooling, pipelines, and code review that make teams faster."
     ],
     "stackLabel": "Core Stack",
     "stack": {
@@ -38,15 +45,14 @@
     "title": "Selected Work",
     "cards": [
       {
-        "eyebrow": "Loopay · Tech Lead · Oct 2025–Present",
+        "eyebrow": "Loopay · Tech Lead · Oct 2025–Nov 2026",
         "note": null,
         "title": "Loopay Suite",
         "summary": "Multi-tenant, cloud-native fintech payments platform for Latin American markets.",
         "bullets": [
-          "Lead a team of 5 engineers — architecture decisions, code reviews, and production support (NestJS, React, PostgreSQL, Azure, Terraform).",
-          "Lead SOBERANA, the cross-border payments platform: custodial wallets, virtual accounts, and payouts through external providers behind Strategy and Adapter patterns, so adding a provider does not change the core.",
-          "Led the AWS-to-Azure migration with the CTO, rebuilding the infrastructure in Terraform with GitHub Actions CI/CD over OIDC (no stored cloud credentials) and an ephemeral environment per pull request.",
-          "Built LoopayOCR, compliance document management with Google Gemini OCR, dynamic Pydantic schema validation, S3 storage, and webhook notifications."
+          "Led a team of 5 engineers on SOBERANA, a cross-border payments platform: custodial wallets, virtual accounts, and payouts through external providers behind Strategy and Adapter patterns.",
+          "Made money-moving flows safe to retry with idempotency keys, balance holds, and exactly-once settlement, and closed 12 findings from a security audit.",
+          "Led the AWS-to-Azure migration with the CTO: Terraform, GitHub Actions CI/CD over OIDC, and an ephemeral environment per pull request."
         ],
         "metric": { "value": "60%", "label": "faster deploys on AWS · 15 → 6 minutes" },
         "links": [
@@ -103,53 +109,6 @@
       "description": "Professional experience and career timeline.",
       "ariaLabel": "Visit David's LinkedIn profile (opens in a new tab)"
     }
-  },
-  "brain": {
-    "hint": "Drag a node into the core — or tap it",
-    "hintShort": "Tap a node",
-    "dropHere": "Connect",
-    "close": "Close",
-    "prev": "Previous",
-    "next": "Next",
-    "timeline": "Career timeline",
-    "readMore": "Read the full page ↓",
-    "core": {
-      "label": "Play my resume",
-      "sub": "Open-world pixel city · 3 min · no install",
-      "aria": "Open the playable resume"
-    },
-    "nodes": {
-      "garage": {
-        "label": "Chía garage",
-        "sub": "2019 – 2021 · self-taught"
-      },
-      "tribuu": {
-        "label": "Tribuu",
-        "sub": "2021 – 2023 · JavaScript Developer"
-      },
-      "loopayjs": {
-        "label": "Loopay",
-        "sub": "2023 · JavaScript Developer"
-      },
-      "galgo": {
-        "label": "Galgo",
-        "sub": "2023 – 2025 · Software Engineer"
-      },
-      "trebet": {
-        "label": "Trebet",
-        "sub": "2024 – 2025 · Co-founder"
-      },
-      "loopay": {
-        "label": "Loopay · SOBERANA",
-        "sub": "2025 – now · Tech Lead"
-      },
-      "contact": {
-        "label": "Contact",
-        "sub": "LinkedIn · GitHub"
-      }
-    },
-    "contactTitle": "Let's talk",
-    "contactBody": "A role, a project or an idea: the fastest way to reach me is LinkedIn or GitHub."
   },
   "footer": {
     "copyright": "© 2026 David Santiago Vargas"

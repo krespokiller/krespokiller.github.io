@@ -1,13 +1,13 @@
 /**
- * Tiny animated preview of the pixel city for the core node (no game code
+ * Tiny animated preview of the pixel city for the game card (no game code
  * loaded): neon skyline, rain, a walking figure and a flickering sign.
  * ~2 KB, canvas 2D, pauses when hidden or under reduced motion.
  */
-export interface CorePreview {
+export interface GamePreview {
   stop(): void;
 }
 
-export function startCorePreview(canvas: HTMLCanvasElement, reducedMotion: boolean): CorePreview {
+export function startGamePreview(canvas: HTMLCanvasElement, reducedMotion: boolean): GamePreview {
   const ctx = canvas.getContext('2d');
   if (!ctx) return { stop() {} };
   const W = canvas.width;

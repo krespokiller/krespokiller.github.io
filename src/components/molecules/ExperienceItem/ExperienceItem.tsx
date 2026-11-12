@@ -1,116 +1,76 @@
-import React from 'react';
-import { Heading } from '@/components/atoms';
+import React, { useId, useState } from 'react';
 import { Experience } from '@/models';
-import { useInView } from '@/hooks';
 import { ICON_MAP } from '@/const/iconMap';
 
-interface ExperienceItemProps extends Experience {
-  index: number;
-}
-
-export const ExperienceItem: React.FC<ExperienceItemProps> = ({
-  company,
-  role,
-  dates,
-  note,
-  description,
-  location,
-  tags,
-  index,
-}) => {
-  const { ref, isInView } = useInView({ threshold: 0.15 });
-  const delay = index * 100;
+/**
+ * One role as a collapsed row: period, role · company and a one-line summary.
+ * The full highlights and stack open on demand, so the section scans as a
+ * short list instead of a wall of bullets. Styles: `.exp-*` in index.css.
+ */
+export const ExperienceItem: React.FC<Experience> = ({ company, role, dates, note, summary, description, location, tags, links }) => {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  // Logos of the tools used in the role, as a quick visual cue while collapsed.
+  const icons = (tags ?? []).filter((tag) => ICON_MAP[tag]).slice(0, 7);
 
   return (
-    <div
-      ref={ref}
-      className={`relative flex gap-4 md:gap-6 transition-all duration-700 ease-out ${
-        isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {/* Timeline dot + line */}
-      <div className="flex flex-col items-center flex-shrink-0 pt-8">
-        <div
-          className={`w-3 h-3 rounded-full border-2 border-primary transition-all duration-500 ${
-            isInView ? 'scale-100' : 'scale-0'
-          }`}
-          style={{
-            transitionDelay: `${delay + 200}ms`,
-            background: isInView ? 'var(--text-tag)' : 'var(--bg)',
-            boxShadow: isInView ? '0 0 0 4px var(--bg-tag)' : 'none',
-          }}
-        />
-        <div
-          className="w-px flex-1 min-h-[80px]"
-          style={{
-            background: `linear-gradient(to bottom, var(--gradient-line), transparent)`,
-          }}
-        />
-      </div>
-
-      {/* Card */}
-      <article className="card relative flex-1 min-w-0 mb-8 overflow-hidden hover:-translate-y-1">
-        {/* Timeline accent edge */}
-        <span
-          aria-hidden="true"
-          className="absolute inset-y-0 left-0 w-0.5"
-          style={{ background: 'linear-gradient(to bottom, var(--color-primary), transparent)' }}
-        />
-
-        <div className="p-5 md:p-6">
-          {/* Period badge */}
-          <span
-            className="inline-block text-xs font-medium tracking-wider uppercase mb-3 rounded-full px-3 py-1"
-            style={{ background: 'var(--bg-tag)', color: 'var(--text-tag)' }}
-          >
-            {dates}
+    <li className={`exp-row${open ? ' open' : ''}`}>
+      <button type="button" className="exp-head" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((value) => !value)}>
+        <span className="exp-dates">{dates}</span>
+        <span className="exp-main">
+          <span className="exp-title">
+            {role} <span className="exp-company">· {company}</span>
           </span>
-          {note && (
-            <p className="text-xs font-light mb-3 ml-2 inline-block" style={{ color: 'var(--text-muted)' }}>
-              {note}
-            </p>
-          )}
-
-          {/* Header */}
-          <div className="mb-4">
-            <Heading level={3} className="text-xl md:text-2xl font-medium tracking-tight" style={{ color: 'var(--text)' }}>
-              {role}
-            </Heading>
-            <p className="text-base font-light" style={{ color: 'var(--text-secondary)' }}>
-              {company}
-              {location && (
-                <span className="ml-2" style={{ color: 'var(--text-muted)' }}>· {location}</span>
-              )}
-            </p>
-          </div>
-
-          {/* Highlights */}
-          <ul className="space-y-2.5 mb-5">
-            {description.map((item, i) => (
-              <li key={i} className="flex gap-3 text-sm leading-relaxed font-light" style={{ color: 'var(--text-secondary)' }}>
-                <span aria-hidden="true" className="mt-1.5 flex-shrink-0 font-medium" style={{ color: 'var(--text-tag)' }}>›</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* Tech chips with icons */}
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag) => {
+          {summary && <span className="exp-summary">{summary}</span>}
+          {icons.length > 0 && (
+            <span className="exp-icons" aria-hidden="true">
+              {icons.map((tag) => {
                 const Icon = ICON_MAP[tag];
                 return (
-                  <span key={tag} className="tag text-[11px] px-2.5 py-0.5">
-                    {Icon && <Icon size={12} />}
-                    {tag}
+                  <span key={tag} title={tag}>
+                    <Icon size={15} />
                   </span>
                 );
               })}
-            </div>
+            </span>
           )}
-        </div>
-      </article>
-    </div>
+        </span>
+        <span className="exp-toggle" aria-hidden="true" />
+      </button>
+
+      <div id={panelId} className="exp-panel" hidden={!open}>
+        <p className="exp-meta">
+          {location}
+          {note ? ` · ${note}` : ''}
+        </p>
+        <ul className="exp-bullets">
+          {description.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        {links && links.length > 0 && (
+          <p className="exp-links">
+            {links.map((link) => (
+              <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">
+                {link.label} ↗
+              </a>
+            ))}
+          </p>
+        )}
+        {tags && tags.length > 0 && (
+          <div className="exp-tags">
+            {tags.map((tag) => {
+              const Icon = ICON_MAP[tag];
+              return (
+                <span key={tag} className="tag text-[11px] px-2.5 py-0.5">
+                  {Icon && <Icon size={12} />}
+                  {tag}
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </li>
   );
 };

@@ -3,11 +3,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heading } from '@/components/atoms';
 import { useInView } from '@/hooks';
-import { ICON_MAP } from '@/const/iconMap';
 
-// Full stack from the CV, grouped by category. Group labels are i18n'd via
-// about.stack.* keys; every icon'd item must exist in ICON_MAP. Concept tags
-// (Multi-tenant, CI/CD, IaC, OCR, ...) are intentionally text-only.
+// Stack from the CV, grouped by category and rendered as plain text rows (no
+// chips or icons) so it reads as a short reference table. Group labels are
+// i18n'd via about.stack.* keys.
 
 export const AboutSection: React.FC = () => {
   const { t } = useTranslation();
@@ -50,7 +49,7 @@ export const AboutSection: React.FC = () => {
             <div className="mt-10">
               <p
                 className="text-xs font-medium tracking-widest uppercase mb-4"
-                style={{ color: 'var(--text-muted)' }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 {t('about.stackLabel')}
               </p>
@@ -58,22 +57,14 @@ export const AboutSection: React.FC = () => {
                 {STACK_GROUPS.map((group) => (
                   <div key={group.labelKey} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
                     <span
-                      className="text-[11px] font-medium tracking-wider uppercase sm:w-32 sm:flex-shrink-0"
-                      style={{ color: 'var(--text-muted)' }}
+                      className="text-[11px] font-medium tracking-wider uppercase sm:w-36 sm:flex-shrink-0"
+                      style={{ color: 'var(--text-tag)' }}
                     >
                       {t(group.labelKey)}
                     </span>
-                    <ul className="flex flex-wrap gap-1.5">
-                      {group.items.map((tech) => {
-                        const Icon = ICON_MAP[tech];
-                        return (
-                          <li key={tech} className="tag text-xs px-3 py-1">
-                            {Icon && <Icon size={13} />}
-                            {tech}
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <span className="text-sm md:text-base font-light leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {group.items.join(' · ')}
+                    </span>
                   </div>
                 ))}
               </div>

@@ -3,10 +3,14 @@
     {
       "company": "Loopay",
       "role": "Tech Lead",
-      "dates": "Oct 2025 – Present",
+      "dates": "Oct 2025 – Nov 2026",
       "location": "Remote",
+      "summary": "Led a team of 5 engineers building SOBERANA, a multi-tenant cross-border payments platform, and moved its infrastructure from AWS to Azure.",
+      "links": [
+        {"label": "SOBERANA", "href": "https://soberana.app/"}
+      ],
       "description": [
-        "Lead a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies: custodial wallets, virtual accounts by country and payment rail, deposits and withdrawals. I set the team's engineering standards: mandatory pull-request review, an INVEST-based backlog, and Playwright end-to-end tests.",
+        "Led a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies: custodial wallets, virtual accounts by country and payment rail, deposits and withdrawals. I set the team's engineering standards: mandatory pull-request review, an INVEST-based backlog, and Playwright end-to-end tests.",
         "Closed 12 findings from a security audit carried out with a partner firm using OpenAI's Daybreak: idempotency of money-moving operations, SSRF protection, API key lifecycle, and encryption of stored secrets.",
         "Led the AWS-to-Azure migration with the CTO, rebuilding the infrastructure in Terraform: Container Apps, Static Web Apps, PostgreSQL Flexible Server, Key Vault, and managed identities.",
         "Built CI/CD on GitHub Actions with OIDC (no stored cloud credentials), ephemeral environments per pull request, and releases by version tag, backed by 6,000+ automated tests. Cut deployment time by 60% (from 15 to 6 minutes) on the AWS pipeline through Terraform automation.",
@@ -20,6 +24,10 @@
       "role": "Software Engineer",
       "dates": "Dec 2023 – Sep 2025",
       "location": "Remote",
+      "summary": "Motorcycle e-commerce with embedded financing. Built NestJS services, a backend-for-frontend layer, and Next.js interfaces for the Checkout and Risk teams.",
+      "links": [
+        {"label": "galgo.com", "href": "https://www.galgo.com/co"}
+      ],
       "description": [
         "Worked on the Checkout and Risk teams building NestJS backend services, a backend-for-frontend (BFF) layer, and Next.js interfaces on event-driven microservices in AWS.",
         "Maintained systems on the critical path of checkout and risk evaluation, with incidents handled through PagerDuty.",
@@ -32,6 +40,11 @@
       "role": "Co-founder & Software Engineer",
       "dates": "Sep 2024 – Nov 2025",
       "location": "Bogotá, Colombia",
+      "summary": "Co-founded a startup for residential communities and took its mobile app from MVP to production in about a month.",
+      "links": [
+        {"label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO"},
+        {"label": "App Store", "href": "https://apps.apple.com/us/app/trebet/id6748287035"}
+      ],
       "note": "Parallel project, concurrent with Galgo",
       "description": [
         "Co-founded a startup and took a digital-intercom mobile app from MVP to production in about a month, working in a remote team of 7 across Colombia, Mexico, and Venezuela.",
@@ -45,6 +58,7 @@
       "role": "JavaScript Developer",
       "dates": "Feb 2023 – Dec 2023",
       "location": "Remote",
+      "summary": "Full-stack development of the main platform with RedwoodJS, GraphQL, and Prisma.",
       "description": [
         "Full-stack development of the main platform on RedwoodJS: interactive React UI and server-side Node.js logic.",
         "Optimized data access via GraphQL and Prisma ORM.",
@@ -57,6 +71,7 @@
       "role": "JavaScript Developer",
       "dates": "Nov 2021 – Jan 2023",
       "location": "Remote",
+      "summary": "Built an Angular single-page app on Node.js microservices, with Algolia search and Zoom video conferencing.",
       "description": [
         "Microservices architecture: Angular SPA frontend with highly modular backend services using Express / Node.js and MongoDB.",
         "Complex API integrations: Algolia indexed search engine and embedded Zoom SDK video conferencing.",
@@ -69,6 +84,7 @@
       "role": "Web Developer",
       "dates": "2019 – 2021",
       "location": "Bogotá, Colombia",
+      "summary": "Self-taught. Built and launched e-commerce stores with WooCommerce and PrestaShop.",
       "description": [
         "Self-taught. Built and launched e-commerce stores with WooCommerce and PrestaShop, and a static site in HTML, CSS, and JavaScript."
       ],

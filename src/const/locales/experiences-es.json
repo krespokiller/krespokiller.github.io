@@ -3,10 +3,14 @@
     {
       "company": "Loopay",
       "role": "Tech Lead",
-      "dates": "Oct 2025 – Presente",
+      "dates": "Oct 2025 – Nov 2026",
       "location": "Remoto",
+      "summary": "Lideré un equipo de 5 ingenieros que construyó SOBERANA, una plataforma multi-tenant de pagos transfronterizos, y migré su infraestructura de AWS a Azure.",
+      "links": [
+        {"label": "SOBERANA", "href": "https://soberana.app/"}
+      ],
       "description": [
-        "Lidero un equipo de 5 ingenieros en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos para empresas fintech: wallets custodiales, cuentas virtuales por país y riel de pago, depósitos y retiros. Defino los estándares de ingeniería del equipo: revisión obligatoria de pull requests, un backlog basado en INVEST y pruebas end-to-end con Playwright.",
+        "Lideré un equipo de 5 ingenieros en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos para empresas fintech: wallets custodiales, cuentas virtuales por país y riel de pago, depósitos y retiros. Definí los estándares de ingeniería del equipo: revisión obligatoria de pull requests, un backlog basado en INVEST y pruebas end-to-end con Playwright.",
         "Cerré 12 hallazgos de una auditoría de seguridad realizada con una empresa partner usando Daybreak de OpenAI: idempotencia de operaciones que mueven dinero, protección contra SSRF, ciclo de vida de claves API y cifrado de secretos almacenados.",
         "Lideré la migración de AWS a Azure junto con el CTO, reconstruyendo la infraestructura en Terraform: Container Apps, Static Web Apps, PostgreSQL Flexible Server, Key Vault e identidades administradas.",
         "Construí CI/CD en GitHub Actions con OIDC (sin credenciales de nube almacenadas), entornos efímeros por pull request y lanzamientos por etiqueta de versión, respaldados por más de 6.000 pruebas automatizadas. Reduje el tiempo de despliegue un 60% (de 15 a 6 minutos) en el pipeline de AWS mediante automatización con Terraform.",
@@ -20,6 +24,10 @@
       "role": "Ingeniero de Software",
       "dates": "Dic 2023 – Sep 2025",
       "location": "Remoto",
+      "summary": "E-commerce de motos con financiamiento integrado. Construí servicios NestJS, una capa backend-for-frontend e interfaces Next.js para los equipos de Checkout y Riesgo.",
+      "links": [
+        {"label": "galgo.com", "href": "https://www.galgo.com/co"}
+      ],
       "description": [
         "Trabajé en los equipos de Checkout y Riesgo construyendo servicios backend en NestJS, una capa backend-for-frontend (BFF) e interfaces en Next.js sobre microservicios event-driven en AWS.",
         "Mantuve sistemas del camino crítico de checkout y evaluación de riesgo, con incidentes atendidos mediante PagerDuty.",
@@ -32,6 +40,11 @@
       "role": "Co-fundador & Ingeniero de Software",
       "dates": "Sep 2024 – Nov 2025",
       "location": "Bogotá, Colombia",
+      "summary": "Cofundé una startup para comunidades residenciales y llevé su app móvil del MVP a producción en cerca de un mes.",
+      "links": [
+        {"label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.trebet&hl=es_CO"},
+        {"label": "App Store", "href": "https://apps.apple.com/us/app/trebet/id6748287035"}
+      ],
       "note": "Proyecto paralelo, concurrente con Galgo",
       "description": [
         "Co-fundé una startup y llevé una app móvil de citófono digital de MVP a producción en aproximadamente un mes, en un equipo remoto de 7 personas en Colombia, México y Venezuela.",
@@ -45,6 +58,7 @@
       "role": "Desarrollador JavaScript",
       "dates": "Feb 2023 – Dic 2023",
       "location": "Remoto",
+      "summary": "Desarrollo full-stack de la plataforma principal con RedwoodJS, GraphQL y Prisma.",
       "description": [
         "Desarrollo full-stack de la plataforma principal sobre RedwoodJS: UI interactiva con React y lógica server-side en Node.js.",
         "Consultas optimizadas mediante GraphQL y Prisma ORM.",
@@ -57,6 +71,7 @@
       "role": "Desarrollador JavaScript",
       "dates": "Nov 2021 – Ene 2023",
       "location": "Remoto",
+      "summary": "Construí una SPA en Angular sobre microservicios Node.js, con búsqueda en Algolia y videoconferencias con Zoom.",
       "description": [
         "Arquitectura de microservicios: SPA con Angular en frontend y servicios backend altamente modulares con Express / Node.js y MongoDB.",
         "Integraciones de APIs complejas: motor de búsqueda indexada con Algolia y videoconferencia embebida con el SDK de Zoom.",
@@ -69,6 +84,7 @@
       "role": "Desarrollador Web",
       "dates": "2019 – 2021",
       "location": "Bogotá, Colombia",
+      "summary": "Autodidacta. Construí y lancé tiendas de e-commerce con WooCommerce y PrestaShop.",
       "description": [
         "Autodidacta. Construí y lancé tiendas en línea con WooCommerce y PrestaShop, y un sitio estático en HTML, CSS y JavaScript."
       ],

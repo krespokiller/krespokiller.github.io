@@ -26,7 +26,7 @@ export const STACK_GROUPS: { labelKey: string; items: string[] }[] = [
   },
   {
     labelKey: 'about.stack.testing',
-    items: ['Jest', 'pytest', 'Pydantic', 'Automated Testing', 'Code Reviews'],
+    items: ['Jest', 'pytest', 'Playwright'],
   },
   {
     labelKey: 'about.stack.aiOcr',

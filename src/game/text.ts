@@ -197,9 +197,9 @@ const en: GameText = {
     },
     loopay: {
       title: 'LOOPAY TOWER',
-      tag: 'Oct 2025 – Present · Tech Lead',
+      tag: 'Oct 2025 – Nov 2026 · Tech Lead',
       pages: [
-        'I lead a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies.',
+        'I led a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies.',
         'We closed 12 findings from a security audit: idempotency of money-moving operations, SSRF protection, API key lifecycle and encrypted secrets.',
         'CI/CD on GitHub Actions with OIDC, an ephemeral environment per pull request and 6,000+ automated tests. Deployments got 60% faster (15 → 6 minutes) on AWS.',
       ],
@@ -452,9 +452,9 @@ const es: GameText = {
     },
     loopay: {
       title: 'TORRE LOOPAY',
-      tag: 'Oct 2025 – Presente · Tech Lead',
+      tag: 'Oct 2025 – Nov 2026 · Tech Lead',
       pages: [
-        'Lidero un equipo de 5 ingenieros en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos para empresas fintech.',
+        'Lideré un equipo de 5 ingenieros en SOBERANA, una plataforma multi-tenant de tesorería y pagos transfronterizos para empresas fintech.',
         'Cerramos 12 hallazgos de una auditoría de seguridad: idempotencia de operaciones que mueven dinero, protección contra SSRF, ciclo de vida de claves API y secretos cifrados.',
         'CI/CD en GitHub Actions con OIDC, un entorno efímero por pull request y más de 6.000 pruebas automatizadas. Los despliegues fueron 60% más rápidos (de 15 a 6 minutos) en AWS.',
       ],

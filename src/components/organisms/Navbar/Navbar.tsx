@@ -10,14 +10,21 @@ interface NavItem {
 // Module-level constants keep referential identity stable so the
 // IntersectionObserver in useActiveSection is created once per mount.
 const NAV_ITEMS: NavItem[] = [
-  { id: 'work', labelKey: 'nav.work' },
-  { id: 'about', labelKey: 'nav.about' },
   { id: 'experience', labelKey: 'nav.experience' },
+  { id: 'about', labelKey: 'nav.about' },
   { id: 'contact', labelKey: 'nav.contact' },
 ];
 const NAV_SECTION_IDS = NAV_ITEMS.map((item) => item.id);
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  /** Opens the playable resume; the Play button renders only when provided. */
+  onPlay?: () => void;
+  /** Prefetches the game chunk on intent (hover or focus). */
+  onPlayIntent?: () => void;
+  playDisabled?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onPlay, onPlayIntent, playDisabled = false }) => {
   const { t } = useTranslation();
   const { toggleLanguage, isEnglish } = useLanguage();
   const activeSection = useActiveSection(NAV_SECTION_IDS);
@@ -36,7 +43,7 @@ export const Navbar: React.FC = () => {
 
   const scrollToSection = (id: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    // Same smooth-scroll behavior as the hero "View My Work" button.
+    // Same smooth-scroll behavior as the hero "See my experience" button.
     document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };
 
@@ -83,6 +90,18 @@ export const Navbar: React.FC = () => {
           </ul>
 
           <div className="flex items-center gap-2">
+            {onPlay && (
+              <button
+                type="button"
+                onClick={onPlay}
+                onPointerEnter={onPlayIntent}
+                onFocus={onPlayIntent}
+                disabled={playDisabled}
+                className="nav-play hidden md:inline-flex items-center gap-1 h-9 px-3.5 rounded-full text-xs font-medium tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span aria-hidden="true">▶</span> {t('nav.play')}
+              </button>
+            )}
             <button
               type="button"
               onClick={toggleLanguage}
