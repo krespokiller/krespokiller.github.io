@@ -37,9 +37,6 @@ const meta: Meta<typeof ExperienceItem> = {
     tags: {
       control: { type: 'object' },
     },
-    index: {
-      control: { type: 'number' },
-    },
   },
 };
 
@@ -52,7 +49,6 @@ export const Default: Story = {
     role: 'Software Engineer',
     dates: 'Dec 2023 – Sep 2025',
     location: 'Remote',
-    index: 0,
     description: [
       'Worked on the Checkout and Risk teams building NestJS backend services, a backend-for-frontend (BFF) layer, and Next.js interfaces on event-driven microservices in AWS.',
       'Maintained systems on the critical path of checkout and risk evaluation, with incidents handled through PagerDuty.',
@@ -62,15 +58,14 @@ export const Default: Story = {
   },
 };
 
-export const CurrentPosition: Story = {
+export const LongEntry: Story = {
   args: {
     company: 'Loopay',
     role: 'Tech Lead',
-    dates: 'Oct 2025 – Present',
+    dates: 'Oct 2025 – Nov 2026',
     location: 'Remote',
-    index: 1,
     description: [
-      'Lead a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies, owning architecture decisions, code reviews, and production support.',
+      'Led a team of 5 engineers on SOBERANA, a multi-tenant cross-border treasury and payments platform for fintech companies, owning architecture decisions, code reviews, and production support.',
       'Led the AWS-to-Azure migration with the CTO, rebuilding the infrastructure in Terraform: Container Apps, Static Web Apps, PostgreSQL Flexible Server, Key Vault, and managed identities.',
       'Built CI/CD on GitHub Actions with OIDC (no stored cloud credentials), ephemeral environments per pull request, and releases by version tag.',
     ],
@@ -85,7 +80,6 @@ export const CompactEntry: Story = {
     dates: 'Sep 2024 – Nov 2025',
     note: 'Parallel project, concurrent with Galgo',
     location: 'Bogotá, Colombia',
-    index: 2,
     description: [
       'Co-founded a startup and took a digital-intercom mobile app from MVP to production in about a month, working in a remote team of 7 across Colombia, Mexico, and Venezuela.',
       'Built the mobile app and backend with React Native, Laravel, WebRTC with a TURN server, and WebSockets, and kept releasing until a pilot with a test community.',

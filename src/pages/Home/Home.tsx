@@ -1,8 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar, SelectedWork } from "@/components";
-import { Brain } from '@/components/organisms/Brain/Brain';
-import type { ParticleNetwork } from '@/components/organisms/InteractiveBackground/ParticleNetwork';
+import { AboutSection, ContactSection, ExperienceSection, Footer, InteractiveBackground, Navbar } from "@/components";
+import { GameCard } from '@/components/molecules';
+import { ICON_MAP } from '@/const/iconMap';
 import { usePrefersReducedMotion } from "@/hooks";
 
 // The game is a separate chunk: it is only fetched on intent (hover / focus /
@@ -20,6 +20,9 @@ type ExitTarget = import('@/game/PlayMode').ExitTarget;
  *   game --(exit start)--> exiting --(EXIT_MS, PlayMode unmounts)--> page
  */
 type Shell = 'page' | 'entering' | 'game' | 'exiting';
+
+/** Tools shown as a logo strip in the hero; each must exist in ICON_MAP. */
+const HERO_STACK = ['TypeScript', 'NestJS', 'React', 'PostgreSQL', 'Azure', 'AWS', 'Terraform', 'Python'];
 const ENTER_MS = 750;
 const EXIT_MS = 700;
 const REDUCED_MS = 220;
@@ -28,9 +31,9 @@ export function Home() {
   const { t } = useTranslation();
   // Reduced motion turns smooth scrolling into instant jumps.
   const prefersReducedMotion = usePrefersReducedMotion();
+  const skills = t('hero.skills', { returnObjects: true }) as { title: string; detail: string }[];
   const [shell, setShell] = useState<Shell>('page');
   const [loadingGame, setLoadingGame] = useState(false);
-  const [network, setNetwork] = useState<ParticleNetwork | null>(null);
   const shellRef = useRef<Shell>('page');
   const timer = useRef<number | null>(null);
   const enterMs = prefersReducedMotion ? REDUCED_MS : ENTER_MS;
@@ -92,44 +95,71 @@ export function Home() {
 
   return (
     <div className={`min-h-screen relative page-shell${shell === 'entering' || shell === 'game' ? ' page-dim' : ''}`}>
-      <Navbar />
-      <InteractiveBackground onNetwork={setNetwork} />
-      <Brain network={network} onPlay={openGame} onPlayIntent={loadPlayMode} suspended={shell !== 'page'} />
+      <Navbar onPlay={openGame} onPlayIntent={loadPlayMode} playDisabled={shell !== 'page' || loadingGame} />
+      <InteractiveBackground />
       {/* Content is pointer-transparent (.layer-content): the background
           canvas owns clicks for grab & pull; links/buttons re-enable
           themselves via CSS. Navbar stays fully interactive (z-40 chrome). */}
       <main className="layer-content container relative z-20">
-        {/* Hero: compact signature (top-left); the constellation + core live in <Brain/> above */}
-        <section className="hero-signature min-h-screen px-6 md:px-8 pt-24 md:pt-28" aria-label={t('hero.name')}>
-          <div className="max-w-xs space-y-1">
-            <h1 className="text-2xl md:text-3xl font-light tracking-tight" style={{ color: 'var(--text)' }}>
-              {t('hero.name')}
-            </h1>
-            <p className="text-base md:text-lg font-light tracking-wide text-gradient">{t('hero.title')}</p>
-            <p className="hidden sm:block text-[11px] md:text-xs font-light tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
-              {t('hero.subtitle')}
-            </p>
-            <a
-              href="#work"
-              className="hero-more inline-flex items-center gap-1 pt-3 text-xs md:text-sm"
-              style={{ color: 'var(--text-secondary)' }}
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('work')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-              }}
-            >
-              {t('hero.viewWork')} ↓
-            </a>
+        {/* Hero: the pitch (what I can do, not a job title) next to the game card.
+            On wide screens they sit side by side; on narrow ones the pitch comes
+            first with an inline Play button and the card follows. The game stays
+            optional: its chunk loads on intent. */}
+        <section className="hero-signature px-6 md:px-8" aria-label={t('hero.name')}>
+          <div className="hero-copy">
+            <h1 className="hero-name">{t('hero.name')}</h1>
+            <p className="hero-headline">{t('hero.headline')}</p>
+            <p className="hero-facts">{t('hero.facts')}</p>
+            <ul className="hero-skills">
+              {skills.map((skill) => (
+                <li key={skill.title}>
+                  <b>{skill.title}</b>
+                  <span>{skill.detail}</span>
+                </li>
+              ))}
+            </ul>
+            <ul className="hero-stack" aria-label={t('hero.stackLabel')}>
+              {HERO_STACK.map((tech) => {
+                const Icon = ICON_MAP[tech];
+                return (
+                  <li key={tech}>
+                    {Icon && <Icon size={16} />}
+                    {tech}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="hero-actions">
+              <a
+                href="#experience"
+                className="hero-btn primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('experience')?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+                }}
+              >
+                {t('hero.viewWork')} ↓
+              </a>
+              <button
+                type="button"
+                className="hero-btn hero-play-inline"
+                onClick={openGame}
+                onPointerEnter={loadPlayMode}
+                onFocus={loadPlayMode}
+                onTouchStart={loadPlayMode}
+                disabled={shell !== 'page' || loadingGame}
+              >
+                ▶ {t('hero.play')}
+              </button>
+            </div>
+            <p className="hero-note hero-play-inline">{t('hero.playNote')}</p>
           </div>
+          <GameCard label={t('hero.play')} note={t('hero.playNote')} onPlay={openGame} onIntent={loadPlayMode} disabled={shell !== 'page' || loadingGame} />
         </section>
 
-        {/* Selected Work Section */}
-        <SelectedWork />
-
-        {/* About Section */}
-        <AboutSection />
-
         <ExperienceSection />
+
+        <AboutSection />
 
         {/* Contact Section */}
         <ContactSection />

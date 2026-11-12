@@ -12,25 +12,15 @@ export const ExperienceSection: React.FC = () => {
     <section id="experience" className="scroll-mt-16 py-24 px-6 md:px-4">
       <div className="container">
         <div className="max-w-3xl mx-auto">
-          <Heading level={2} className="text-3xl md:text-4xl text-center mb-16" style={{ color: 'var(--text)' }}>
+          <Heading level={2} className="text-3xl md:text-4xl text-center mb-12" style={{ color: 'var(--text)' }}>
             {t('experience.title')}
           </Heading>
 
-          <div className="relative">
-            {experiences.map((exp, index) => (
-              <ExperienceItem
-                key={`${exp.company}-${exp.dates}`}
-                company={exp.company}
-                role={exp.role}
-                dates={exp.dates}
-                note={exp.note}
-                location={exp.location}
-                description={exp.description}
-                tags={exp.tags}
-                index={index}
-              />
+          <ul className="exp-list">
+            {experiences.map((exp) => (
+              <ExperienceItem key={`${exp.company}-${exp.dates}`} {...exp} />
             ))}
-          </div>
+          </ul>
         </div>
       </div>
     </section>

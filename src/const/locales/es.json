@@ -1,26 +1,33 @@
 {
   "hero": {
     "name": "David Santiago Vargas",
-    "title": "Tech Lead",
-    "subtitle": "Sistemas distribuidos · Arquitectura Cloud · Desarrollo con IA",
-    "viewWork": "Ver Mi Trabajo",
-    "play": "CV jugable"
+    "headline": "Construyo sistemas que siguen siendo correctos cuando algo falla.",
+    "facts": "Bogotá, Colombia · Remoto · Español (nativo) · Inglés (B2)",
+    "stackLabel": "Herramientas principales",
+    "skills": [
+      { "title": "Dinero que se mueve exactamente una vez", "detail": "Claves de idempotencia, reservas de saldo y liquidación según el estado final del proveedor." },
+      { "title": "Webhooks confiables", "detail": "Firmas verificadas sobre el cuerpo crudo y deduplicación en la misma transacción que acredita el saldo." },
+      { "title": "Proveedores que se conectan sin tocar el núcleo", "detail": "Custodia, cuentas virtuales, pagos y KYC detrás de patrones Strategy y Adapter." },
+      { "title": "Infraestructura como código", "detail": "Terraform en Azure y AWS, CI/CD sobre OIDC y un entorno efímero por pull request." }
+    ],
+    "viewWork": "Ver mi experiencia",
+    "play": "Juega mi CV",
+    "playNote": "Ciudad pixel de mundo abierto · 3 min · sin instalar"
   },
   "nav": {
     "ariaLabel": "Navegación principal",
     "home": "Volver arriba",
-    "work": "Trabajo",
     "about": "Sobre mí",
     "experience": "Experiencia",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "play": "Jugar"
   },
   "about": {
     "title": "Sobre mí",
     "bio": [
-      "Soy Tech Lead especializado en plataformas de pago fintech y sistemas multi-tenant.",
-      "He construido y escalado infraestructura de pagos en mercados de Latinoamérica.",
-      "He liderado equipos de 5+ ingenieros con enfoque en arquitectura event-driven, clean architecture y automatización CI/CD usando TypeScript, Python, PostgreSQL, Azure y AWS.",
-      "Me importa entregar software confiable, y también las herramientas, los pipelines y la cultura de code review que hacen los equipos más rápidos."
+      "Soy ingeniero de software en Bogotá, Colombia. Desde 2023 trabajo en productos fintech: pagos, checkout y riesgo.",
+      "En mi rol más reciente lideré un equipo de cinco ingenieros en una plataforma de pagos transfronterizos y su migración de AWS a Azure. Trabajo sobre todo con TypeScript y Python, con PostgreSQL y Terraform.",
+      "Me importa entregar software confiable, y también las herramientas, los pipelines y el code review que hacen más rápidos a los equipos."
     ],
     "stackLabel": "Stack principal",
     "stack": {
@@ -38,15 +45,14 @@
     "title": "Trabajo Destacado",
     "cards": [
       {
-        "eyebrow": "Loopay · Tech Lead · Oct 2025–Presente",
+        "eyebrow": "Loopay · Tech Lead · Oct 2025–Nov 2026",
         "note": null,
         "title": "Loopay Suite",
         "summary": "Plataforma fintech de pagos multi-tenant y cloud-native para mercados de Latinoamérica.",
         "bullets": [
-          "Lidero un equipo de 5 ingenieros — decisiones de arquitectura, code reviews y soporte a producción (NestJS, React, PostgreSQL, Azure, Terraform).",
-          "Lidero SOBERANA, la plataforma de pagos transfronterizos: wallets custodiales, cuentas virtuales y pagos a través de proveedores externos detrás de patrones Strategy y Adapter, de modo que sumar un proveedor no modifica el núcleo.",
-          "Lideré la migración de AWS a Azure junto con el CTO, reconstruyendo la infraestructura en Terraform con CI/CD en GitHub Actions sobre OIDC (sin credenciales de nube almacenadas) y un entorno efímero por pull request.",
-          "Construí LoopayOCR, gestión de documentos de cumplimiento con OCR de Google Gemini, validación dinámica de esquemas con Pydantic, almacenamiento en S3 y notificaciones por webhooks."
+          "Lideré un equipo de 5 ingenieros en SOBERANA, una plataforma de pagos transfronterizos: wallets custodiales, cuentas virtuales y pagos a través de proveedores externos detrás de patrones Strategy y Adapter.",
+          "Hice seguros ante reintentos los flujos que mueven dinero, con claves de idempotencia, reservas de saldo y liquidación exactamente una vez, y cerré 12 hallazgos de una auditoría de seguridad.",
+          "Lideré la migración de AWS a Azure junto con el CTO: Terraform, CI/CD en GitHub Actions sobre OIDC y un entorno efímero por pull request."
         ],
         "metric": { "value": "60%", "label": "despliegues más rápidos en AWS · de 15 a 6 minutos" },
         "links": [
@@ -103,53 +109,6 @@
       "description": "Experiencia profesional y trayectoria.",
       "ariaLabel": "Visitar el perfil de LinkedIn de David (se abre en una pestaña nueva)"
     }
-  },
-  "brain": {
-    "hint": "Arrastra un nodo al núcleo — o tócalo",
-    "hintShort": "Toca un nodo",
-    "dropHere": "Conectar",
-    "close": "Cerrar",
-    "prev": "Anterior",
-    "next": "Siguiente",
-    "timeline": "Línea de tiempo de mi carrera",
-    "readMore": "Leer la página completa ↓",
-    "core": {
-      "label": "Juega mi CV",
-      "sub": "Ciudad pixel de mundo abierto · 3 min · sin instalar",
-      "aria": "Abrir el CV jugable"
-    },
-    "nodes": {
-      "garage": {
-        "label": "Garaje en Chía",
-        "sub": "2019 – 2021 · autodidacta"
-      },
-      "tribuu": {
-        "label": "Tribuu",
-        "sub": "2021 – 2023 · Desarrollador JavaScript"
-      },
-      "loopayjs": {
-        "label": "Loopay",
-        "sub": "2023 · Desarrollador JavaScript"
-      },
-      "galgo": {
-        "label": "Galgo",
-        "sub": "2023 – 2025 · Ingeniero de Software"
-      },
-      "trebet": {
-        "label": "Trebet",
-        "sub": "2024 – 2025 · Co-fundador"
-      },
-      "loopay": {
-        "label": "Loopay · SOBERANA",
-        "sub": "2025 – hoy · Tech Lead"
-      },
-      "contact": {
-        "label": "Contacto",
-        "sub": "LinkedIn · GitHub"
-      }
-    },
-    "contactTitle": "Hablemos",
-    "contactBody": "Un rol, un proyecto o una idea: lo más rápido es LinkedIn o GitHub."
   },
   "footer": {
     "copyright": "© 2026 David Santiago Vargas"

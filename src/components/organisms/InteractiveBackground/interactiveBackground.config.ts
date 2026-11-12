@@ -21,8 +21,9 @@ export const INTERACTIVE_BACKGROUND_CONFIG = {
   LINK_DISTANCE: 14,
   LINK_MAX_SEGMENTS: 900,
 
-  // Motion
-  DRIFT_SPEED: 0.6,
+  // Motion. DRIFT_SPEED 0 keeps particles at rest: the network only moves when
+  // the visitor moves it (pointer repulsion, parallax, grab).
+  DRIFT_SPEED: 0,
   MAX_DELTA: 0.05,
 
   // Pointer interaction
@@ -43,7 +44,8 @@ export const INTERACTIVE_BACKGROUND_CONFIG = {
   // Idle camera drift: slow autonomous Lissajous motion so the 3D reads at
   // rest. Fades out while the pointer is active. Time is integrated from rAF
   // deltas (never wall clock), so reduced motion and tab pauses stay static.
-  IDLE_DRIFT_AMPLITUDE: 2.4,
+  // Amplitude 0 disables it: the background no longer moves on its own.
+  IDLE_DRIFT_AMPLITUDE: 0,
   IDLE_DRIFT_PERIOD: 40,
   IDLE_BLEND_RATE: 1.2,
 
